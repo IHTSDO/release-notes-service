@@ -1,12 +1,12 @@
 package org.snomed.release.note.core.data.domain;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.elasticsearch.annotations.DateFormat;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 
-import java.util.Date;
-import java.util.UUID;
+import java.time.LocalDate;
 
 @Document(indexName = "subject")
 public class Subject {
@@ -21,18 +21,18 @@ public class Subject {
     @Field(type = FieldType.Keyword)
     private String path;
 
-    @Field(type = FieldType.Date)
-    private Date createdDate;
+    @Field(type = FieldType.Date, format = DateFormat.year_month_day)
+    private LocalDate createdDate;
 
-    @Field(type = FieldType.Date)
-    private Date lastModified;
+    @Field(type = FieldType.Date, format = DateFormat.year_month_day)
+    private LocalDate lastModified;
 
     public Subject() {
     }
 
-    public Subject(String title, String path, Date createdDate, Date lastModified) {
+    public Subject(String id, String title, String path, LocalDate createdDate, LocalDate lastModified) {
         this();
-        this.id = UUID.randomUUID().toString();
+        this.id = id;
         this.title = title;
         this.path = path;
         this.createdDate = createdDate;
@@ -59,19 +59,23 @@ public class Subject {
         this.path = path;
     }
 
-    public Date getCreatedDate() {
+    public LocalDate getCreatedDate() {
         return createdDate;
     }
 
-    public void setCreatedDate(Date createdDate) {
-        this.createdDate = createdDate;
-    }
-
-    public Date getLastModified() {
+    public LocalDate getLastModified() {
         return lastModified;
     }
 
-    public void setLastModified(Date lastModified) {
+    public void setLastModified(LocalDate lastModified) {
         this.lastModified = lastModified;
+    }
+
+    public void setCreatedDate(LocalDate createdDate) {
+        this.createdDate = createdDate;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 }
