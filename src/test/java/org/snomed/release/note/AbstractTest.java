@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Testcontainers
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {TestConfig.class})
-abstract class AbstractTest {
+public abstract class AbstractTest {
 	@Autowired
 	RestHighLevelClient elasticsearchClient;
 

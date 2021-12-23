@@ -1,16 +1,15 @@
 package org.snomed.release.note.core.data.service;
 
+import org.elasticsearch.common.Strings;
 import org.snomed.release.note.core.data.domain.Subject;
 import org.snomed.release.note.core.data.repository.SubjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
-import org.springframework.data.elasticsearch.core.query.IndexQuery;
-import org.springframework.data.elasticsearch.core.query.IndexQueryBuilder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Service
@@ -19,22 +18,28 @@ public class SubjectService {
 	@Autowired
 	private SubjectRepository subjectRepository;
 
-	@Autowired
-	private ElasticsearchOperations elasticsearchOperations;
-
-	public String create(Subject subject) {
+	public Subject create(Subject subject) {
+		subject.setId(UUID.randomUUID().toString());
 		subject.setCreatedDate(LocalDate.now());
+		return subjectRepository.save(subject);
+	}
 
-		IndexQuery indexQuery = new IndexQueryBuilder()
-				.withId(UUID.randomUUID().toString())
-				.withObject(subject)
-				.build();
+	public Subject update(Subject subject) {
+		String subjectId = subject.getId();
 
-		return elasticsearchOperations.index(indexQuery, elasticsearchOperations.getIndexCoordinatesFor(Subject.class));
+		if (Strings.isNullOrEmpty(subjectId)) {
+			throw new IllegalArgumentException("id is required");
+		}
+		if (!subjectRepository.existsById(subjectId)) {
+			throw new NoSuchElementException("Subject '" + subjectId + "' does not exist");
+		}
+		subject.setLastModifiedDate(LocalDate.now());
+		return subjectRepository.save(subject);
 	}
 
 	public Subject find(String id) {
-		return elasticsearchOperations.get(id, Subject.class);
+		return subjectRepository.findById(id).orElseThrow(() ->
+				new NoSuchElementException("Subject '" + id + "' is not found"));
 	}
 
 	public List<Subject> findByTitle(String title) {
@@ -50,16 +55,11 @@ public class SubjectService {
 		return result;
 	}
 
-	public void update(Subject subject) {
-
-	}
-
 	public void delete(String id) {
-		final Subject subject = elasticsearchOperations.get(id, Subject.class);
-		if (subject == null) {
-			throw new IllegalArgumentException("Subject with id = " + id + " does not exist");
+		if (!subjectRepository.existsById(id)) {
+			throw new NoSuchElementException("Subject '" + id + "' does not exist");
 		}
-		subjectRepository.delete(subject);
+		subjectRepository.deleteById(id);
 	}
 
 	public void deleteAll() {
