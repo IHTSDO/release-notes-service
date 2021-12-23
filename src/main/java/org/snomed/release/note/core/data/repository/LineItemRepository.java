@@ -7,6 +7,6 @@ import java.util.List;
 
 public interface LineItemRepository extends ElasticsearchRepository<LineItem, Long> {
 
-    List<LineItem> findBySubjectId(String subjectId);
+	List<LineItem> findBySubjectId(String subjectId);
 
 }

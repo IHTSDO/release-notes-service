@@ -16,54 +16,54 @@ import java.util.UUID;
 @Service
 public class SubjectService {
 
-    @Autowired
-    private SubjectRepository subjectRepository;
+	@Autowired
+	private SubjectRepository subjectRepository;
 
-    @Autowired
-    private ElasticsearchOperations elasticsearchOperations;
+	@Autowired
+	private ElasticsearchOperations elasticsearchOperations;
 
-    public String create(Subject subject) {
-        subject.setCreatedDate(LocalDate.now());
+	public String create(Subject subject) {
+		subject.setCreatedDate(LocalDate.now());
 
-        IndexQuery indexQuery = new IndexQueryBuilder()
-                .withId(UUID.randomUUID().toString())
-                .withObject(subject)
-                .build();
+		IndexQuery indexQuery = new IndexQueryBuilder()
+				.withId(UUID.randomUUID().toString())
+				.withObject(subject)
+				.build();
 
-        return elasticsearchOperations.index(indexQuery, elasticsearchOperations.getIndexCoordinatesFor(Subject.class));
-    }
+		return elasticsearchOperations.index(indexQuery, elasticsearchOperations.getIndexCoordinatesFor(Subject.class));
+	}
 
-    public Subject find(String id) {
-        return elasticsearchOperations.get(id, Subject.class);
-    }
+	public Subject find(String id) {
+		return elasticsearchOperations.get(id, Subject.class);
+	}
 
-    public List<Subject> findByTitle(String title) {
-        return subjectRepository.findByTitle(title);
-    }
+	public List<Subject> findByTitle(String title) {
+		return subjectRepository.findByTitle(title);
+	}
 
-    public List<Subject> findAll() {
-        List<Subject> result = new ArrayList<>();
+	public List<Subject> findAll() {
+		List<Subject> result = new ArrayList<>();
 
-        Iterable<Subject> foundSubjects = subjectRepository.findAll();
-        foundSubjects.forEach(result::add);
+		Iterable<Subject> foundSubjects = subjectRepository.findAll();
+		foundSubjects.forEach(result::add);
 
-        return result;
-    }
+		return result;
+	}
 
-    public void update(Subject subject) {
+	public void update(Subject subject) {
 
-    }
+	}
 
-    public void delete(String id) {
-        final Subject subject = elasticsearchOperations.get(id, Subject.class);
-        if (subject == null) {
-            throw new IllegalArgumentException("Subject with id = " + id + " does not exist");
-        }
-        subjectRepository.delete(subject);
-    }
+	public void delete(String id) {
+		final Subject subject = elasticsearchOperations.get(id, Subject.class);
+		if (subject == null) {
+			throw new IllegalArgumentException("Subject with id = " + id + " does not exist");
+		}
+		subjectRepository.delete(subject);
+	}
 
-    public void deleteAll() {
-        subjectRepository.deleteAll();
-    }
+	public void deleteAll() {
+		subjectRepository.deleteAll();
+	}
 
 }
