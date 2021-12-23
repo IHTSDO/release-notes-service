@@ -7,5 +7,5 @@ import org.springframework.context.annotation.PropertySource;
 @Configuration
 @EnableConfigurationProperties
 @PropertySource(value = "classpath:application.properties", encoding = "UTF-8")
-public class Config {
+public class Config extends ElasticsearchConfig {
 }
