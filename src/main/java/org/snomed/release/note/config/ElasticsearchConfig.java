@@ -7,9 +7,9 @@ import org.springframework.data.elasticsearch.config.AbstractElasticsearchConfig
 
 public class ElasticsearchConfig extends AbstractElasticsearchConfiguration {
 
-    @Override
-    public RestHighLevelClient elasticsearchClient() {
-        // TODO externalize config for elasticsearch url, index prefix and shard configurations etc.
-        return RestClients.create(ClientConfiguration.localhost()).rest();
-    }
+	@Override
+	public RestHighLevelClient elasticsearchClient() {
+		// TODO externalize config for elasticsearch url, index prefix and shard configurations etc.
+		return RestClients.create(ClientConfiguration.localhost()).rest();
+	}
 }
