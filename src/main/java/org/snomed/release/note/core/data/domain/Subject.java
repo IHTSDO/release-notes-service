@@ -7,6 +7,8 @@ import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Objects;
 
 @Document(indexName = "subject")
 public class Subject {
@@ -25,22 +27,26 @@ public class Subject {
 	private LocalDate createdDate;
 
 	@Field(type = FieldType.Date, format = DateFormat.year_month_day)
-	private LocalDate lastModified;
+	private LocalDate lastModifiedDate;
 
 	public Subject() {
 	}
 
-	public Subject(String id, String title, String path, LocalDate createdDate, LocalDate lastModified) {
+	public Subject(String id, String title, String path, LocalDate createdDate, LocalDate lastModifiedDate) {
 		this();
 		this.id = id;
 		this.title = title;
 		this.path = path;
 		this.createdDate = createdDate;
-		this.lastModified = lastModified;
+		this.lastModifiedDate = lastModifiedDate;
 	}
 
 	public String getId() {
 		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
 	}
 
 	public String getTitle() {
@@ -63,19 +69,46 @@ public class Subject {
 		return createdDate;
 	}
 
-	public LocalDate getLastModified() {
-		return lastModified;
-	}
-
-	public void setLastModified(LocalDate lastModified) {
-		this.lastModified = lastModified;
-	}
-
 	public void setCreatedDate(LocalDate createdDate) {
 		this.createdDate = createdDate;
 	}
 
-	public void setId(String id) {
-		this.id = id;
+	public LocalDate getLastModifiedDate() {
+		return lastModifiedDate;
 	}
+
+	public void setLastModifiedDate(LocalDate lastModifiedDate) {
+		this.lastModifiedDate = lastModifiedDate;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+
+		Subject subject = (Subject) o;
+
+		if (id != null || subject.id != null) {
+			return Objects.equals(id, subject.id);
+		}
+
+		return Objects.equals(title, subject.title) && Objects.equals(path, subject.path);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(id, title, path);
+	}
+
+	@Override
+	public String toString() {
+		return "Subject{" +
+				"id='" + id + '\'' +
+				", title='" + title + '\'' +
+				", path=" + path +
+				", createdDate='" + createdDate.format(DateTimeFormatter.BASIC_ISO_DATE) + '\'' +
+				", lastModifiedDate='" + lastModifiedDate.format(DateTimeFormatter.BASIC_ISO_DATE) + '\'' +
+				'}';
+	}
+
 }

@@ -15,20 +15,26 @@ public class SubjectController {
 	private SubjectService subjectService;
 
 	@PostMapping(value = "/subjects")
-	public String createSubject(
+	public Subject createSubject(
 			@RequestBody Subject subject) {
 		return subjectService.create(subject);
 	}
 
-	@GetMapping(value = "/subjects", produces = "application/json")
+	@GetMapping(value = "/subjects")
 	public List<Subject> findSubjects() {
 		return subjectService.findAll();
 	}
 
-	@GetMapping(value = "/subjects/{id}", produces = "application/json")
+	@GetMapping(value = "/subjects/{id}")
 	public Subject findSubject(
 			@PathVariable("id") String id) {
 		return subjectService.find(id);
+	}
+
+	@PutMapping(value = "/subjects/{id}")
+	public Subject updateSubject(
+			@RequestBody Subject subject) {
+		return subjectService.update(subject);
 	}
 
 	@DeleteMapping("/subjects/{id}")
@@ -41,4 +47,5 @@ public class SubjectController {
 	public void deleteSubjects() {
 		subjectService.deleteAll();
 	}
+
 }
