@@ -1,5 +1,7 @@
 package org.snomed.release.note.core.data.service;
 
+import org.ihtsdo.otf.rest.exception.BusinessServiceException;
+import org.ihtsdo.otf.rest.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -7,8 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.snomed.release.note.AbstractTest;
 import org.snomed.release.note.core.data.domain.Subject;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class SubjectServiceTest extends AbstractTest {
 
@@ -20,12 +21,30 @@ public class SubjectServiceTest extends AbstractTest {
 	}
 
 	@Test
-	void testCreate() {
+	void testCreate() throws BusinessServiceException {
 		Subject subject = subjectService.create(new Subject("Clinical Finding", "MAIN"));
 		assertNotNull(subject.getId());
-		logger.info(subject.toString());
 		subject = subjectService.find(subject.getId());
 		assertEquals("Clinical Finding", subject.getTitle());
 		assertEquals("MAIN", subject.getPath());
 	}
+
+	@Test
+	void testUpdate() throws BusinessServiceException {
+		Subject created = subjectService.create(new Subject("Clinical Finding", "MAIN"));
+		Subject updated = subjectService.update(created.getId(), new Subject("Procedure", "MAIN/SNOMEDCT-US"));
+		assertEquals(created.getId(), updated.getId());
+		assertEquals("Procedure", updated.getTitle());
+		assertEquals("MAIN/SNOMEDCT-US", updated.getPath());
+	}
+
+	@Test
+	void testDelete() throws BusinessServiceException {
+		Subject subject = subjectService.create(new Subject("Clinical Finding", "MAIN"));
+		subjectService.delete(subject.getId());
+		assertThrows(ResourceNotFoundException.class, () -> {
+			subjectService.find(subject.getId());
+		});
+	}
+
 }

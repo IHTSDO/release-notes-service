@@ -2,7 +2,6 @@ package org.snomed.release.note.rest;
 
 import org.ihtsdo.otf.rest.exception.BusinessServiceException;
 import org.snomed.release.note.core.data.domain.LineItem;
-import org.snomed.release.note.core.data.domain.Subject;
 import org.snomed.release.note.core.data.service.LineItemService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -19,7 +18,7 @@ public class LineItemController {
 
 	@PostMapping
 	public LineItem createLineItem(
-			@RequestBody LineItem lineItem) {
+			@RequestBody LineItem lineItem) throws BusinessServiceException {
 		return lineItemService.create(lineItem);
 	}
 
@@ -30,19 +29,28 @@ public class LineItemController {
 
 	@GetMapping(value = "/{id}")
 	public LineItem findLineItem(
-			@PathVariable("id") String id) {
+			@PathVariable final String id) {
 		return lineItemService.find(id);
 	}
 
+	// TODO: what method to use for update and promote, PUT or POST? Can we use PATCH?
 	@PutMapping(value = "/{id}")
 	public LineItem updateLineItem(
-			@RequestBody LineItem lineItem) throws BusinessServiceException {
-		return lineItemService.update(lineItem);
+			@PathVariable final String id,
+			@RequestBody LineItem lineItemDetails) {
+		return lineItemService.update(id, lineItemDetails);
+	}
+
+	@PatchMapping(value = "/{id}/promote")
+	public LineItem promoteLineItem(
+			@PathVariable final String id,
+			@RequestBody LineItem lineItemDetails) throws BusinessServiceException {
+		return lineItemService.promote(id, lineItemDetails.getPromotedBranch());
 	}
 
 	@DeleteMapping(value = "/{id}")
 	public void deleteLineItem(
-			@PathVariable("id") String id) {
+			@PathVariable final String id) {
 		lineItemService.delete(id);
 	}
 

@@ -19,28 +19,38 @@ public class SubjectService {
 	@Autowired
 	private SubjectRepository subjectRepository;
 
-	public Subject create(Subject subject) {
+	public Subject create(Subject subject) throws BusinessServiceException {
+		if (Strings.isNullOrEmpty(subject.getTitle())) {
+			throw new BadRequestException("title is required");
+		}
+		if (Strings.isNullOrEmpty(subject.getPath())) {
+			throw new BadRequestException("path is required");
+		}
+
 		subject.setCreatedDate(LocalDate.now());
 		return subjectRepository.save(subject);
 	}
 
-	public Subject update(Subject subject) throws BusinessServiceException {
-		String subjectId = subject.getId();
-		if (Strings.isNullOrEmpty(subjectId)) {
-			throw new BadRequestException("Subject id is required");
+	public Subject update(final String id, final Subject subjectDetails) {
+		Subject subject = find(id);
+
+		// TODO: can we update path if we already have line items for this subject?
+		if (subjectDetails.getTitle() != null) {
+			subject.setTitle(subjectDetails.getTitle());
 		}
-		if (!subjectRepository.existsById(subjectId)) {
-			throw new ResourceNotFoundException("No subject found for id " + subjectId);
+		if (subjectDetails.getPath() != null) {
+			subject.setPath(subjectDetails.getPath());
 		}
 		subject.setLastModifiedDate(LocalDate.now());
+
 		return subjectRepository.save(subject);
 	}
 
-	public Subject find(String id) {
+	public Subject find(final String id) {
 		return subjectRepository.findById(id).orElseThrow(() ->	new ResourceNotFoundException("No subject found for id " + id));
 	}
 
-	public List<Subject> findByTitle(String title) {
+	public List<Subject> findByTitle(final String title) {
 		return subjectRepository.findByTitle(title);
 	}
 
@@ -51,7 +61,7 @@ public class SubjectService {
 		return result;
 	}
 
-	public void delete(String id) {
+	public void delete(final String id) {
 		if (!subjectRepository.existsById(id)) {
 			throw new ResourceNotFoundException("No subject found for id " + id);
 		}
