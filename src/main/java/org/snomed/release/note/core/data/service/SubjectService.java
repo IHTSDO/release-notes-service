@@ -10,7 +10,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.UUID;
 
 @Service
 public class SubjectService {
@@ -19,7 +18,6 @@ public class SubjectService {
 	private SubjectRepository subjectRepository;
 
 	public Subject create(Subject subject) {
-		subject.setId(UUID.randomUUID().toString());
 		subject.setCreatedDate(LocalDate.now());
 		return subjectRepository.save(subject);
 	}
