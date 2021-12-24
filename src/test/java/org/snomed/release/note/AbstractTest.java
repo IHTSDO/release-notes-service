@@ -40,6 +40,6 @@ public abstract class AbstractTest {
 	@AfterEach
 	void defaultTearDown() throws InterruptedException {
 		subjectService.deleteAll();
-		lineItemService.findAll();
+		lineItemService.deleteAll();
 	}
 }

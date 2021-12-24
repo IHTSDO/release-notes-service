@@ -7,6 +7,8 @@ import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Objects;
 
 @Document(indexName = "lineitem")
 public class LineItem {
@@ -145,5 +147,47 @@ public class LineItem {
 
 	public void setReleased(Boolean released) {
 		this.released = released;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+
+		LineItem lineItem = (LineItem) o;
+
+		if (id != null || lineItem.id != null) {
+			return Objects.equals(id, lineItem.id);
+		}
+
+		return Objects.equals(subjectId, lineItem.subjectId)
+				&& Objects.equals(content, lineItem.content)
+				&& Objects.equals(sourceBranch, lineItem.sourceBranch);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(id, subjectId);
+	}
+
+	@Override
+	public String toString() {
+		return "LineItem{" +
+				"id='" + id + '\'' +
+				", subjectId='" + subjectId + '\'' +
+				", parentId='" + parentId + '\'' +
+				", level='" + level + '\'' +
+				", content=" + content + '\'' +
+				", sequence='" + sequence + '\'' +
+				", sourceBranch='" + sourceBranch + '\'' +
+				", promotedBranch='" + promotedBranch + '\'' +
+				", startDate='" + formatDate(startDate) + '\'' +
+				", endDate='" + formatDate(endDate) + '\'' +
+				", released='" + released + '\'' +
+				'}';
+	}
+
+	private String formatDate(LocalDate date) {
+		return (date == null) ? "null" : date.format(DateTimeFormatter.ISO_LOCAL_DATE);
 	}
 }

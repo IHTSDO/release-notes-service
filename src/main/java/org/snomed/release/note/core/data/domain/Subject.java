@@ -95,7 +95,7 @@ public class Subject {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, title, path);
+		return Objects.hash(id);
 	}
 
 	@Override
@@ -103,10 +103,14 @@ public class Subject {
 		return "Subject{" +
 				"id='" + id + '\'' +
 				", title='" + title + '\'' +
-				", path=" + path +
-				", createdDate='" + createdDate.format(DateTimeFormatter.BASIC_ISO_DATE) + '\'' +
-				", lastModifiedDate='" + lastModifiedDate.format(DateTimeFormatter.BASIC_ISO_DATE) + '\'' +
+				", path=" + path + '\'' +
+				", createdDate='" + formatDate(createdDate) + '\'' +
+				", lastModifiedDate='" + formatDate(lastModifiedDate) + '\'' +
 				'}';
+	}
+
+	private String formatDate(LocalDate date) {
+		return (date == null) ? "null" : date.format(DateTimeFormatter.ISO_LOCAL_DATE);
 	}
 
 }
