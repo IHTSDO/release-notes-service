@@ -12,14 +12,14 @@ import java.time.LocalDate;
 public class LineItem {
 
 	@Id
-	@Field(type = FieldType.Long)
-	private Long id;
+	@Field(type = FieldType.Keyword)
+	private String id;
 
 	@Field(type = FieldType.Keyword)
 	private String subjectId;
 
-	@Field(type = FieldType.Long)
-	private Long parentId;
+	@Field(type = FieldType.Keyword)
+	private String parentId;
 
 	@Field(type = FieldType.Integer)
 	private Integer level;
@@ -48,26 +48,22 @@ public class LineItem {
 	public LineItem() {
 	}
 
-	public LineItem(Long id, String subjectId, Long parentId, Integer level, String content, Integer sequence, String sourceBranch, String promotedBranch, LocalDate startDate, LocalDate endDate, Boolean released) {
+	public LineItem(String subjectId, String content, String sourceBranch) {
 		this();
-		this.id = id;
 		this.subjectId = subjectId;
-		this.parentId = parentId;
-		this.level = level;
+		this.level = 0;
 		this.content = content;
-		this.sequence = sequence;
+		this.sequence = 0;
 		this.sourceBranch = sourceBranch;
-		this.promotedBranch = promotedBranch;
-		this.startDate = startDate;
-		this.endDate = endDate;
-		this.released = released;
+		this.startDate = LocalDate.now();
+		this.released = false;
 	}
 
-	public Long getId() {
+	public String getId() {
 		return id;
 	}
 
-	public void setId(Long id) {
+	public void setId(String id) {
 		this.id = id;
 	}
 
@@ -79,11 +75,11 @@ public class LineItem {
 		this.subjectId = subjectId;
 	}
 
-	public Long getParentId() {
+	public String getParentId() {
 		return parentId;
 	}
 
-	public void setParentId(Long parentId) {
+	public void setParentId(String parentId) {
 		this.parentId = parentId;
 	}
 

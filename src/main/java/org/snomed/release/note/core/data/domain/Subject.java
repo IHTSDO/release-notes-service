@@ -32,13 +32,11 @@ public class Subject {
 	public Subject() {
 	}
 
-	public Subject(String id, String title, String path, LocalDate createdDate, LocalDate lastModifiedDate) {
+	public Subject(String title, String path) {
 		this();
-		this.id = id;
 		this.title = title;
 		this.path = path;
-		this.createdDate = createdDate;
-		this.lastModifiedDate = lastModifiedDate;
+		this.createdDate = LocalDate.now();
 	}
 
 	public String getId() {
