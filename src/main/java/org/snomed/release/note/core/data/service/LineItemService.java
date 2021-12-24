@@ -23,28 +23,48 @@ public class LineItemService {
 	@Autowired
 	private ElasticsearchOperations elasticsearchOperations;
 
-	public LineItem create(LineItem lineItem) {
+	public LineItem create(LineItem lineItem) throws BusinessServiceException {
+		if (Strings.isNullOrEmpty(lineItem.getSubjectId())) {
+			throw new BadRequestException("subjectId is required");
+		}
+		if (Strings.isNullOrEmpty(lineItem.getSourceBranch())) {
+			throw new BadRequestException("sourceBranch is required");
+		}
+
 		lineItem.setStartDate(LocalDate.now());
 		lineItem.setReleased(false);
+
 		return lineItemRepository.save(lineItem);
 	}
 
-	public LineItem update(LineItem lineItem) throws BusinessServiceException {
-		String lineItemId = lineItem.getId();
-		if (Strings.isNullOrEmpty(lineItemId)) {
-			throw new BadRequestException("Line item id is required");
+	public LineItem update(final String id, final LineItem lineItemDetails) {
+		LineItem lineItem = find(id);
+
+		if (lineItemDetails.getContent() != null) {
+			lineItem.setContent(lineItemDetails.getContent());
 		}
-		if (!lineItemRepository.existsById(lineItemId)) {
-			throw new ResourceNotFoundException("No line item found for id " + lineItemId);
+		if (lineItemDetails.getSequence() != null) {
+			lineItem.setSequence(lineItemDetails.getSequence());
 		}
+
 		return lineItemRepository.save(lineItem);
 	}
 
-	public LineItem find(String id) {
+	public LineItem promote(final String id, final String promotedBranch) throws BusinessServiceException {
+		if (Strings.isNullOrEmpty(promotedBranch)) {
+			throw new BadRequestException("promotedBranch is required");
+		}
+
+		LineItem lineItem = find(id);
+		lineItem.setPromotedBranch(promotedBranch);
+		return lineItemRepository.save(lineItem);
+	}
+
+	public LineItem find(final String id) {
 		return lineItemRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("No line item found for id " + id));
 	}
 
-	public List<LineItem> findBySubjectId(String subjectId) {
+	public List<LineItem> findBySubjectId(final String subjectId) {
 		return lineItemRepository.findBySubjectId(subjectId);
 	}
 
@@ -55,7 +75,7 @@ public class LineItemService {
 		return result;
 	}
 
-	public void delete(String id) {
+	public void delete(final String id) {
 		if (!lineItemRepository.existsById(id)) {
 			throw new ResourceNotFoundException("No line item found for id " + id);
 		}

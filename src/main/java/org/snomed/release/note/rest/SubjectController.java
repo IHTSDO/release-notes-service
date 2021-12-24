@@ -18,7 +18,7 @@ public class SubjectController {
 
 	@PostMapping
 	public Subject createSubject(
-			@RequestBody Subject subject) {
+			@RequestBody Subject subject) throws BusinessServiceException {
 		return subjectService.create(subject);
 	}
 
@@ -29,19 +29,21 @@ public class SubjectController {
 
 	@GetMapping(value = "/{id}")
 	public Subject findSubject(
-			@PathVariable("id") String id) {
+			@PathVariable final String id) {
 		return subjectService.find(id);
 	}
 
+	// TODO: what method to use for update, PUT or POST? Can we use PATCH?
 	@PutMapping(value = "/{id}")
 	public Subject updateSubject(
-			@RequestBody Subject subject) throws BusinessServiceException {
-		return subjectService.update(subject);
+			@PathVariable final String id,
+			@RequestBody Subject subjectDetails) {
+		return subjectService.update(id, subjectDetails);
 	}
 
 	@DeleteMapping(value = "/{id}")
 	public void deleteSubject(
-			@PathVariable("id") String id) {
+			@PathVariable final String id) {
 		subjectService.delete(id);
 	}
 
