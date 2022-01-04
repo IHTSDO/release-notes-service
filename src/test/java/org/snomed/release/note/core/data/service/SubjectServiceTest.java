@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 import org.snomed.release.note.AbstractTest;
 import org.snomed.release.note.core.data.domain.Subject;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class SubjectServiceTest extends AbstractTest {
@@ -45,6 +47,29 @@ public class SubjectServiceTest extends AbstractTest {
 		assertThrows(ResourceNotFoundException.class, () -> {
 			subjectService.find(subject.getId());
 		});
+	}
+
+	@Test
+	void testFind() throws BusinessServiceException {
+		subjectService.create(new Subject("Clinical Finding", "MAIN"));
+		subjectService.create(new Subject("COVID-19", "MAIN"));
+		subjectService.create(new Subject("Procedure", "MAIN/SNOMEDCT-US"));
+		subjectService.create(new Subject("COVID-19", "MAIN/SNOMEDCT-US"));
+
+		List<Subject> found = subjectService.find(null, null);
+		assertEquals(4, found.size());
+
+		found = subjectService.find(null, "MAIN");
+		assertEquals(2, found.size());
+
+		found = subjectService.find("COVID-19", null);
+		assertEquals(2, found.size());
+
+		found = subjectService.find("Procedure", "MAIN/SNOMEDCT-US");
+		assertEquals(1, found.size());
+
+		found = subjectService.find("Procedure", "MAIN");
+		assertEquals(0, found.size());
 	}
 
 }

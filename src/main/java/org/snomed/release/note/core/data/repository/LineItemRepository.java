@@ -10,8 +10,4 @@ public interface LineItemRepository extends ElasticsearchRepository<LineItem, St
 
 	List<LineItem> findBySubjectId(String subjectId);
 
-	List<LineItem> findByPromotedBranch(String promotedBranch);
-
-	List<LineItem> findByEndDateOrPromotedBranch(LocalDate endDate, String promotedBranch);
-
 }

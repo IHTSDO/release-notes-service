@@ -22,15 +22,17 @@ public class SubjectController {
 		return subjectService.create(subject);
 	}
 
-	@GetMapping
-	public List<Subject> findSubjects() {
-		return subjectService.findAll();
-	}
-
 	@GetMapping(value = "/{id}")
 	public Subject findSubject(
 			@PathVariable final String id) {
 		return subjectService.find(id);
+	}
+
+	@GetMapping
+	public List<Subject> findSubjects(
+			@RequestParam(required = false) String title,
+			@RequestParam(required = false) String path) {
+		return subjectService.find(title, path);
 	}
 
 	// TODO: what method to use for update, PUT or POST? Can we use PATCH?
