@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -22,15 +23,19 @@ public class LineItemController {
 		return lineItemService.create(lineItem);
 	}
 
-	@GetMapping
-	public List<LineItem> findLineItems() {
-		return lineItemService.findAll();
-	}
-
 	@GetMapping(value = "/{id}")
 	public LineItem findLineItem(
 			@PathVariable final String id) {
 		return lineItemService.find(id);
+	}
+
+	@GetMapping
+	public List<LineItem> findLineItems(
+			@RequestParam(required = false) String sourceBranch,
+			@RequestParam(required = false) String promotedBranch,
+			@RequestParam(required = false) LocalDate startDate,
+			@RequestParam(required = false) LocalDate endDate) {
+		return lineItemService.find(sourceBranch, promotedBranch, startDate, endDate);
 	}
 
 	// TODO: what method to use for update and promote, PUT or POST? Can we use PATCH?

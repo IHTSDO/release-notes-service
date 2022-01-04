@@ -10,6 +10,9 @@ import org.snomed.release.note.AbstractTest;
 import org.snomed.release.note.core.data.domain.LineItem;
 import org.snomed.release.note.core.data.domain.Subject;
 
+import java.time.LocalDate;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class LineItemServiceTest extends AbstractTest {
@@ -20,7 +23,7 @@ public class LineItemServiceTest extends AbstractTest {
 
 	@BeforeEach
 	void setUp() throws BusinessServiceException {
-		subject = subjectService.create(new Subject("Clinical Finding", "MAIN"));
+		subject = subjectService.create(new Subject("Body structure", "MAIN"));
 	}
 
 	@Test
@@ -62,5 +65,33 @@ public class LineItemServiceTest extends AbstractTest {
 		assertThrows(ResourceNotFoundException.class, () -> {
 			lineItemService.find(lineItem.getId());
 		});
+	}
+
+	@Test
+	void testFind() throws BusinessServiceException {
+		lineItemService.create(new LineItem(subject.getId(), "Demonstration Release of the Anatomy Model", "MAIN/ProjectA"));
+		lineItemService.create(new LineItem(subject.getId(), "Limbs/Girdles", "MAIN/ProjectA"));
+		lineItemService.create(new LineItem(subject.getId(), "Flexor annular pulley", "MAIN/ProjectB"));
+		lineItemService.create(new LineItem(subject.getId(), "Muscle tendon of toes", "MAIN/ProjectB"));
+
+		List<LineItem> found = lineItemService.find(null, null, null, null);
+		assertEquals(4, found.size());
+
+		found = lineItemService.find("MAIN/ProjectA", null, null, null);
+		assertEquals(2, found.size());
+
+		LineItem lineItem = found.get(0);
+
+		lineItemService.promote(lineItem.getId(), "MAIN");
+
+		found = lineItemService.find("MAIN/ProjectA", "MAIN", null, null);
+		assertEquals(1, found.size());
+		assertEquals(lineItem, found.get(0));
+
+		found = lineItemService.find(null, null, LocalDate.now(), null);
+		assertEquals(4, found.size());
+
+		found = lineItemService.find(null, null, null, LocalDate.now());
+		assertEquals(0, found.size());
 	}
 }

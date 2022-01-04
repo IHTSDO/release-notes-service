@@ -8,11 +8,17 @@ import org.snomed.release.note.core.data.domain.LineItem;
 import org.snomed.release.note.core.data.repository.LineItemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.SearchHit;
+import org.springframework.data.elasticsearch.core.SearchHits;
+import org.springframework.data.elasticsearch.core.query.Criteria;
+import org.springframework.data.elasticsearch.core.query.CriteriaQuery;
+import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class LineItemService {
@@ -62,6 +68,28 @@ public class LineItemService {
 
 	public LineItem find(final String id) {
 		return lineItemRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("No line item found for id " + id));
+	}
+
+	public List<LineItem> find(final String sourceBranch, final String promotedBranch, final LocalDate startDate, final LocalDate endDate) {
+		if (sourceBranch == null && promotedBranch == null && startDate == null && endDate == null) {
+			return findAll();
+		}
+		Criteria criteria = new Criteria();
+		if (sourceBranch != null) {
+			criteria = criteria.and("sourceBranch").is(sourceBranch);
+		}
+		if (promotedBranch != null) {
+			criteria = criteria.and("promotedBranch").is(promotedBranch);
+		}
+		if (startDate != null) {
+			criteria = criteria.and("startDate").is(startDate);
+		}
+		if (endDate != null) {
+			criteria = criteria.and("endDate").is(endDate);
+		}
+		Query query = new CriteriaQuery(criteria);
+		SearchHits<LineItem> searchHits = elasticsearchOperations.search(query, LineItem.class);
+		return searchHits.get().map(SearchHit::getContent).collect(Collectors.toList());
 	}
 
 	public List<LineItem> findBySubjectId(final String subjectId) {
