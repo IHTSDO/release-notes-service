@@ -35,7 +35,6 @@ public class SubjectController {
 		return subjectService.find(title, path);
 	}
 
-	// TODO: what method to use for update, PUT or POST? Can we use PATCH?
 	@PutMapping(value = "/{id}")
 	public Subject updateSubject(
 			@PathVariable final String id,

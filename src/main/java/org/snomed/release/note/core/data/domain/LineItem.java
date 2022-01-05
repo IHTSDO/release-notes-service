@@ -24,13 +24,13 @@ public class LineItem {
 	private String parentId;
 
 	@Field(type = FieldType.Integer)
-	private Integer level;
+	private int level;
 
 	@Field(type = FieldType.Text)
 	private String content;
 
 	@Field(type = FieldType.Integer)
-	private Integer sequence;
+	private int sequence;
 
 	@Field(type = FieldType.Keyword)
 	private String sourceBranch;
@@ -45,7 +45,7 @@ public class LineItem {
 	private LocalDate endDate;
 
 	@Field(type = FieldType.Boolean)
-	private Boolean released;
+	private boolean released;
 
 	public LineItem() {
 	}
@@ -53,12 +53,9 @@ public class LineItem {
 	public LineItem(String subjectId, String content, String sourceBranch) {
 		this();
 		this.subjectId = subjectId;
-		this.level = 0;
 		this.content = content;
-		this.sequence = 0;
 		this.sourceBranch = sourceBranch;
 		this.startDate = LocalDate.now();
-		this.released = false;
 	}
 
 	public String getId() {
@@ -85,11 +82,11 @@ public class LineItem {
 		this.parentId = parentId;
 	}
 
-	public Integer getLevel() {
+	public int getLevel() {
 		return level;
 	}
 
-	public void setLevel(Integer level) {
+	public void setLevel(int level) {
 		this.level = level;
 	}
 
@@ -101,11 +98,11 @@ public class LineItem {
 		this.content = content;
 	}
 
-	public Integer getSequence() {
+	public int getSequence() {
 		return sequence;
 	}
 
-	public void setSequence(Integer sequence) {
+	public void setSequence(int sequence) {
 		this.sequence = sequence;
 	}
 
@@ -141,11 +138,11 @@ public class LineItem {
 		this.endDate = endDate;
 	}
 
-	public Boolean getReleased() {
+	public boolean getReleased() {
 		return released;
 	}
 
-	public void setReleased(Boolean released) {
+	public void setReleased(boolean released) {
 		this.released = released;
 	}
 
