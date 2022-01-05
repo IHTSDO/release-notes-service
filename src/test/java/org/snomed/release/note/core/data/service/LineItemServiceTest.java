@@ -43,8 +43,7 @@ public class LineItemServiceTest extends AbstractTest {
 		LineItem created = lineItemService.create(new LineItem(subject.getId(), "Demonstration Release of the Anatomy Model", "MAIN/ProjectA"));
 		LineItem updated = lineItemService.update(created.getId(), new LineItem(subject.getId(), "Final Release of the Anatomy Model", "MAIN/ProjectA/Task1"));
 		assertEquals(created.getId(), updated.getId());
-		// Do not update source branch
-		assertEquals("MAIN/ProjectA", updated.getSourceBranch());
+		assertEquals("MAIN/ProjectA/Task1", updated.getSourceBranch());
 		assertEquals("Final Release of the Anatomy Model", updated.getContent());
 	}
 
@@ -93,5 +92,37 @@ public class LineItemServiceTest extends AbstractTest {
 
 		found = lineItemService.find(null, null, null, LocalDate.now());
 		assertEquals(0, found.size());
+	}
+
+	@Test
+	void testMerge() throws BusinessServiceException {
+		LineItem lineItem1 = lineItemService.create(new LineItem(subject.getId(), "Demonstration Release of the Anatomy Model", "MAIN/ProjectA"));
+		LineItem lineItem2 = lineItemService.create(new LineItem(subject.getId(), "Limbs/Girdles", "MAIN/ProjectA"));
+		LineItem lineItem3 = lineItemService.create(new LineItem(subject.getId(), "Flexor annular pulley", "MAIN/ProjectB"));
+		LineItem lineItem4 = lineItemService.create(new LineItem(subject.getId(), "Muscle tendon of toes", "MAIN/ProjectB"));
+
+		lineItemService.promote(lineItem1.getId(), "MAIN");
+		lineItemService.promote(lineItem2.getId(), "MAIN");
+		lineItemService.promote(lineItem3.getId(), "MAIN");
+
+		LineItem merged = lineItemService.merge(subject.getId(), "MAIN");
+
+		lineItem1 = lineItemService.find(lineItem1.getId());
+		lineItem2 = lineItemService.find(lineItem2.getId());
+		lineItem3 = lineItemService.find(lineItem3.getId());
+		lineItem4 = lineItemService.find(lineItem4.getId());
+
+		assertEquals(merged.getStartDate(), lineItem1.getEndDate());
+		assertEquals(merged.getStartDate(), lineItem2.getEndDate());
+		assertEquals(merged.getStartDate(), lineItem3.getEndDate());
+
+		assertNull(lineItem4.getEndDate());
+
+		String mergedContent = lineItem1.getContent() + "\n" + lineItem2.getContent() + "\n" + lineItem3.getContent();
+		assertEquals(mergedContent, merged.getContent());
+
+		assertThrows(BusinessServiceException.class, () -> {
+			lineItemService.merge(subject.getId(), "MAIN");
+		});
 	}
 }

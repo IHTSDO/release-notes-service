@@ -36,23 +36,15 @@ public class SubjectService {
 		if (Strings.isNullOrEmpty(subject.getPath())) {
 			throw new BadRequestException("path is required");
 		}
-
 		subject.setCreatedDate(LocalDate.now());
 		return subjectRepository.save(subject);
 	}
 
 	public Subject update(final String id, final Subject subjectDetails) {
 		Subject subject = find(id);
-
-		// TODO: can we update path if we already have line items for this subject?
-		if (subjectDetails.getTitle() != null) {
-			subject.setTitle(subjectDetails.getTitle());
-		}
-		if (subjectDetails.getPath() != null) {
-			subject.setPath(subjectDetails.getPath());
-		}
+		subject.setTitle(subjectDetails.getTitle());
+		subject.setPath(subjectDetails.getPath());
 		subject.setLastModifiedDate(LocalDate.now());
-
 		return subjectRepository.save(subject);
 	}
 

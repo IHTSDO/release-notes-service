@@ -26,7 +26,6 @@ public class SubjectServiceTest extends AbstractTest {
 	void testCreate() throws BusinessServiceException {
 		Subject subject = subjectService.create(new Subject("Clinical Finding", "MAIN"));
 		assertNotNull(subject.getId());
-		subject = subjectService.find(subject.getId());
 		assertEquals("Clinical Finding", subject.getTitle());
 		assertEquals("MAIN", subject.getPath());
 	}
@@ -71,5 +70,4 @@ public class SubjectServiceTest extends AbstractTest {
 		found = subjectService.find("Procedure", "MAIN");
 		assertEquals(0, found.size());
 	}
-
 }
