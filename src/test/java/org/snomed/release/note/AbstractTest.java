@@ -28,7 +28,7 @@ public abstract class AbstractTest {
 	protected SubjectService subjectService;
 
 
-	private static ElasticsearchContainer elasticsearchContainer = TestConfig.getElasticsearchContainerInstance();
+	private final static ElasticsearchContainer elasticsearchContainer = TestConfig.getElasticsearchContainerInstance();
 
 	@BeforeAll
 	static void setUp() {
@@ -38,7 +38,7 @@ public abstract class AbstractTest {
 	}
 
 	@AfterEach
-	void defaultTearDown() throws InterruptedException {
+	void defaultTearDown() {
 		subjectService.deleteAll();
 		lineItemService.deleteAll();
 	}

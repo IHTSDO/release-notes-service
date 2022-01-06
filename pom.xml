@@ -23,7 +23,7 @@
 		<maven.compiler.target>${java.version}</maven.compiler.target>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<packageName>${project.artifactId}</packageName>
-		<elasticsearch.version>7.15.1</elasticsearch.version>
+		<elasticsearch.version>7.15.2</elasticsearch.version>
 		<otf-common.version>5.0.0</otf-common.version>
 	</properties>
 
