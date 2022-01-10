@@ -21,7 +21,7 @@ public class Subject {
 	private String title;
 
 	@Field(type = FieldType.Keyword)
-	private String branchPath;
+	private String path;
 
 	@Field(type = FieldType.Date, format = DateFormat.year_month_day)
 	private LocalDate createdDate;
@@ -32,9 +32,9 @@ public class Subject {
 	public Subject() {
 	}
 
-	public Subject(String title, String branchPath) {
+	public Subject(String title, String path) {
 		this.title = title;
-		this.branchPath = branchPath;
+		this.path = path;
 		this.createdDate = LocalDate.now();
 	}
 
@@ -54,12 +54,12 @@ public class Subject {
 		this.title = title;
 	}
 
-	public String getBranchPath() {
-		return branchPath;
+	public String getPath() {
+		return path;
 	}
 
-	public void setBranchPath(String branchPath) {
-		this.branchPath = branchPath;
+	public void setPath(String path) {
+		this.path = path;
 	}
 
 	public LocalDate getCreatedDate() {
@@ -89,7 +89,7 @@ public class Subject {
 			return Objects.equals(id, subject.id);
 		}
 
-		return Objects.equals(title, subject.title) && Objects.equals(branchPath, subject.branchPath);
+		return Objects.equals(title, subject.title) && Objects.equals(path, subject.path);
 	}
 
 	@Override
@@ -102,7 +102,7 @@ public class Subject {
 		return "Subject{" +
 				"id='" + id + '\'' +
 				", title='" + title + '\'' +
-				", branchPath=" + branchPath + '\'' +
+				", path=" + path + '\'' +
 				", createdDate='" + formatDate(createdDate) + '\'' +
 				", lastModifiedDate='" + formatDate(lastModifiedDate) + '\'' +
 				'}';

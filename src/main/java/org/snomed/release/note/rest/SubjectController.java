@@ -11,50 +11,47 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping(value = "/subjects", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 public class SubjectController {
 
 	@Autowired
 	private SubjectService subjectService;
 
-	@PostMapping
+	@PostMapping(value = "/{path}/subjects")
 	public Subject createSubject(
+			@PathVariable final String path,
 			@RequestBody Subject subject) throws BusinessServiceException {
+		if (!path.equals(subject.getPath())) {
+			throw new BadRequestException("Subject path '" + subject.getPath() + "' does not match path '" + path + "'");
+		}
 		return subjectService.create(subject);
 	}
 
-	@GetMapping(value = "/{id}")
+	@GetMapping(value = "/subjects/{id}")
 	public Subject findSubject(
 			@PathVariable final String id) {
 		return subjectService.find(id);
 	}
 
-	@GetMapping
+	@GetMapping(value = "/{path}/subjects")
 	public List<Subject> findSubjects(
-			@RequestParam(required = false) String title,
-			@RequestParam(required = false) String branchPath) {
-		return subjectService.find(title, branchPath);
+			@PathVariable final String path) {
+		return subjectService.findByPath(path);
 	}
 
-	@PutMapping(value = "/{id}")
+	@GetMapping(value = "/subjects")
+	public List<Subject> findSubjects() {
+		return subjectService.findAll();
+	}
+
+	@PutMapping(value = "/subjects/{id}")
 	public Subject updateSubject(
 			@PathVariable final String id,
 			@RequestBody Subject subject) throws BusinessServiceException {
 		if (!id.equals(subject.getId())) {
-			throw new BadRequestException("Subject id '" + subject.getId() + "' does not match path id '" + id + "'");
+			throw new BadRequestException("Subject id '" + subject.getId() + "' does not match id '" + id + "'");
 		}
 		return subjectService.update(subject);
-	}
-
-	@DeleteMapping(value = "/{id}")
-	public void deleteSubject(
-			@PathVariable final String id) {
-		subjectService.delete(id);
-	}
-
-	@DeleteMapping()
-	public void deleteSubjects() {
-		subjectService.deleteAll();
 	}
 
 }
