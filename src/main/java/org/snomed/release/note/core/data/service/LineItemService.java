@@ -8,16 +8,15 @@ import org.ihtsdo.otf.rest.exception.BadRequestException;
 import org.ihtsdo.otf.rest.exception.BusinessServiceException;
 import org.ihtsdo.otf.rest.exception.ResourceNotFoundException;
 import org.snomed.release.note.core.data.domain.LineItem;
+import org.snomed.release.note.core.data.domain.Subject;
+import org.snomed.release.note.core.data.repository.SubjectRepository;
+import org.snomed.release.note.rest.request.MergeRequest;
 import org.snomed.release.note.core.data.repository.LineItemRepository;
+import org.snomed.release.note.rest.request.PromoteRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.elasticsearch.annotations.DateFormat;
-import org.springframework.data.elasticsearch.annotations.Field;
-import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
-import org.springframework.data.elasticsearch.core.query.Criteria;
-import org.springframework.data.elasticsearch.core.query.CriteriaQuery;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Service;
@@ -31,6 +30,9 @@ import java.util.stream.Collectors;
 public class LineItemService {
 
 	@Autowired
+	private SubjectRepository subjectRepository;
+
+	@Autowired
 	private LineItemRepository lineItemRepository;
 
 	@Autowired
@@ -40,34 +42,37 @@ public class LineItemService {
 		if (Strings.isNullOrEmpty(lineItem.getSubjectId())) {
 			throw new BadRequestException("subjectId is required");
 		}
-		if (Strings.isNullOrEmpty(lineItem.getSourceBranch())) {
-			throw new BadRequestException("sourceBranch is required");
+		if (Strings.isNullOrEmpty(lineItem.getSourceBranchPath())) {
+			throw new BadRequestException("sourceBranchPath is required");
 		}
-		lineItem.setStartDate(LocalDate.now());
+		lineItem.setStart(LocalDate.now());
 		return lineItemRepository.save(lineItem);
 	}
 
-	public LineItem update(final String id, final LineItem lineItemDetails) {
+	public LineItem update(final LineItem lineItem) {
+		LineItem existingLineItem = find(lineItem.getId());
+		existingLineItem.setSubjectId(lineItem.getSubjectId());
+		existingLineItem.setParentId(lineItem.getParentId());
+		existingLineItem.setLevel(lineItem.getLevel());
+		existingLineItem.setContent(lineItem.getContent());
+		existingLineItem.setSequence(lineItem.getSequence());
+		existingLineItem.setEnd(lineItem.getEnd());
+		existingLineItem.setReleased(lineItem.getReleased());
+		return lineItemRepository.save(existingLineItem);
+	}
+
+	public LineItem promote(final String id, PromoteRequest promoteRequest) throws BusinessServiceException {
+		if (Strings.isNullOrEmpty(promoteRequest.getBranchPath())) {
+			throw new BadRequestException("branchPath is required");
+		}
 		LineItem lineItem = find(id);
-		lineItem.setSubjectId(lineItemDetails.getSubjectId());
-		lineItem.setParentId(lineItemDetails.getParentId());
-		lineItem.setLevel(lineItemDetails.getLevel());
-		lineItem.setContent(lineItemDetails.getContent());
-		lineItem.setSequence(lineItemDetails.getSequence());
-		lineItem.setSourceBranch(lineItemDetails.getSourceBranch());
-		lineItem.setPromotedBranch(lineItemDetails.getPromotedBranch());
-		lineItem.setStartDate(lineItemDetails.getStartDate());
-		lineItem.setEndDate(lineItemDetails.getEndDate());
-		lineItem.setReleased(lineItemDetails.getReleased());
+		lineItem.setPromotedBranchPath(promoteRequest.getBranchPath());
 		return lineItemRepository.save(lineItem);
 	}
 
-	public LineItem promote(final String id, final String promotedBranch) throws BusinessServiceException {
-		if (Strings.isNullOrEmpty(promotedBranch)) {
-			throw new BadRequestException("promotedBranch is required");
-		}
+	public LineItem release(final String id) throws BusinessServiceException {
 		LineItem lineItem = find(id);
-		lineItem.setPromotedBranch(promotedBranch);
+		lineItem.setReleased(true);
 		return lineItemRepository.save(lineItem);
 	}
 
@@ -75,30 +80,42 @@ public class LineItemService {
 		return lineItemRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("No line item found for id " + id));
 	}
 
-	public List<LineItem> find(final String sourceBranch, final String promotedBranch, final LocalDate startDate, final LocalDate endDate) {
-		if (sourceBranch == null && promotedBranch == null && startDate == null && endDate == null) {
-			return findAll();
+	public List<LineItem> find(final String subjectTitle,
+							   final String subjectId,
+							   final String sourceBranchPath,
+							   final String promotedBranchPath,
+							   final String content,
+							   final LocalDate start,
+							   final LocalDate end) {
+		BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
+		if (subjectTitle != null) {
+			List<Subject> subjects = subjectRepository.findByTitle(subjectTitle);
+			String[] subjectIds = subjects.stream().map(Subject::getId).toArray(String[]::new);
+			boolQueryBuilder = boolQueryBuilder.must(QueryBuilders.termsQuery("subjectId", subjectIds));
 		}
-		Criteria criteria = new Criteria();
-		if (sourceBranch != null) {
-			criteria = criteria.and("sourceBranch").is(sourceBranch);
+		if (subjectId != null) {
+			boolQueryBuilder = boolQueryBuilder.must(QueryBuilders.termQuery("subjectId", subjectId));
 		}
-		if (promotedBranch != null) {
-			criteria = criteria.and("promotedBranch").is(promotedBranch);
+		if (sourceBranchPath != null) {
+			boolQueryBuilder = boolQueryBuilder.must(QueryBuilders.termQuery("sourceBranchPath", sourceBranchPath));
 		}
-		if (startDate != null) {
-			criteria = criteria.and("startDate").is(startDate);
+		if (promotedBranchPath != null) {
+			boolQueryBuilder = boolQueryBuilder.must(QueryBuilders.termQuery("promotedBranchPath", promotedBranchPath));
 		}
-		if (endDate != null) {
-			criteria = criteria.and("endDate").is(endDate);
+		if (content != null) {
+			boolQueryBuilder = boolQueryBuilder.must(QueryBuilders.matchQuery("content", content));
 		}
-		Query query = new CriteriaQuery(criteria);
+		if (start != null) {
+			boolQueryBuilder = boolQueryBuilder.must(QueryBuilders.matchQuery("start", start));
+		}
+		if (end != null) {
+			boolQueryBuilder = boolQueryBuilder.must(QueryBuilders.matchQuery("end", end));
+		}
+		Query query = new NativeSearchQueryBuilder()
+				.withQuery(boolQueryBuilder)
+				.build();
 		SearchHits<LineItem> searchHits = elasticsearchOperations.search(query, LineItem.class);
 		return searchHits.get().map(SearchHit::getContent).collect(Collectors.toList());
-	}
-
-	public List<LineItem> findBySubjectId(final String subjectId) {
-		return lineItemRepository.findBySubjectId(subjectId);
 	}
 
 	public List<LineItem> findAll() {
@@ -119,33 +136,36 @@ public class LineItemService {
 		lineItemRepository.deleteAll();
 	}
 
-	public LineItem merge(final String subjectId, final String sourceBranch) throws BusinessServiceException {
+	public LineItem merge(MergeRequest mergeRequest) throws BusinessServiceException {
+		final String subjectId = mergeRequest.getSubjectId();
+		final String branchPath = mergeRequest.getBranchPath();
 		// look for open line items to merge
-		List<LineItem> lineItems = getOpenLineItems(subjectId, sourceBranch);
+		List<LineItem> lineItems = getOpenLineItems(subjectId, branchPath);
 		// create new line item
 		final String content = lineItems.stream().map(LineItem::getContent).collect(Collectors.joining("\n"));
-		LineItem mergedLineItem = create(new LineItem(subjectId, content, sourceBranch));
+		LineItem mergedLineItem = create(new LineItem(subjectId, content, branchPath));
 		// close merged line items
-		final LocalDate endDate = mergedLineItem.getStartDate();
+		final LocalDate end = mergedLineItem.getStart();
 		lineItems.forEach(lineItem -> {
-			lineItem.setEndDate(endDate);
+			lineItem.setEnd(end);
 			lineItemRepository.save(lineItem);
 		});
 		return mergedLineItem;
 	}
 
-	public List<LineItem> getOpenLineItems(final String subjectId, final String promotedBranch) throws BusinessServiceException {
+	public List<LineItem> getOpenLineItems(final String subjectId, final String promotedBranchPath) throws BusinessServiceException {
 		QueryBuilder boolQueryBuilder = QueryBuilders.boolQuery()
 				.must(QueryBuilders.matchQuery("subjectId", subjectId))
-				.must(QueryBuilders.matchQuery("promotedBranch", promotedBranch))
-				.mustNot(QueryBuilders.existsQuery("endDate"));
+				.must(QueryBuilders.matchQuery("promotedBranchPath", promotedBranchPath))
+				.mustNot(QueryBuilders.existsQuery("end"));
 		Query query = new NativeSearchQueryBuilder()
 				.withQuery(boolQueryBuilder)
 				.build();
 		SearchHits<LineItem> searchHits = elasticsearchOperations.search(query, LineItem.class);
 		if (searchHits.isEmpty()) {
-			throw new BusinessServiceException("No open line items found for subjectId " + subjectId + " and promotedBranch " + promotedBranch);
+			throw new BusinessServiceException("No open line items found for subjectId '" + subjectId + "' and promotedBranchPath '" + promotedBranchPath +"'");
 		}
 		return searchHits.get().map(SearchHit::getContent).collect(Collectors.toList());
 	}
+
 }

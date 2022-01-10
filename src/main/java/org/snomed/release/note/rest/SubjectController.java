@@ -1,5 +1,6 @@
 package org.snomed.release.note.rest;
 
+import org.ihtsdo.otf.rest.exception.BadRequestException;
 import org.ihtsdo.otf.rest.exception.BusinessServiceException;
 import org.snomed.release.note.core.data.domain.Subject;
 import org.snomed.release.note.core.data.service.SubjectService;
@@ -31,15 +32,18 @@ public class SubjectController {
 	@GetMapping
 	public List<Subject> findSubjects(
 			@RequestParam(required = false) String title,
-			@RequestParam(required = false) String path) {
-		return subjectService.find(title, path);
+			@RequestParam(required = false) String branchPath) {
+		return subjectService.find(title, branchPath);
 	}
 
 	@PutMapping(value = "/{id}")
 	public Subject updateSubject(
 			@PathVariable final String id,
-			@RequestBody Subject subjectDetails) {
-		return subjectService.update(id, subjectDetails);
+			@RequestBody Subject subject) throws BusinessServiceException {
+		if (!id.equals(subject.getId())) {
+			throw new BadRequestException("Subject id '" + subject.getId() + "' does not match path id '" + id + "'");
+		}
+		return subjectService.update(subject);
 	}
 
 	@DeleteMapping(value = "/{id}")

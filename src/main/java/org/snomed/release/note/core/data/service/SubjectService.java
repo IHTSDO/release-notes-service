@@ -1,9 +1,12 @@
 package org.snomed.release.note.core.data.service;
 
 import org.elasticsearch.common.Strings;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.ihtsdo.otf.rest.exception.BadRequestException;
 import org.ihtsdo.otf.rest.exception.BusinessServiceException;
 import org.ihtsdo.otf.rest.exception.ResourceNotFoundException;
+import org.snomed.release.note.core.data.domain.LineItem;
 import org.snomed.release.note.core.data.domain.Subject;
 import org.snomed.release.note.core.data.repository.SubjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +15,7 @@ import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.query.Criteria;
 import org.springframework.data.elasticsearch.core.query.CriteriaQuery;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Service;
 
@@ -33,37 +37,36 @@ public class SubjectService {
 		if (Strings.isNullOrEmpty(subject.getTitle())) {
 			throw new BadRequestException("title is required");
 		}
-		if (Strings.isNullOrEmpty(subject.getPath())) {
-			throw new BadRequestException("path is required");
+		if (Strings.isNullOrEmpty(subject.getBranchPath())) {
+			throw new BadRequestException("branchPath is required");
 		}
 		subject.setCreatedDate(LocalDate.now());
 		return subjectRepository.save(subject);
 	}
 
-	public Subject update(final String id, final Subject subjectDetails) {
-		Subject subject = find(id);
-		subject.setTitle(subjectDetails.getTitle());
-		subject.setPath(subjectDetails.getPath());
-		subject.setLastModifiedDate(LocalDate.now());
-		return subjectRepository.save(subject);
+	public Subject update(final Subject subject) {
+		Subject existingSubject = find(subject.getId());
+		existingSubject.setTitle(subject.getTitle());
+		existingSubject.setBranchPath(subject.getBranchPath());
+		existingSubject.setLastModifiedDate(LocalDate.now());
+		return subjectRepository.save(existingSubject);
 	}
 
 	public Subject find(final String id) {
 		return subjectRepository.findById(id).orElseThrow(() ->	new ResourceNotFoundException("No subject found for id " + id));
 	}
 
-	public List<Subject> find(final String title, final String path) {
-		if (title == null && path == null) {
-			return findAll();
-		}
-		Criteria criteria = new Criteria();
+	public List<Subject> find(final String title, final String branchPath) {
+		BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
 		if (title != null) {
-			criteria = criteria.and("title").is(title);
+			boolQueryBuilder = boolQueryBuilder.must(QueryBuilders.termQuery("title", title));
 		}
-		if (path != null) {
-			criteria = criteria.and("path").is(path);
+		if (branchPath != null) {
+			boolQueryBuilder = boolQueryBuilder.must(QueryBuilders.termQuery("branchPath", branchPath));
 		}
-		Query query = new CriteriaQuery(criteria);
+		Query query = new NativeSearchQueryBuilder()
+				.withQuery(QueryBuilders.matchQuery("branchPath", branchPath))//boolQueryBuilder)
+				.build();
 		SearchHits<Subject> searchHits = elasticsearchOperations.search(query, Subject.class);
 		return searchHits.get().map(SearchHit::getContent).collect(Collectors.toList());
 	}

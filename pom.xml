@@ -26,7 +26,6 @@
 		<packageName>${project.artifactId}</packageName>
 		<elasticsearch.version>7.15.2</elasticsearch.version>
 		<otf-common.version>5.0.0</otf-common.version>
-		<springfox-swagger.version>2.7.0</springfox-swagger.version>
 	</properties>
 
 	<dependencies>
@@ -53,6 +52,7 @@
 		<dependency>
 			<groupId>org.springframework.data</groupId>
 			<artifactId>spring-data-elasticsearch</artifactId>
+			<version>4.3.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -63,13 +63,8 @@
 		<!-- Swagger UI -->
 		<dependency>
 			<groupId>io.springfox</groupId>
-			<artifactId>springfox-swagger2</artifactId>
-			<version>${springfox-swagger.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>io.springfox</groupId>
-			<artifactId>springfox-swagger-ui</artifactId>
-			<version>${springfox-swagger.version}</version>
+			<artifactId>springfox-boot-starter</artifactId>
+			<version>3.0.0</version>
 		</dependency>
 
 		<!-- REST exceptions -->
