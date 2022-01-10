@@ -10,23 +10,20 @@ import org.springframework.security.web.authentication.www.BasicAuthenticationFi
 import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
-import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 import static java.util.function.Predicate.*;
 import static springfox.documentation.builders.PathSelectors.*;
 
 @Configuration
 @EnableWebSecurity
-@EnableSwagger2
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Override
 	public void configure(HttpSecurity http) throws Exception {
 		http.authorizeRequests()
-				.antMatchers("/swagger-ui.html",
+				.antMatchers("/swagger-ui/index.html",
 				"/swagger-resources/**",
-				"/v2/api-docs",
-				"/webjars/springfox-swagger-ui/**").permitAll()
+				"/v2/api-docs").permitAll()
 				.anyRequest().authenticated()
 				.and().httpBasic();
 		http.csrf().disable();
