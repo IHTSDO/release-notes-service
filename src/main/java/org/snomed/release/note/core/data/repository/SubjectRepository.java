@@ -7,6 +7,6 @@ import java.util.List;
 
 public interface SubjectRepository extends ElasticsearchRepository<Subject, String> {
 
-	List<Subject> findByTitleContaining(String title);
+	List<Subject> findByTitle(String title);
 
 }

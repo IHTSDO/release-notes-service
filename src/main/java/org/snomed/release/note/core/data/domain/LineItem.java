@@ -33,16 +33,16 @@ public class LineItem {
 	private int sequence;
 
 	@Field(type = FieldType.Keyword)
-	private String sourceBranch;
+	private String sourceBranchPath;
 
 	@Field(type = FieldType.Keyword)
-	private String promotedBranch;
+	private String promotedBranchPath;
 
 	@Field(type = FieldType.Date, format = DateFormat.year_month_day)
-	private LocalDate startDate;
+	private LocalDate start;
 
 	@Field(type = FieldType.Date, format = DateFormat.year_month_day)
-	private LocalDate endDate;
+	private LocalDate end;
 
 	@Field(type = FieldType.Boolean)
 	private boolean released;
@@ -50,12 +50,11 @@ public class LineItem {
 	public LineItem() {
 	}
 
-	public LineItem(String subjectId, String content, String sourceBranch) {
-		this();
+	public LineItem(String subjectId, String content, String sourceBranchPath) {
 		this.subjectId = subjectId;
 		this.content = content;
-		this.sourceBranch = sourceBranch;
-		this.startDate = LocalDate.now();
+		this.sourceBranchPath = sourceBranchPath;
+		this.start = LocalDate.now();
 	}
 
 	public String getId() {
@@ -106,36 +105,36 @@ public class LineItem {
 		this.sequence = sequence;
 	}
 
-	public String getSourceBranch() {
-		return sourceBranch;
+	public String getSourceBranchPath() {
+		return sourceBranchPath;
 	}
 
-	public void setSourceBranch(String sourceBranch) {
-		this.sourceBranch = sourceBranch;
+	public void setSourceBranchPath(String sourceBranchPath) {
+		this.sourceBranchPath = sourceBranchPath;
 	}
 
-	public String getPromotedBranch() {
-		return promotedBranch;
+	public String getPromotedBranchPath() {
+		return promotedBranchPath;
 	}
 
-	public void setPromotedBranch(String promotedBranch) {
-		this.promotedBranch = promotedBranch;
+	public void setPromotedBranchPath(String promotedBranchPath) {
+		this.promotedBranchPath = promotedBranchPath;
 	}
 
-	public LocalDate getStartDate() {
-		return startDate;
+	public LocalDate getStart() {
+		return start;
 	}
 
-	public void setStartDate(LocalDate startDate) {
-		this.startDate = startDate;
+	public void setStart(LocalDate start) {
+		this.start = start;
 	}
 
-	public LocalDate getEndDate() {
-		return endDate;
+	public LocalDate getEnd() {
+		return end;
 	}
 
-	public void setEndDate(LocalDate endDate) {
-		this.endDate = endDate;
+	public void setEnd(LocalDate end) {
+		this.end = end;
 	}
 
 	public boolean getReleased() {
@@ -159,7 +158,7 @@ public class LineItem {
 
 		return Objects.equals(subjectId, lineItem.subjectId)
 				&& Objects.equals(content, lineItem.content)
-				&& Objects.equals(sourceBranch, lineItem.sourceBranch);
+				&& Objects.equals(sourceBranchPath, lineItem.sourceBranchPath);
 	}
 
 	@Override
@@ -176,10 +175,10 @@ public class LineItem {
 				", level='" + level + '\'' +
 				", content=" + content + '\'' +
 				", sequence='" + sequence + '\'' +
-				", sourceBranch='" + sourceBranch + '\'' +
-				", promotedBranch='" + promotedBranch + '\'' +
-				", startDate='" + formatDate(startDate) + '\'' +
-				", endDate='" + formatDate(endDate) + '\'' +
+				", sourceBranchPath='" + sourceBranchPath + '\'' +
+				", promotedBranchPath='" + promotedBranchPath + '\'' +
+				", start='" + formatDate(start) + '\'' +
+				", end='" + formatDate(end) + '\'' +
 				", released='" + released + '\'' +
 				'}';
 	}

@@ -12,8 +12,8 @@ import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
-import static com.google.common.base.Predicates.not;
-import static springfox.documentation.builders.PathSelectors.regex;
+import static java.util.function.Predicate.*;
+import static springfox.documentation.builders.PathSelectors.*;
 
 @Configuration
 @EnableWebSecurity
@@ -24,9 +24,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	public void configure(HttpSecurity http) throws Exception {
 		http.authorizeRequests()
 				.antMatchers("/swagger-ui.html",
-						"/swagger-resources/**",
-						"/v2/api-docs",
-						"/webjars/springfox-swagger-ui/**").permitAll()
+				"/swagger-resources/**",
+				"/v2/api-docs",
+				"/webjars/springfox-swagger-ui/**").permitAll()
 				.anyRequest().authenticated()
 				.and().httpBasic();
 		http.csrf().disable();
