@@ -24,7 +24,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 				.antMatchers("/swagger-ui/index.html",
 				"/swagger-resources/**",
 				"/v2/api-docs").permitAll()
-				.anyRequest().authenticated()
+				.anyRequest().permitAll() // disable it temporarily
 				.and().httpBasic();
 		http.csrf().disable();
 		http.addFilterAfter(new RequestHeaderAuthenticationDecorator(), BasicAuthenticationFilter.class);
