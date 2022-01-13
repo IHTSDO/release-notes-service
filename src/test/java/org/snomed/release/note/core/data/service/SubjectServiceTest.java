@@ -24,52 +24,60 @@ public class SubjectServiceTest extends AbstractTest {
 
 	@Test
 	void testCreate() throws BusinessServiceException {
-		Subject subject = subjectService.create(new Subject("Clinical Finding", "MAIN"));
+		final String path = "MAIN";
+		Subject subject = subjectService.create(new Subject("Clinical Finding", path), path);
 		assertNotNull(subject.getId());
 		assertEquals("Clinical Finding", subject.getTitle());
-		assertEquals("MAIN", subject.getPath());
+		assertEquals(path, subject.getPath());
 	}
 
 	@Test
 	void testUpdate() throws BusinessServiceException {
-		Subject subject = subjectService.create(new Subject("Clinical Finding", "MAIN"));
+		final String path = "MAIN";
+		Subject subject = subjectService.create(new Subject("Clinical Finding", path), path);
 		subject.setTitle("Procedure");
-		subject.setPath("MAIN/SNOMEDCT-US");
-		Subject updated = subjectService.update(subject);
+		Subject updated = subjectService.update(subject, path);
 		assertEquals(subject.getId(), updated.getId());
 		assertEquals("Procedure", updated.getTitle());
-		assertEquals("MAIN/SNOMEDCT-US", updated.getPath());
+		assertEquals(path, updated.getPath());
 	}
 
 	@Test
 	void testDelete() throws BusinessServiceException {
-		Subject subject = subjectService.create(new Subject("Clinical Finding", "MAIN"));
-		subjectService.delete(subject.getId());
+		final String path = "MAIN";
+		Subject subject = subjectService.create(new Subject("Clinical Finding", path), path);
+		subjectService.delete(subject.getId(), path);
 		assertThrows(ResourceNotFoundException.class, () -> {
-			subjectService.find(subject.getId());
+			subjectService.find(subject.getId(), path);
 		});
 	}
 
 	@Test
 	void testFind() throws BusinessServiceException {
-		subjectService.create(new Subject("Clinical Finding", "MAIN"));
-		subjectService.create(new Subject("COVID-19", "MAIN"));
-		subjectService.create(new Subject("Procedure", "MAIN/SNOMEDCT-US"));
-		subjectService.create(new Subject("COVID-19", "MAIN/SNOMEDCT-US"));
+		Subject subject = subjectService.create(new Subject("Clinical Finding", "MAIN"), "MAIN");
+		subjectService.create(new Subject("COVID-19", "MAIN"), "MAIN");
+		subjectService.create(new Subject("Procedure", "MAIN/SNOMEDCT-US"), "MAIN/SNOMEDCT-US");
+		subjectService.create(new Subject("COVID-19", "MAIN/SNOMEDCT-US"), "MAIN/SNOMEDCT-US");
 
-		List<Subject> found = subjectService.findAll();
-		assertEquals(4, found.size());
+		Subject found = subjectService.find(subject.getId(), subject.getPath());
+		assertNotNull(found);
+		assertEquals(subject.getId(), found.getId());
+		assertEquals(subject.getPath(), found.getPath());
+		assertEquals(subject.getTitle(), found.getTitle());
 
-		found = subjectService.findByPath("MAIN");
-		assertEquals(2, found.size());
+		List<Subject> foundList = subjectService.findAll();
+		assertEquals(4, foundList.size());
 
-		found = subjectService.findByPath("MAIN/SNOMEDCT-US");
-		assertEquals(2, found.size());
+		foundList = subjectService.findByPath("MAIN");
+		assertEquals(2, foundList.size());
 
-		found = subjectService.findByTitle("COVID-19");
-		assertEquals(2, found.size());
+		foundList = subjectService.findByPath("MAIN/SNOMEDCT-US");
+		assertEquals(2, foundList.size());
 
-		found = subjectService.findByTitle("Body structure");
-		assertEquals(0, found.size());
+		foundList = subjectService.findByTitle("COVID-19");
+		assertEquals(2, foundList.size());
+
+		foundList = subjectService.findByTitle("Body structure");
+		assertEquals(0, foundList.size());
 	}
 }

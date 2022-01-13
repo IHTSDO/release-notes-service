@@ -1,11 +1,14 @@
 package org.snomed.release.note.rest;
 
+import io.kaicode.rest.util.branchpathrewrite.BranchPathUriUtil;
 import org.ihtsdo.otf.rest.exception.BadRequestException;
 import org.ihtsdo.otf.rest.exception.BusinessServiceException;
 import org.snomed.release.note.core.data.domain.Subject;
 import org.snomed.release.note.core.data.service.SubjectService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,40 +21,34 @@ public class SubjectController {
 	private SubjectService subjectService;
 
 	@PostMapping(value = "/{path}/subjects")
-	public Subject createSubject(
-			@PathVariable final String path,
+	public ResponseEntity<Subject> createSubject(
+			@PathVariable String path,
 			@RequestBody Subject subject) throws BusinessServiceException {
-		if (!path.equals(subject.getPath())) {
-			throw new BadRequestException("Subject path '" + subject.getPath() + "' does not match path '" + path + "'");
-		}
-		return subjectService.create(subject);
+		return new ResponseEntity<>(subjectService.create(subject, BranchPathUriUtil.decodePath(path)), HttpStatus.CREATED);
 	}
 
-	@GetMapping(value = "/subjects/{id}")
-	public Subject findSubject(
-			@PathVariable final String id) {
-		return subjectService.find(id);
+	@GetMapping(value = "/{path}/subjects/{id}")
+	public ResponseEntity<Subject> findSubject(
+			@PathVariable String path,
+			@PathVariable String id) {
+		return new ResponseEntity<>(subjectService.find(id, BranchPathUriUtil.decodePath(path)), HttpStatus.OK);
 	}
 
 	@GetMapping(value = "/{path}/subjects")
 	public List<Subject> findSubjects(
-			@PathVariable final String path) {
-		return subjectService.findByPath(path);
+			@PathVariable String path) {
+		return subjectService.findByPath(BranchPathUriUtil.decodePath(path));
 	}
 
-	@GetMapping(value = "/subjects")
-	public List<Subject> findSubjects() {
-		return subjectService.findAll();
-	}
-
-	@PutMapping(value = "/subjects/{id}")
+	@PutMapping(value = "/{path}/subjects/{id}")
 	public Subject updateSubject(
-			@PathVariable final String id,
+			@PathVariable String path,
+			@PathVariable String id,
 			@RequestBody Subject subject) throws BusinessServiceException {
 		if (!id.equals(subject.getId())) {
-			throw new BadRequestException("Subject id '" + subject.getId() + "' does not match id '" + id + "'");
+			throw new BadRequestException("'id' in the request body: '" + subject.getId() + "' does not match the one in the path: '" + id + "'");
 		}
-		return subjectService.update(subject);
+		return subjectService.update(subject, BranchPathUriUtil.decodePath(path));
 	}
 
 }

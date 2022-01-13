@@ -1,5 +1,6 @@
 package org.snomed.release.note.rest;
 
+import io.kaicode.rest.util.branchpathrewrite.BranchPathUriUtil;
 import org.ihtsdo.otf.rest.exception.BadRequestException;
 import org.ihtsdo.otf.rest.exception.BusinessServiceException;
 import org.snomed.release.note.core.data.domain.LineItem;
@@ -10,60 +11,56 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping(value = "/lineitems", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(produces = MediaType.APPLICATION_JSON_VALUE)
 public class LineItemController {
 
 	@Autowired
 	private LineItemService lineItemService;
 
-	@PostMapping
+	@PostMapping(value = "/{path}/lineitems")
 	public LineItem createLineItem(
+			@PathVariable String path,
 			@RequestBody LineItem lineItem) throws BusinessServiceException {
-		return lineItemService.create(lineItem);
+		return lineItemService.create(lineItem, BranchPathUriUtil.decodePath(path));
 	}
 
-	@GetMapping(value = "/{id}")
+	@GetMapping(value = "/{path}/lineitems/{id}")
 	public LineItem findLineItem(
-			@PathVariable final String id) {
-		return lineItemService.find(id);
+			@PathVariable String path,
+			@PathVariable String id) {
+		return lineItemService.find(id, BranchPathUriUtil.decodePath(path));
 	}
 
-	@GetMapping
+	@GetMapping(value = "/{path}/lineitems")
 	public List<LineItem> findLineItems(
-			@RequestParam(required = false) String subjectTitle,
-			@RequestParam(required = false) String subjectId,
-			@RequestParam(required = false) String sourceBranchPath,
-			@RequestParam(required = false) String promotedBranchPath,
-			@RequestParam(required = false) String content,
-			@RequestParam(required = false) LocalDate start,
-			@RequestParam(required = false) LocalDate end) {
-		return lineItemService.find(subjectTitle, subjectId, sourceBranchPath, promotedBranchPath, content, start, end);
+			@PathVariable String path) {
+		return lineItemService.find(BranchPathUriUtil.decodePath(path));
 	}
 
-	@PutMapping(value = "/{id}")
+	@PutMapping(value = "/{path}/lineitems/{id}")
 	public LineItem updateLineItem(
-			@PathVariable final String id,
+			@PathVariable String path,
+			@PathVariable String id,
 			@RequestBody LineItem lineItem) throws BusinessServiceException {
 		if (!id.equals(lineItem.getId())) {
-			throw new BadRequestException("Line item id '" + lineItem.getId() + "' does not match path id '" + id + "'");
+			throw new BadRequestException("'id' in the request body: '" + lineItem.getId() + "' does not match the one in the path: '" + id + "'");
 		}
-		return lineItemService.update(lineItem);
+		return lineItemService.update(lineItem, BranchPathUriUtil.decodePath(path));
 	}
 
-	@PatchMapping(value = "/{id}/promote")
+	/*@PatchMapping(value = "/{id}/promote")
 	public LineItem promoteLineItem(
-			@PathVariable final String id,
+			@PathVariable String id,
 			@RequestBody PromoteRequest promoteRequest) throws BusinessServiceException {
 		return lineItemService.promote(id, promoteRequest);
 	}
 
 	@PostMapping(value = "{id}/release")
 	public LineItem publishLineItems(
-			@PathVariable final String id) throws BusinessServiceException {
+			@PathVariable String id) throws BusinessServiceException {
 		return lineItemService.release(id);
 	}
 
@@ -71,17 +68,13 @@ public class LineItemController {
 	public LineItem mergeLineItems(
 			@RequestBody MergeRequest mergeRequest) throws BusinessServiceException {
 		return lineItemService.merge(mergeRequest);
-	}
+	}*/
 
-	@DeleteMapping(value = "/{id}")
+	@DeleteMapping(value = "/{path}/lineitems/{id}")
 	public void deleteLineItem(
-			@PathVariable final String id) {
-		lineItemService.delete(id);
-	}
-
-	@DeleteMapping()
-	public void deleteLineItems() {
-		lineItemService.deleteAll();
+			@PathVariable String path,
+			@PathVariable String id) {
+		lineItemService.delete(id, BranchPathUriUtil.decodePath(path));
 	}
 
 }
