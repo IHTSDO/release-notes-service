@@ -33,10 +33,10 @@ public class LineItem {
 	private int sequence;
 
 	@Field(type = FieldType.Keyword)
-	private String sourceBranchPath;
+	private String sourceBranch;
 
 	@Field(type = FieldType.Keyword)
-	private String promotedBranchPath;
+	private String promotedBranch;
 
 	@Field(type = FieldType.Date, format = DateFormat.year_month_day)
 	private LocalDate start;
@@ -50,10 +50,10 @@ public class LineItem {
 	public LineItem() {
 	}
 
-	public LineItem(String subjectId, String content, String sourceBranchPath) {
+	public LineItem(String subjectId, String content, String sourceBranch) {
 		this.subjectId = subjectId;
 		this.content = content;
-		this.sourceBranchPath = sourceBranchPath;
+		this.sourceBranch = sourceBranch;
 		this.start = LocalDate.now();
 	}
 
@@ -105,20 +105,20 @@ public class LineItem {
 		this.sequence = sequence;
 	}
 
-	public String getSourceBranchPath() {
-		return sourceBranchPath;
+	public String getSourceBranch() {
+		return sourceBranch;
 	}
 
-	public void setSourceBranchPath(String sourceBranchPath) {
-		this.sourceBranchPath = sourceBranchPath;
+	public void setSourceBranch(String sourceBranch) {
+		this.sourceBranch = sourceBranch;
 	}
 
-	public String getPromotedBranchPath() {
-		return promotedBranchPath;
+	public String getPromotedBranch() {
+		return promotedBranch;
 	}
 
-	public void setPromotedBranchPath(String promotedBranchPath) {
-		this.promotedBranchPath = promotedBranchPath;
+	public void setPromotedBranch(String promotedBranch) {
+		this.promotedBranch = promotedBranch;
 	}
 
 	public LocalDate getStart() {
@@ -158,7 +158,7 @@ public class LineItem {
 
 		return Objects.equals(subjectId, lineItem.subjectId)
 				&& Objects.equals(content, lineItem.content)
-				&& Objects.equals(sourceBranchPath, lineItem.sourceBranchPath);
+				&& Objects.equals(sourceBranch, lineItem.sourceBranch);
 	}
 
 	@Override
@@ -175,8 +175,8 @@ public class LineItem {
 				", level='" + level + '\'' +
 				", content=" + content + '\'' +
 				", sequence='" + sequence + '\'' +
-				", sourceBranchPath='" + sourceBranchPath + '\'' +
-				", promotedBranchPath='" + promotedBranchPath + '\'' +
+				", sourceBranch='" + sourceBranch + '\'' +
+				", promotedBranch='" + promotedBranch + '\'' +
 				", start='" + formatDate(start) + '\'' +
 				", end='" + formatDate(end) + '\'' +
 				", released='" + released + '\'' +

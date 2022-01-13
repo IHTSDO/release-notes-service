@@ -8,11 +8,9 @@ import org.ihtsdo.otf.rest.exception.BadRequestException;
 import org.ihtsdo.otf.rest.exception.BusinessServiceException;
 import org.ihtsdo.otf.rest.exception.ResourceNotFoundException;
 import org.snomed.release.note.core.data.domain.LineItem;
-import org.snomed.release.note.core.data.domain.Subject;
 import org.snomed.release.note.core.data.repository.SubjectRepository;
 import org.snomed.release.note.rest.request.MergeRequest;
 import org.snomed.release.note.core.data.repository.LineItemRepository;
-import org.snomed.release.note.rest.request.PromoteRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.SearchHit;
@@ -38,30 +36,26 @@ public class LineItemService {
 	@Autowired
 	private ElasticsearchOperations elasticsearchOperations;
 
-	public LineItem create(LineItem lineItem) throws BusinessServiceException {
+	public LineItem create(LineItem lineItem, final String path) throws BusinessServiceException {
 		if (Strings.isNullOrEmpty(lineItem.getSubjectId())) {
-			throw new BadRequestException("subjectId is required");
+			throw new BadRequestException("'subjectId' is required");
 		}
-		if (Strings.isNullOrEmpty(lineItem.getSourceBranchPath())) {
-			throw new BadRequestException("sourceBranchPath is required");
-		}
+		lineItem.setSourceBranch(path);
 		lineItem.setStart(LocalDate.now());
 		return lineItemRepository.save(lineItem);
 	}
 
-	public LineItem update(final LineItem lineItem) {
-		LineItem existingLineItem = find(lineItem.getId());
-		existingLineItem.setSubjectId(lineItem.getSubjectId());
-		existingLineItem.setParentId(lineItem.getParentId());
-		existingLineItem.setLevel(lineItem.getLevel());
-		existingLineItem.setContent(lineItem.getContent());
-		existingLineItem.setSequence(lineItem.getSequence());
-		existingLineItem.setEnd(lineItem.getEnd());
-		existingLineItem.setReleased(lineItem.getReleased());
-		return lineItemRepository.save(existingLineItem);
+	public LineItem update(final LineItem lineItem, final String path) {
+		LineItem existing = find(lineItem.getId(), path);
+		existing.setLevel(lineItem.getLevel());
+		existing.setContent(lineItem.getContent());
+		existing.setSequence(lineItem.getSequence());
+		existing.setEnd(lineItem.getEnd());
+		existing.setReleased(lineItem.getReleased());
+		return lineItemRepository.save(existing);
 	}
 
-	public LineItem promote(final String id, PromoteRequest promoteRequest) throws BusinessServiceException {
+	/*public LineItem promote(final String id, PromoteRequest promoteRequest) throws BusinessServiceException {
 		if (Strings.isNullOrEmpty(promoteRequest.getBranchPath())) {
 			throw new BadRequestException("branchPath is required");
 		}
@@ -74,48 +68,31 @@ public class LineItemService {
 		LineItem lineItem = find(id);
 		lineItem.setReleased(true);
 		return lineItemRepository.save(lineItem);
+	}*/
+
+	public LineItem find(final String id, final String path) {
+		final LineItem lineItem = lineItemRepository.findById(id).orElseThrow(() ->
+				new ResourceNotFoundException("No line item found for id '" + id + "'"));
+		String sourceBranch = lineItem.getSourceBranch();
+		if (!path.equals(sourceBranch)) {
+			throw new ResourceNotFoundException("No line item found for id '" + id + "' and source branch '" + path + "'");
+		}
+		return lineItem;
 	}
 
-	public LineItem find(final String id) {
-		return lineItemRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("No line item found for id " + id));
-	}
-
-	public List<LineItem> find(final String subjectTitle,
-							   final String subjectId,
-							   final String sourceBranchPath,
-							   final String promotedBranchPath,
-							   final String content,
-							   final LocalDate start,
-							   final LocalDate end) {
-		BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
-		if (subjectTitle != null) {
-			List<Subject> subjects = subjectRepository.findByTitle(subjectTitle);
-			String[] subjectIds = subjects.stream().map(Subject::getId).toArray(String[]::new);
-			boolQueryBuilder = boolQueryBuilder.must(QueryBuilders.termsQuery("subjectId", subjectIds));
-		}
-		if (subjectId != null) {
-			boolQueryBuilder = boolQueryBuilder.must(QueryBuilders.termQuery("subjectId", subjectId));
-		}
-		if (sourceBranchPath != null) {
-			boolQueryBuilder = boolQueryBuilder.must(QueryBuilders.termQuery("sourceBranchPath", sourceBranchPath));
-		}
-		if (promotedBranchPath != null) {
-			boolQueryBuilder = boolQueryBuilder.must(QueryBuilders.termQuery("promotedBranchPath", promotedBranchPath));
-		}
-		if (content != null) {
-			boolQueryBuilder = boolQueryBuilder.must(QueryBuilders.matchQuery("content", content));
-		}
-		if (start != null) {
-			boolQueryBuilder = boolQueryBuilder.must(QueryBuilders.matchQuery("start", start));
-		}
-		if (end != null) {
-			boolQueryBuilder = boolQueryBuilder.must(QueryBuilders.matchQuery("end", end));
-		}
+	public List<LineItem> find(final String path) {
+		BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery()
+				.should(QueryBuilders.termQuery("sourceBranch", path))
+				.should(QueryBuilders.termQuery("promotedBranch", path));
 		Query query = new NativeSearchQueryBuilder()
 				.withQuery(boolQueryBuilder)
 				.build();
 		SearchHits<LineItem> searchHits = elasticsearchOperations.search(query, LineItem.class);
 		return searchHits.get().map(SearchHit::getContent).collect(Collectors.toList());
+	}
+
+	public List<LineItem> findBySubjectId(final String subjectId) {
+		return lineItemRepository.findBySubjectId(subjectId);
 	}
 
 	public List<LineItem> findAll() {
@@ -125,18 +102,16 @@ public class LineItemService {
 		return result;
 	}
 
-	public void delete(final String id) {
-		if (!lineItemRepository.existsById(id)) {
-			throw new ResourceNotFoundException("No line item found for id " + id);
-		}
-		lineItemRepository.deleteById(id);
+	public void delete(final String id, final String path) {
+		LineItem lineItem = find(id, path);
+		lineItemRepository.delete(lineItem);
 	}
 
 	public void deleteAll() {
 		lineItemRepository.deleteAll();
 	}
 
-	public LineItem merge(MergeRequest mergeRequest) throws BusinessServiceException {
+	/*public LineItem merge(MergeRequest mergeRequest) throws BusinessServiceException {
 		final String subjectId = mergeRequest.getSubjectId();
 		final String branchPath = mergeRequest.getBranchPath();
 		// look for open line items to merge
@@ -166,6 +141,6 @@ public class LineItemService {
 			throw new BusinessServiceException("No open line items found for subjectId '" + subjectId + "' and promotedBranchPath '" + promotedBranchPath +"'");
 		}
 		return searchHits.get().map(SearchHit::getContent).collect(Collectors.toList());
-	}
+	}*/
 
 }

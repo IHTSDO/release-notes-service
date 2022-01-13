@@ -23,27 +23,29 @@ public class SubjectService {
 	@Autowired
 	private ElasticsearchOperations elasticsearchOperations;
 
-	public Subject create(Subject subject) throws BusinessServiceException {
+	public Subject create(Subject subject, final String path) throws BusinessServiceException {
 		if (Strings.isNullOrEmpty(subject.getTitle())) {
-			throw new BadRequestException("title is required");
+			throw new BadRequestException("'title' is required");
 		}
-		if (Strings.isNullOrEmpty(subject.getPath())) {
-			throw new BadRequestException("path is required");
-		}
+		subject.setPath(path);
 		subject.setCreatedDate(LocalDate.now());
 		return subjectRepository.save(subject);
 	}
 
-	public Subject update(final Subject subject) {
-		Subject existingSubject = find(subject.getId());
-		existingSubject.setTitle(subject.getTitle());
-		existingSubject.setPath(subject.getPath());
-		existingSubject.setLastModifiedDate(LocalDate.now());
-		return subjectRepository.save(existingSubject);
+	public Subject update(final Subject subject, final String path) {
+		Subject existing = find(subject.getId(), path);
+		existing.setTitle(subject.getTitle());
+		existing.setLastModifiedDate(LocalDate.now());
+		return subjectRepository.save(existing);
 	}
 
-	public Subject find(final String id) {
-		return subjectRepository.findById(id).orElseThrow(() ->	new ResourceNotFoundException("No subject found for id '" + id +"'"));
+	public Subject find(final String id, final String path) {
+		final Subject subject = subjectRepository.findById(id).orElseThrow(() ->
+				new ResourceNotFoundException("No subject found for id '" + id +"'"));
+		if (!path.equals(subject.getPath())) {
+			throw new ResourceNotFoundException("No subject found for id '" + id + "' and path '" + path + "'");
+		}
+		return subject;
 	}
 
 	public List<Subject> findByPath(final String path) {
@@ -61,11 +63,9 @@ public class SubjectService {
 		return result;
 	}
 
-	public void delete(final String id) {
-		if (!subjectRepository.existsById(id)) {
-			throw new ResourceNotFoundException("No subject found for id '" + id +"'");
-		}
-		subjectRepository.deleteById(id);
+	public void delete(final String id, final String path) {
+		Subject subject = find(id, path);
+		subjectRepository.delete(subject);
 	}
 
 	public void deleteAll() {
