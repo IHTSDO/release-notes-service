@@ -1,4 +1,4 @@
-package org.snomed.release.note.rest;
+package org.snomed.release.note.rest.config;
 
 import org.ihtsdo.otf.rest.exception.*;
 import org.slf4j.Logger;
@@ -17,9 +17,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 @ControllerAdvice
-public class GlobalControllerExceptionHandler {
+public class ControllerExceptionHandler {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(GlobalControllerExceptionHandler.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(ControllerExceptionHandler.class);
 
 	@ExceptionHandler(AuthenticationException.class)
 	@ResponseStatus(HttpStatus.UNAUTHORIZED)

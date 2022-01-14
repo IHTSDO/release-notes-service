@@ -6,6 +6,7 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.ihtsdo.otf.rest.exception.BadRequestException;
 import org.ihtsdo.otf.rest.exception.BusinessServiceException;
+import org.ihtsdo.otf.rest.exception.EntityAlreadyExistsException;
 import org.ihtsdo.otf.rest.exception.ResourceNotFoundException;
 import org.snomed.release.note.core.data.domain.LineItem;
 import org.snomed.release.note.core.data.repository.SubjectRepository;
@@ -39,6 +40,9 @@ public class LineItemService {
 	public LineItem create(LineItem lineItem, final String path) throws BusinessServiceException {
 		if (Strings.isNullOrEmpty(lineItem.getSubjectId())) {
 			throw new BadRequestException("'subjectId' is required");
+		}
+		if (lineItem.getId() != null && exists(lineItem.getId())) {
+			throw new EntityAlreadyExistsException("Line item with id '" + lineItem.getId() + "' already exists");
 		}
 		lineItem.setSourceBranch(path);
 		lineItem.setStart(LocalDate.now());
@@ -109,6 +113,10 @@ public class LineItemService {
 
 	public void deleteAll() {
 		lineItemRepository.deleteAll();
+	}
+
+	public boolean exists(final String id) {
+		return lineItemRepository.existsById(id);
 	}
 
 	/*public LineItem merge(MergeRequest mergeRequest) throws BusinessServiceException {
