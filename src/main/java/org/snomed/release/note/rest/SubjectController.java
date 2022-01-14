@@ -21,17 +21,17 @@ public class SubjectController {
 	private SubjectService subjectService;
 
 	@PostMapping(value = "/{path}/subjects")
-	public ResponseEntity<Subject> createSubject(
+	public Subject createSubject(
 			@PathVariable String path,
 			@RequestBody Subject subject) throws BusinessServiceException {
-		return new ResponseEntity<>(subjectService.create(subject, BranchPathUriUtil.decodePath(path)), HttpStatus.CREATED);
+		return subjectService.create(subject, BranchPathUriUtil.decodePath(path));
 	}
 
 	@GetMapping(value = "/{path}/subjects/{id}")
-	public ResponseEntity<Subject> findSubject(
+	public Subject findSubject(
 			@PathVariable String path,
 			@PathVariable String id) {
-		return new ResponseEntity<>(subjectService.find(id, BranchPathUriUtil.decodePath(path)), HttpStatus.OK);
+		return subjectService.find(id, BranchPathUriUtil.decodePath(path));
 	}
 
 	@GetMapping(value = "/{path}/subjects")
