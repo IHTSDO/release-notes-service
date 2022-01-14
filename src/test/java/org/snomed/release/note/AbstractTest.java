@@ -18,8 +18,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {TestConfig.class})
 public abstract class AbstractTest {
-	@Autowired
-	protected RestHighLevelClient elasticsearchClient;
 
 	@Autowired
 	protected LineItemService lineItemService;

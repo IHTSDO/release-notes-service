@@ -3,6 +3,7 @@ package org.snomed.release.note.core.data.service;
 import org.elasticsearch.common.Strings;
 import org.ihtsdo.otf.rest.exception.BadRequestException;
 import org.ihtsdo.otf.rest.exception.BusinessServiceException;
+import org.ihtsdo.otf.rest.exception.EntityAlreadyExistsException;
 import org.ihtsdo.otf.rest.exception.ResourceNotFoundException;
 import org.snomed.release.note.core.data.domain.Subject;
 import org.snomed.release.note.core.data.repository.SubjectRepository;
@@ -26,6 +27,9 @@ public class SubjectService {
 	public Subject create(Subject subject, final String path) throws BusinessServiceException {
 		if (Strings.isNullOrEmpty(subject.getTitle())) {
 			throw new BadRequestException("'title' is required");
+		}
+		if (subject.getId() != null && exists(subject.getId())) {
+			throw new EntityAlreadyExistsException("Subject with id '" + subject.getId() + "' already exists");
 		}
 		subject.setPath(path);
 		subject.setCreatedDate(LocalDate.now());
@@ -70,6 +74,10 @@ public class SubjectService {
 
 	public void deleteAll() {
 		subjectRepository.deleteAll();
+	}
+
+	public boolean exists(final String id) {
+		return subjectRepository.existsById(id);
 	}
 
 }

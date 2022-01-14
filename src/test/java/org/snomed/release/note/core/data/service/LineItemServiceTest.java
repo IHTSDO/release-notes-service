@@ -21,16 +21,15 @@ public class LineItemServiceTest extends AbstractTest {
 
 	private static final Logger logger = LoggerFactory.getLogger(LineItemServiceTest.class);
 
-	private Subject subject;
-
 	@BeforeEach
 	void setUp() throws BusinessServiceException {
-		subject = subjectService.create(new Subject("Body structure", "MAIN"), "MAIN");
+
 	}
 
 	@Test
 	void testCreate() throws BusinessServiceException{
 		final String path = "MAIN/ProjectA";
+		Subject subject = subjectService.create(new Subject("Body structure", "MAIN"), "MAIN");
 		LineItem lineItem = lineItemService.create(new LineItem(subject.getId(), "Demonstration Release of the Anatomy Model", path), path);
 		assertNotNull(lineItem.getId());
 		lineItem = lineItemService.find(lineItem.getId(), path);
@@ -44,6 +43,7 @@ public class LineItemServiceTest extends AbstractTest {
 	@Test
 	void testUpdate() throws BusinessServiceException {
 		final String path = "MAIN/ProjectA";
+		Subject subject = subjectService.create(new Subject("Body structure", "MAIN"), "MAIN");
 		LineItem lineItem = lineItemService.create(new LineItem(subject.getId(), "Demonstration Release of the Anatomy Model", path), path);
 		lineItem.setContent("Final Release of the Anatomy Model");
 		lineItem.setSequence(3);
@@ -67,6 +67,7 @@ public class LineItemServiceTest extends AbstractTest {
 	@Test
 	void testDelete() throws BusinessServiceException {
 		final String path = "MAIN/ProjectA";
+		Subject subject = subjectService.create(new Subject("Body structure", "MAIN"), "MAIN");
 		LineItem lineItem = lineItemService.create(new LineItem(subject.getId(), "Demonstration Release of the Anatomy Model", path), path);
 		lineItemService.delete(lineItem.getId(), path);
 		assertThrows(ResourceNotFoundException.class, () -> {
@@ -74,25 +75,15 @@ public class LineItemServiceTest extends AbstractTest {
 		});
 	}
 
-	/*@Test
-	void testFindAll() throws BusinessServiceException {
-		lineItemService.create(new LineItem(subject.getId(), "Demonstration Release of the Anatomy Model", "MAIN/ProjectA"));
-		lineItemService.create(new LineItem(subject.getId(), "Limbs/Girdles", "MAIN/ProjectA"));
-		lineItemService.create(new LineItem(subject.getId(), "Flexor annular pulley", "MAIN/ProjectB"));
-		lineItemService.create(new LineItem(subject.getId(), "Muscle tendon of toes", "MAIN/ProjectB"));
-		lineItemService.create(new LineItem(subjectService.create(new Subject(subject.getTitle(), "MAIN")).getId(), "Muscle tendon of toes", "MAIN/ProjectB"));
-
-		List<LineItem> found = lineItemService.findAll();
-		assertEquals(5, found.size());
-	}*/
-
 	@Test
 	void testFind() throws BusinessServiceException {
+		Subject subject = subjectService.create(new Subject("Body structure", "MAIN"), "MAIN");
+		Subject anotherSubject = subjectService.create(new Subject(subject.getTitle(), "MAIN"), "MAIN");
+
 		LineItem lineItem = lineItemService.create(new LineItem(subject.getId(), "Demonstration Release of the Anatomy Model", "MAIN/ProjectA"), "MAIN/ProjectA");
 		lineItemService.create(new LineItem(subject.getId(), "Limbs/Girdles", "MAIN/ProjectA"), "MAIN/ProjectA");
 		lineItemService.create(new LineItem(subject.getId(), "Flexor annular pulley", "MAIN/ProjectB"), "MAIN/ProjectB");
 		lineItemService.create(new LineItem(subject.getId(), "Muscle tendon of toes", "MAIN/ProjectB"), "MAIN/ProjectB");
-		Subject anotherSubject = subjectService.create(new Subject(subject.getTitle(), "MAIN"), "MAIN");
 		lineItemService.create(new LineItem(anotherSubject.getId(), "Muscle tendon of toes", "MAIN/ProjectB"), "MAIN/ProjectB");
 
 		LineItem found = lineItemService.find(lineItem.getId(), lineItem.getSourceBranch());
