@@ -95,15 +95,18 @@ public class LineItemService {
 	}
 
 	public List<LineItem> find(final String path) {
+		return lineItemRepository.findBySourceBranch(path);
+		/*
 		BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery()
-				.should(QueryBuilders.termQuery("sourceBranch", path))
-				.should(QueryBuilders.termQuery("promotedBranch", path))
-				.mustNot(QueryBuilders.existsQuery("end"));
+				.must(QueryBuilders.termQuery("sourceBranch", path));
+				//.should(QueryBuilders.termQuery("sourceBranch", path))
+				//.should(QueryBuilders.termQuery("promotedBranch", path))
+				//.mustNot(QueryBuilders.existsQuery("end"));
 		Query query = new NativeSearchQueryBuilder()
 				.withQuery(boolQueryBuilder)
 				.build();
 		SearchHits<LineItem> searchHits = elasticsearchOperations.search(query, LineItem.class);
-		return searchHits.get().map(SearchHit::getContent).collect(Collectors.toList());
+		return searchHits.get().map(SearchHit::getContent).collect(Collectors.toList());*/
 	}
 
 	public List<LineItem> findBySubjectId(final String subjectId) {
