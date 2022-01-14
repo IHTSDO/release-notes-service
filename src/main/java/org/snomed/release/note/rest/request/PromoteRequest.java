@@ -2,20 +2,20 @@ package org.snomed.release.note.rest.request;
 
 public class PromoteRequest {
 
-	private String branchPath;
+	private String promotedBranch;
 
 	public PromoteRequest() {
 	}
 
-	public PromoteRequest(String branchPath) {
-		this.branchPath = branchPath;
+	public PromoteRequest(String promotedBranch) {
+		this.promotedBranch = promotedBranch;
 	}
 
-	public String getBranchPath() {
-		return branchPath;
+	public String getPromotedBranch() {
+		return promotedBranch;
 	}
 
-	public void setBranchPath(String branchPath) {
-		this.branchPath = branchPath;
+	public void setPromotedBranch(String promotedBranch) {
+		this.promotedBranch = promotedBranch;
 	}
 }
