@@ -10,5 +10,4 @@ public interface LineItemRepository extends ElasticsearchRepository<LineItem, St
 
 	List<LineItem> findBySubjectId(String subjectId);
 
-	List<LineItem> findBySourceBranch(String sourceBranch);
 }

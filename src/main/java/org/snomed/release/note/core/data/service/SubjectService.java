@@ -1,6 +1,8 @@
 package org.snomed.release.note.core.data.service;
 
 import org.elasticsearch.common.Strings;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.ihtsdo.otf.rest.exception.BadRequestException;
 import org.ihtsdo.otf.rest.exception.BusinessServiceException;
 import org.ihtsdo.otf.rest.exception.EntityAlreadyExistsException;
@@ -9,11 +11,16 @@ import org.snomed.release.note.core.data.domain.Subject;
 import org.snomed.release.note.core.data.repository.SubjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.SearchHit;
+import org.springframework.data.elasticsearch.core.SearchHits;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
+import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class SubjectService {
@@ -52,8 +59,14 @@ public class SubjectService {
 		return subject;
 	}
 
-	public List<Subject> findByPath(final String path) {
-		return subjectRepository.findByPath(path);
+	public List<Subject> find(final String path) {
+		BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery()
+				.filter(QueryBuilders.termQuery("path.keyword", path));
+		Query query = new NativeSearchQueryBuilder()
+				.withQuery(boolQueryBuilder)
+				.build();
+		SearchHits<Subject> searchHits = elasticsearchOperations.search(query, Subject.class);
+		return searchHits.get().map(SearchHit::getContent).collect(Collectors.toList());
 	}
 
 	public List<Subject> findByTitle(final String title) {

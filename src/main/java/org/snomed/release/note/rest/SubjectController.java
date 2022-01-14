@@ -35,7 +35,7 @@ public class SubjectController {
 	@GetMapping(value = "/{path}/subjects")
 	public List<Subject> findSubjects(
 			@PathVariable String path) {
-		return subjectService.findByPath(BranchPathUriUtil.decodePath(path));
+		return subjectService.find(BranchPathUriUtil.decodePath(path));
 	}
 
 	@PutMapping(value = "/{path}/subjects/{id}")

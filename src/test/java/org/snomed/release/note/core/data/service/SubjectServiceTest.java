@@ -68,16 +68,11 @@ public class SubjectServiceTest extends AbstractTest {
 		List<Subject> foundList = subjectService.findAll();
 		assertEquals(4, foundList.size());
 
-		foundList = subjectService.findByPath("MAIN");
+		foundList = subjectService.find("MAIN");
 		assertEquals(2, foundList.size());
 
-		foundList = subjectService.findByPath("MAIN/SNOMEDCT-US");
+		foundList = subjectService.find("MAIN/SNOMEDCT-US");
 		assertEquals(2, foundList.size());
-
-		foundList = subjectService.findByTitle("COVID-19");
-		assertEquals(2, foundList.size());
-
-		foundList = subjectService.findByTitle("Body structure");
-		assertEquals(0, foundList.size());
 	}
+
 }
