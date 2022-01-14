@@ -51,14 +51,22 @@ public class LineItemController {
 		return lineItemService.update(lineItem, BranchPathUriUtil.decodePath(path));
 	}
 
-	/*@PatchMapping(value = "/{id}/promote")
+	@PostMapping(value = "/{path}/lineitems/{id}/promote")
 	public LineItem promoteLineItem(
+			@PathVariable String path,
 			@PathVariable String id,
 			@RequestBody PromoteRequest promoteRequest) throws BusinessServiceException {
-		return lineItemService.promote(id, promoteRequest);
+		return lineItemService.promote(id, BranchPathUriUtil.decodePath(path), promoteRequest);
 	}
 
-	@PostMapping(value = "{id}/release")
+	@PostMapping(value = "/{path}/lineitems/promote")
+	public List<LineItem> promoteLineItems(
+			@PathVariable String path,
+			@RequestBody PromoteRequest promoteRequest) throws BusinessServiceException {
+		return lineItemService.promote(BranchPathUriUtil.decodePath(path), promoteRequest);
+	}
+
+	/*@PostMapping(value = "{id}/release")
 	public LineItem publishLineItems(
 			@PathVariable String id) throws BusinessServiceException {
 		return lineItemService.release(id);

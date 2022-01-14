@@ -4,14 +4,12 @@ import org.elasticsearch.common.Strings;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.ihtsdo.otf.rest.exception.BadRequestException;
-import org.ihtsdo.otf.rest.exception.BusinessServiceException;
-import org.ihtsdo.otf.rest.exception.EntityAlreadyExistsException;
-import org.ihtsdo.otf.rest.exception.ResourceNotFoundException;
+import org.ihtsdo.otf.rest.exception.*;
 import org.snomed.release.note.core.data.domain.LineItem;
 import org.snomed.release.note.core.data.repository.SubjectRepository;
 import org.snomed.release.note.rest.request.MergeRequest;
 import org.snomed.release.note.core.data.repository.LineItemRepository;
+import org.snomed.release.note.rest.request.PromoteRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.SearchHit;
@@ -59,16 +57,28 @@ public class LineItemService {
 		return lineItemRepository.save(existing);
 	}
 
-	/*public LineItem promote(final String id, PromoteRequest promoteRequest) throws BusinessServiceException {
-		if (Strings.isNullOrEmpty(promoteRequest.getBranchPath())) {
-			throw new BadRequestException("branchPath is required");
+	public LineItem promote(final String id, final String path, final PromoteRequest promoteRequest) throws BusinessServiceException {
+		if (Strings.isNullOrEmpty(promoteRequest.getPromotedBranch())) {
+			throw new BadRequestException("'promotedBranch' is required");
 		}
-		LineItem lineItem = find(id);
-		lineItem.setPromotedBranchPath(promoteRequest.getBranchPath());
+		LineItem lineItem = find(id, path);
+		if (!Strings.isNullOrEmpty(lineItem.getPromotedBranch())) {
+			throw new ProcessingException("Line item with id '" + id + "' is already promoted to branch '" + lineItem.getPromotedBranch() + "'");
+		}
+		lineItem.setPromotedBranch(promoteRequest.getPromotedBranch());
 		return lineItemRepository.save(lineItem);
 	}
 
-	public LineItem release(final String id) throws BusinessServiceException {
+	public List<LineItem> promote(final String path, final PromoteRequest promoteRequest) throws BusinessServiceException {
+		if (Strings.isNullOrEmpty(promoteRequest.getPromotedBranch())) {
+			throw new BadRequestException("'promotedBranch' is required");
+		}
+		List<LineItem> lineItems = find(path);
+		lineItems.forEach(lineItem -> lineItem.setPromotedBranch(promoteRequest.getPromotedBranch()));
+		lineItemRepository.saveAll(lineItems);
+		return lineItems;
+	}
+/*	public LineItem release(final String id) throws BusinessServiceException {
 		LineItem lineItem = find(id);
 		lineItem.setReleased(true);
 		return lineItemRepository.save(lineItem);
@@ -87,7 +97,8 @@ public class LineItemService {
 	public List<LineItem> find(final String path) {
 		BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery()
 				.should(QueryBuilders.termQuery("sourceBranch", path))
-				.should(QueryBuilders.termQuery("promotedBranch", path));
+				.should(QueryBuilders.termQuery("promotedBranch", path))
+				.mustNot(QueryBuilders.existsQuery("end"));
 		Query query = new NativeSearchQueryBuilder()
 				.withQuery(boolQueryBuilder)
 				.build();

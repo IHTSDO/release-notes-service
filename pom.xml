@@ -25,7 +25,8 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<packageName>${project.artifactId}</packageName>
 		<elasticsearch.version>7.15.2</elasticsearch.version>
-		<otf-common.version>5.0.0</otf-common.version>
+		<spring-data-elasticsearch.version>4.3.0</spring-data-elasticsearch.version>
+		<springfox.version>3.0.0</springfox.version>
 	</properties>
 
 	<dependencies>
@@ -52,7 +53,7 @@
 		<dependency>
 			<groupId>org.springframework.data</groupId>
 			<artifactId>spring-data-elasticsearch</artifactId>
-			<version>4.3.0</version>
+			<version>${spring-data-elasticsearch.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>io.kaicode</groupId>
@@ -69,14 +70,14 @@
 		<dependency>
 			<groupId>io.springfox</groupId>
 			<artifactId>springfox-boot-starter</artifactId>
-			<version>3.0.0</version>
+			<version>${springfox.version}</version>
 		</dependency>
 
 		<!-- REST exceptions -->
 		<dependency>
 			<groupId>org.ihtsdo.otf.common</groupId>
 			<artifactId>otf-common</artifactId>
-			<version>${otf-common.version}</version>
+			<version>5.0.0</version>
 			<exclusions>
 				<exclusion>
 					<groupId>org.springframework.boot</groupId>

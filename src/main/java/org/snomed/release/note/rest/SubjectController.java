@@ -49,4 +49,11 @@ public class SubjectController {
 		return subjectService.update(subject, BranchPathUriUtil.decodePath(path));
 	}
 
+	@DeleteMapping(value = "/{path}/subjects/{id}")
+	public void deleteSubject(
+			@PathVariable String path,
+			@PathVariable String id) {
+		subjectService.delete(id, BranchPathUriUtil.decodePath(path));
+	}
+
 }
