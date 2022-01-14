@@ -4,8 +4,6 @@ import io.kaicode.rest.util.branchpathrewrite.BranchPathUriUtil;
 import org.ihtsdo.otf.rest.exception.BadRequestException;
 import org.ihtsdo.otf.rest.exception.BusinessServiceException;
 import org.snomed.release.note.core.data.domain.LineItem;
-import org.snomed.release.note.rest.request.MergeRequest;
-import org.snomed.release.note.rest.request.PromoteRequest;
 import org.snomed.release.note.core.data.service.LineItemService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -54,29 +52,15 @@ public class LineItemController {
 	@PostMapping(value = "/{path}/lineitems/{id}/promote")
 	public LineItem promoteLineItem(
 			@PathVariable String path,
-			@PathVariable String id,
-			@RequestBody PromoteRequest promoteRequest) throws BusinessServiceException {
-		return lineItemService.promote(id, BranchPathUriUtil.decodePath(path), promoteRequest);
+			@PathVariable String id) throws BusinessServiceException {
+		return lineItemService.promote(id, BranchPathUriUtil.decodePath(path));
 	}
 
 	@PostMapping(value = "/{path}/lineitems/promote")
 	public List<LineItem> promoteLineItems(
-			@PathVariable String path,
-			@RequestBody PromoteRequest promoteRequest) throws BusinessServiceException {
-		return lineItemService.promote(BranchPathUriUtil.decodePath(path), promoteRequest);
+			@PathVariable String path) throws BusinessServiceException {
+		return lineItemService.promote(BranchPathUriUtil.decodePath(path));
 	}
-
-	/*@PostMapping(value = "{id}/release")
-	public LineItem publishLineItems(
-			@PathVariable String id) throws BusinessServiceException {
-		return lineItemService.release(id);
-	}
-
-	@PostMapping(value = "/merge")
-	public LineItem mergeLineItems(
-			@RequestBody MergeRequest mergeRequest) throws BusinessServiceException {
-		return lineItemService.merge(mergeRequest);
-	}*/
 
 	@DeleteMapping(value = "/{path}/lineitems/{id}")
 	public void deleteLineItem(
