@@ -20,7 +20,8 @@ public class LineItemServiceTest extends AbstractTest {
 
 	@BeforeEach
 	void setUp() throws BusinessServiceException {
-
+		List<LineItem> lineItems = lineItemService.findAll();
+		logger.info("There are {} line items found", lineItems.size());
 	}
 
 	@Test

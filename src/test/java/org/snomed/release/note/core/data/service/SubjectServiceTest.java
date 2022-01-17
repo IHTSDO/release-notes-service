@@ -19,7 +19,8 @@ public class SubjectServiceTest extends AbstractTest {
 
 	@BeforeEach
 	void setUp() {
-
+		List<Subject> subjects = subjectService.findAll();
+		logger.info("There are {} subjects found", subjects.size());
 	}
 
 	@Test

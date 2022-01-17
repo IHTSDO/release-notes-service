@@ -9,4 +9,5 @@ public interface SubjectRepository extends ElasticsearchRepository<Subject, Stri
 
 	List<Subject> findByTitle(String title);
 
+	List<Subject> findByPath(String path);
 }

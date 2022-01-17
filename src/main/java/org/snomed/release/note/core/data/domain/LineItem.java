@@ -166,24 +166,24 @@ public class LineItem {
 		return Objects.hash(id, subjectId);
 	}
 
+	private String formatDate(LocalDate date) {
+		return (date == null) ? "null" : date.format(DateTimeFormatter.ISO_LOCAL_DATE);
+	}
+
 	@Override
 	public String toString() {
 		return "LineItem{" +
 				"id='" + id + '\'' +
 				", subjectId='" + subjectId + '\'' +
 				", parentId='" + parentId + '\'' +
-				", level='" + level + '\'' +
-				", content=" + content + '\'' +
-				", sequence='" + sequence + '\'' +
+				", level=" + level +
+				", content='" + content + '\'' +
+				", sequence=" + sequence +
 				", sourceBranch='" + sourceBranch + '\'' +
 				", promotedBranch='" + promotedBranch + '\'' +
-				", start='" + formatDate(start) + '\'' +
-				", end='" + formatDate(end) + '\'' +
-				", released='" + released + '\'' +
+				", start=" + formatDate(start) +
+				", end=" + formatDate(end) +
+				", released=" + released +
 				'}';
-	}
-
-	private String formatDate(LocalDate date) {
-		return (date == null) ? "null" : date.format(DateTimeFormatter.ISO_LOCAL_DATE);
 	}
 }

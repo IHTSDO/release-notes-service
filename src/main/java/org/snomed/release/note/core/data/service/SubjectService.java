@@ -60,13 +60,7 @@ public class SubjectService {
 	}
 
 	public List<Subject> find(final String path) {
-		BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery()
-				.filter(QueryBuilders.termQuery("path.keyword", path));
-		Query query = new NativeSearchQueryBuilder()
-				.withQuery(boolQueryBuilder)
-				.build();
-		SearchHits<Subject> searchHits = elasticsearchOperations.search(query, Subject.class);
-		return searchHits.get().map(SearchHit::getContent).collect(Collectors.toList());
+		return subjectRepository.findByPath(path);
 	}
 
 	public List<Subject> findByTitle(final String title) {

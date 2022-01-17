@@ -1,10 +1,12 @@
 package org.snomed.release.note.rest;
 
 import io.kaicode.rest.util.branchpathrewrite.BranchPathUriUtil;
+import org.elasticsearch.common.Strings;
 import org.ihtsdo.otf.rest.exception.BadRequestException;
 import org.ihtsdo.otf.rest.exception.BusinessServiceException;
 import org.snomed.release.note.core.data.domain.LineItem;
 import org.snomed.release.note.core.data.service.LineItemService;
+import org.snomed.release.note.rest.request.PublishRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -61,6 +63,16 @@ public class LineItemController {
 			@PathVariable String path) throws BusinessServiceException {
 		return lineItemService.promote(BranchPathUriUtil.decodePath(path));
 	}
+
+	/*@PostMapping(value = "/{path}/lineitems/publish")
+	public void publishLineItems(
+			@PathVariable String path,
+			@RequestBody PublishRequest publishRequest) throws BusinessServiceException {
+		if (Strings.isNullOrEmpty(publishRequest.getVersion())) {
+			throw new BadRequestException("'version' is required");
+		}
+		lineItemService.publish(path, publishRequest.getVersion());
+	}*/
 
 	@DeleteMapping(value = "/{path}/lineitems/{id}")
 	public void deleteLineItem(
