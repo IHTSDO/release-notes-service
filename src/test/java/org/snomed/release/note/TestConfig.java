@@ -4,6 +4,7 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.snomed.release.note.config.Config;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.data.elasticsearch.client.ClientConfiguration;
 import org.springframework.data.elasticsearch.client.RestClients;
@@ -11,6 +12,7 @@ import org.testcontainers.DockerClientFactory;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.junit.jupiter.Container;
 
+@SpringBootApplication
 @TestConfiguration
 public class TestConfig extends Config {
 	private static final String ELASTIC_SEARCH_SERVER_VERSION = "7.15.2";
