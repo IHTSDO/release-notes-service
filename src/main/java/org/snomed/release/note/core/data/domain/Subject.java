@@ -29,9 +29,6 @@ public class Subject {
 	@Field(type = FieldType.Date, format = DateFormat.year_month_day)
 	private LocalDate lastModifiedDate;
 
-	public Subject() {
-	}
-
 	public Subject(String title, String path) {
 		this.title = title;
 		this.path = path;

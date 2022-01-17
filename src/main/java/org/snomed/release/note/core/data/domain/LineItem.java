@@ -47,9 +47,6 @@ public class LineItem {
 	@Field(type = FieldType.Boolean)
 	private boolean released;
 
-	public LineItem() {
-	}
-
 	public LineItem(String subjectId, String content, String sourceBranch) {
 		this.subjectId = subjectId;
 		this.content = content;
