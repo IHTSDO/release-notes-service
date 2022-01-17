@@ -97,19 +97,18 @@ public class Subject {
 		return Objects.hash(id);
 	}
 
+	private String formatDate(LocalDate date) {
+		return (date == null) ? "null" : date.format(DateTimeFormatter.ISO_LOCAL_DATE);
+	}
+
 	@Override
 	public String toString() {
 		return "Subject{" +
 				"id='" + id + '\'' +
 				", title='" + title + '\'' +
-				", path=" + path + '\'' +
-				", createdDate='" + formatDate(createdDate) + '\'' +
-				", lastModifiedDate='" + formatDate(lastModifiedDate) + '\'' +
+				", path='" + path + '\'' +
+				", createdDate=" + formatDate(createdDate) +
+				", lastModifiedDate=" + formatDate(lastModifiedDate) +
 				'}';
 	}
-
-	private String formatDate(LocalDate date) {
-		return (date == null) ? "null" : date.format(DateTimeFormatter.ISO_LOCAL_DATE);
-	}
-
 }

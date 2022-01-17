@@ -92,8 +92,8 @@ public class LineItemService {
 	public List<LineItem> find(final String path) {
 		BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery()
 				.mustNot(QueryBuilders.existsQuery("end"))
-				.should(QueryBuilders.termQuery("sourceBranch.keyword", path))
-				.should(QueryBuilders.termQuery("promotedBranch.keyword", path));
+				.should(QueryBuilders.termQuery("sourceBranch", path))
+				.should(QueryBuilders.termQuery("promotedBranch", path));
 		Query query = new NativeSearchQueryBuilder()
 				.withQuery(boolQueryBuilder)
 				.build();
@@ -123,6 +123,12 @@ public class LineItemService {
 
 	public boolean exists(final String id) {
 		return lineItemRepository.existsById(id);
+	}
+
+	public void publish(final String path, final String version) {
+		List<LineItem> lineItems = find(path);
+
+		// TODO what do we do for publish?
 	}
 
 	private String getPromotedBranch(final String sourceBranch) throws BusinessServiceException {
