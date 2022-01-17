@@ -7,6 +7,6 @@ import org.springframework.context.annotation.PropertySource;
 @SpringBootApplication
 @EnableConfigurationProperties
 @PropertySource(value = "classpath:application.properties", encoding = "UTF-8")
-public class Config extends ElasticsearchConfig {
+public abstract class Config extends ElasticsearchConfig {
 	
 }
