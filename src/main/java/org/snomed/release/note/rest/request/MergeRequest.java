@@ -6,9 +6,6 @@ public class MergeRequest {
 
 	private String branchPath;
 
-	public MergeRequest() {
-	}
-
 	public MergeRequest(String subjectId, String branchPath) {
 		this.subjectId = subjectId;
 		this.branchPath = branchPath;

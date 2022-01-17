@@ -4,9 +4,6 @@ public class PublishRequest {
 
 	private String version;
 
-	public PublishRequest() {
-	}
-
 	public PublishRequest(String version) {
 		this.version = version;
 	}
