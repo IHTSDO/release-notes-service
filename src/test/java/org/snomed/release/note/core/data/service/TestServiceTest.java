@@ -11,7 +11,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class TestServiceTest extends AbstractTest {
+class TestServiceTest extends AbstractTest {
 
 	@Autowired
 	private TestService testService;
@@ -21,8 +21,9 @@ public class TestServiceTest extends AbstractTest {
 		testService.createData("MAIN/Test");
 		List<Subject> subjects = subjectService.findAll();
 		List<LineItem> lineItems = lineItemService.findAll();
-		assertEquals(7, subjects.size());
-		assertEquals(7, lineItems.size());
+		assertEquals(16, subjects.size());
+		assertEquals(16, lineItems.size());
+		assertEquals(3, lineItemService.findOrderedLineItems("MAIN/Test").size());
 	}
 
 	@Test
