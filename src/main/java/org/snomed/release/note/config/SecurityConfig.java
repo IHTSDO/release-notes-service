@@ -48,7 +48,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 				"/(.*)/subjects",
 				"/(.*)/subjects/.*",
 				"/(.*)/lineitems",
-				"/(.*)/lineitems/.*"
+				"/(.*)/lineitems/.*",
+				"/test/(.*)/testData"
 		));
 	}
 

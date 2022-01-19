@@ -1,6 +1,5 @@
 package org.snomed.release.note;
 
-import org.elasticsearch.client.RestHighLevelClient;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,7 +30,7 @@ public abstract class AbstractTest {
 	@BeforeAll
 	static void setUp() {
 		if (!TestConfig.useLocalElasticsearch) {
-			assertTrue(TestConfig.getElasticsearchContainerInstance().isRunning(), "Test container is not running");
+			assertTrue(elasticsearchContainer.isRunning(), "Test container is not running");
 		}
 	}
 

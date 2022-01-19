@@ -1,0 +1,117 @@
+[
+  {
+    "title": "Introduction",
+    "level": 1,
+    "sequence": 1,
+    "content": null,
+    "children": [
+      {
+        "title": "Background",
+        "level": 2,
+        "sequence": 1,
+        "content": "SNOMED CT terminology provides a common language that enables a consistent way of indexing, storing, retrieving, and aggregating clinical data across specialties and sites of care.",
+        "children": []
+      },
+      {
+        "title": "Purpose",
+        "level": 2,
+        "sequence": 2,
+        "content": "This document provides a summarized description of the content changes included in the January 2022 release of SNOMED Clinical Terms® (SCT) International Release.",
+        "children": []
+      },
+      {
+        "title": "Scope",
+        "level": 2,
+        "sequence": 3,
+        "content": "This document is written for the purpose described above and is not intended to provide details of the technical specifications for SNOMED CT or encompass every change made during the release.",
+        "children": []
+      },
+      {
+        "title": "Audience",
+        "level": 2,
+        "sequence": 4,
+        "content": "The audience includes National Release Centers, WHO-FIC release centers, vendors of electronic health records, terminology developers and managers who wish to have an understanding of changes that have been incorporated into the January 2022 International release.",
+        "children": []
+      }
+    ]
+  },
+  {
+    "title": "Content Development Activity",
+    "level": 1,
+    "sequence": 2,
+    "content": null,
+    "children": [
+      {
+        "title": "Summary",
+        "level": 2,
+        "sequence": 1,
+        "content": "Continuous quality improvement and enhancement of existing content is an ongoing process undertaken by SNOMED International in preparation for every release. The January 2022 International Release has seen a continuation of the work driven by contributions from: Kaiser Permanente i.e. Convergent Medical Terminology (CMT), Global Medical Device Nomenclature Agency (GMDNA), Orphanet and other domain specific collaborations as well as requests received via the Content Request System (CRS).",
+        "children": []
+      },
+      {
+        "title": "COVID-19",
+        "level": 2,
+        "sequence": 2,
+        "content": "Content relating to COVID-19 can be viewed here SNOMED CT COVID-19 Related Content\n\nFor the January 2022 International release, descriptions have been updated for all concepts containing “Severe acute respiratory syndrome coronavirus 2” to remove capitalization from ''Severe” (except when it is found at the beginning of the description in accordance with editorial guidance).",
+        "children": []
+      },
+      {
+        "title": "Quality Initiative",
+        "level": 2,
+        "sequence": 3,
+        "content": "The Quality Initiative (QI) project is the implementation of the Quality Strategy. After a successful pilot project for the July 2018 release the next stage has been implemented for subsequent releases including January 2022.",
+        "children": []
+      },
+      {
+        "title": "Body structure",
+        "level": 2,
+        "sequence": 4,
+        "content": "2.4.1. Update Fully Specified Name to Include 'Structure/Structure of'\nA bulk update to FSNs for over 7,000 structure concepts has been carried out to add the word 'Structure' to the descriptions and align with editorial guidance.\n\nThe FSN should include the word 'Structure' though this can be omitted in synonyms. \n\n2.4.2. SEP and Laterality Anatomy Reference Sets\nNew concepts have been added to complete the refset for structure and entire concepts.",
+        "children": []
+      },
+      {
+        "title": "Clinical finding",
+        "level": 2,
+        "sequence": 5,
+        "content": "2.5.1. Pressure Injury\nA new hierarchy, 1163215007 |Pressure injury (disorder)|has been created in SNOMED CT based on the recommendations of the National Pressure Injury Advisory Panel (NPIAP) and adopted for the 2019 international clinical practice guidelines on the prevention and treatment of pressure ulcers/injuries.",
+        "children": []
+      },
+      {
+        "title": "Procedure",
+        "level": 2,
+        "sequence": 6,
+        "content": "2.6.1. Bilateral Procedure Naming Update\nCurrent bilateral procedure content has been updated to align with new naming conventions as documented in the Editorial Guide Bilateral Procedure Naming Conventions\n\n2.6.2. Improved Modeling of Doppler Procedures\nThe modeling of Doppler procedures has been updated with inactivation of the attribute-value pair 424226004 |Using device (attribute)| = 43770009 |Doppler device (physical object)|. Existing and new Doppler actions are now used for the 260686004 |Method (attribute)| value which makes this consistent with other imaging procedures where the modality is expressed as the method action.",
+        "children": []
+      }
+    ]
+  },
+  {
+    "title": "Technical notes",
+    "level": 1,
+    "sequence": 3,
+    "content": null,
+    "children": [
+      {
+        "title": "Known Issues",
+        "level": 2,
+        "sequence": 1,
+        "content": "Known Issues are content or technical issues where the root cause is understood, and the resolution has been discussed and agreed but has yet to be implemented.  This can be due to a number of reasons, from lack of capacity within the current editing cycle, to the risk of impact to the stability of SNOMED CT if the fix were to be deployed at that stage in the Product lifecycle.",
+        "children": []
+      },
+      {
+        "title": "Resolved Issues",
+        "level": 2,
+        "sequence": 2,
+        "content": "Resolved issues are Known Issues which were not fixed as part of the previous release lifecycle, but which have now been resolved in the latest release.  They can also be issues found during the Alpha and Beta testing of the current release, which were resolved before the final deployment of the associated Member release.  Finally they can be issues which were reported or found during the testing phase, but which have been closed without any action taken.",
+        "children": []
+      },
+      {
+        "title": "Technical updates",
+        "level": 2,
+        "sequence": 3,
+        "content": "3.3.1. RF2 package format\nFor future reference, the RF2 package convention dictates that it contains all relevant files, regardless of whether or not there is content to be included in each particular release.  Therefore, the package contains a mixture of files which contain both header rows and content data, and also files that are intentionally left blank (including only a header record).",
+        "children": []
+      }
+    ]
+  }
+]

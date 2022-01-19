@@ -8,6 +8,7 @@ class ApplicationTest extends AbstractTest {
 
 	@Test
 	void contextLoads() {
+
 	}
 
 }
