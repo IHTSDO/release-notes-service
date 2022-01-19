@@ -9,14 +9,18 @@ import org.slf4j.LoggerFactory;
 import org.snomed.release.note.AbstractTest;
 import org.snomed.release.note.core.data.domain.LineItem;
 import org.snomed.release.note.core.data.domain.Subject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class LineItemServiceTest extends AbstractTest {
+class LineItemServiceTest extends AbstractTest {
 
 	private static final Logger logger = LoggerFactory.getLogger(LineItemServiceTest.class);
+
+	@Autowired
+	private TestDataHelper testDataHelper;
 
 	@BeforeEach
 	void setUp() throws BusinessServiceException {
@@ -95,6 +99,23 @@ public class LineItemServiceTest extends AbstractTest {
 		lineItemService.promote(lineItem.getId(), lineItem.getSourceBranch());
 		foundList = lineItemService.find("MAIN");
 		assertEquals(2, foundList.size());
+	}
+
+	@Test
+	void testFindOrderedLineItems() {
+		testDataHelper.createLineItems("MAIN");
+		List<LineItem> lineItems = lineItemService.findOrderedLineItems("MAIN");
+		assertNotNull(lineItems);
+		assertEquals(3, lineItems.size());
+		lineItems.forEach(item -> {
+			assertEquals(1, item.getLevel());
+			assertTrue(TestDataHelper.LEVEL_ONE_TITLES.contains(item.getTitle()));
+			assertFalse(item.getChildren().isEmpty());
+			item.getChildren().forEach(child -> {
+				assertEquals(item.getId(), child.getParentId());
+				assertTrue(TestDataHelper.LEVEL_TWO_TITLES.contains(child.getTitle()));
+			});
+		});
 	}
 
 	@Test

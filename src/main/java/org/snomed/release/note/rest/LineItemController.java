@@ -1,12 +1,10 @@
 package org.snomed.release.note.rest;
 
 import io.kaicode.rest.util.branchpathrewrite.BranchPathUriUtil;
-import org.elasticsearch.common.Strings;
 import org.ihtsdo.otf.rest.exception.BadRequestException;
 import org.ihtsdo.otf.rest.exception.BusinessServiceException;
 import org.snomed.release.note.core.data.domain.LineItem;
 import org.snomed.release.note.core.data.service.LineItemService;
-import org.snomed.release.note.rest.request.PublishRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -37,7 +35,7 @@ public class LineItemController {
 	@GetMapping(value = "/{path}/lineitems")
 	public List<LineItem> findLineItems(
 			@PathVariable String path) {
-		return lineItemService.find(BranchPathUriUtil.decodePath(path));
+		return lineItemService.findOrderedLineItems(BranchPathUriUtil.decodePath(path));
 	}
 
 	@PutMapping(value = "/{path}/lineitems/{id}")

@@ -1,10 +1,12 @@
 package org.snomed.release.note.core.data.service;
 
+import org.apache.lucene.index.DocIDMerger;
 import org.elasticsearch.common.Strings;
 import org.ihtsdo.otf.rest.exception.BadRequestException;
 import org.ihtsdo.otf.rest.exception.BusinessServiceException;
 import org.ihtsdo.otf.rest.exception.EntityAlreadyExistsException;
 import org.ihtsdo.otf.rest.exception.ResourceNotFoundException;
+import org.snomed.release.note.core.data.domain.LineItem;
 import org.snomed.release.note.core.data.domain.Subject;
 import org.snomed.release.note.core.data.repository.SubjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,8 +14,8 @@ import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class SubjectService {
@@ -80,4 +82,17 @@ public class SubjectService {
 		return subjectRepository.existsById(id);
 	}
 
+	public void joinSubjects(List<LineItem> lineItems) {
+		Set<String> subjectIds = lineItems.stream().map(LineItem::getSubjectId).collect(Collectors.toSet());
+		Iterable<Subject> results = subjectRepository.findAllById(subjectIds);
+		Map<String, Subject> subjectIdMap = new HashMap<>();
+		if (results != null) {
+			results.forEach(subject -> {
+				subjectIdMap.put(subject.getId(), subject);
+			});
+		}
+		lineItems.stream().forEach(lineItem -> {
+			lineItem.setSubject(subjectIdMap.get(lineItem.getSubjectId()));
+		});
+	}
 }

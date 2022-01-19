@@ -1,6 +1,7 @@
 package org.snomed.release.note.core.data.domain;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.elasticsearch.annotations.DateFormat;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
@@ -8,10 +9,10 @@ import org.springframework.data.elasticsearch.annotations.FieldType;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Objects;
+import java.util.*;
 
 @Document(indexName = "lineitem")
-public class LineItem {
+public class LineItem implements LineItemView {
 
 	@Id
 	@Field(type = FieldType.Keyword)
@@ -24,13 +25,13 @@ public class LineItem {
 	private String parentId;
 
 	@Field(type = FieldType.Integer)
-	private int level;
+	private Integer level;
 
 	@Field(type = FieldType.Text)
 	private String content;
 
 	@Field(type = FieldType.Integer)
-	private int sequence;
+	private Integer sequence;
 
 	@Field(type = FieldType.Keyword)
 	private String sourceBranch;
@@ -47,11 +48,35 @@ public class LineItem {
 	@Field(type = FieldType.Boolean)
 	private boolean released;
 
+	@Transient
+	private List<LineItem> children;
+
+	@Transient
+	private Subject subject;
+
+	public LineItem() {
+		this.children = new ArrayList<>();
+		this.start = LocalDate.now();
+		this.level = 0;
+		this.sequence = 0;
+	}
+
+	public LineItem(Subject subject, String content, String sourceBranch) {
+		this();
+		if (subject != null) {
+			this.subject = subject;
+			this.subjectId = subject.getId();
+		}
+		this.content = content;
+		this.sourceBranch = sourceBranch;
+
+	}
+
 	public LineItem(String subjectId, String content, String sourceBranch) {
+		this();
 		this.subjectId = subjectId;
 		this.content = content;
 		this.sourceBranch = sourceBranch;
-		this.start = LocalDate.now();
 	}
 
 	public String getId() {
@@ -74,15 +99,16 @@ public class LineItem {
 		return parentId;
 	}
 
+
 	public void setParentId(String parentId) {
 		this.parentId = parentId;
 	}
 
-	public int getLevel() {
+	public Integer getLevel() {
 		return level;
 	}
 
-	public void setLevel(int level) {
+	public void setLevel(Integer level) {
 		this.level = level;
 	}
 
@@ -98,7 +124,7 @@ public class LineItem {
 		return sequence;
 	}
 
-	public void setSequence(int sequence) {
+	public void setSequence(Integer sequence) {
 		this.sequence = sequence;
 	}
 
@@ -140,6 +166,25 @@ public class LineItem {
 
 	public void setReleased(boolean released) {
 		this.released = released;
+	}
+
+
+	@Override
+	public List<LineItem> getChildren() {
+		return children;
+	}
+
+	public void setChildren(List<LineItem> children) {
+		this.children = children;
+	}
+
+	@Override
+	public String getTitle() {
+		return subject != null ? subject.getTitle() : null;
+	}
+
+	public void setSubject(Subject subject) {
+		this.subject = subject;
 	}
 
 	@Override

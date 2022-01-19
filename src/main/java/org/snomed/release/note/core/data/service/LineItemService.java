@@ -4,6 +4,8 @@ import org.elasticsearch.common.Strings;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.ihtsdo.otf.rest.exception.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.snomed.release.note.core.data.domain.LineItem;
 import org.snomed.release.note.rest.request.MergeRequest;
 import org.snomed.release.note.core.data.repository.LineItemRepository;
@@ -16,9 +18,11 @@ import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
+import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
 
 @Service
 public class LineItemService {
@@ -31,6 +35,8 @@ public class LineItemService {
 
 	@Autowired
 	private ElasticsearchOperations elasticsearchOperations;
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(LineItemService.class);
 
 	public LineItem create(LineItem lineItem, final String path) throws BusinessServiceException {
 		if (Strings.isNullOrEmpty(lineItem.getSubjectId())) {
@@ -90,15 +96,45 @@ public class LineItemService {
 	}
 
 	public List<LineItem> find(final String path) {
-		BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery()
+		Query query = new NativeSearchQueryBuilder().withQuery(boolQuery()
 				.mustNot(QueryBuilders.existsQuery("end"))
-				.should(QueryBuilders.termQuery("sourceBranch", path))
-				.should(QueryBuilders.termQuery("promotedBranch", path));
-		Query query = new NativeSearchQueryBuilder()
-				.withQuery(boolQueryBuilder)
+				.must(QueryBuilders.termQuery("sourceBranch", path)))
 				.build();
 		SearchHits<LineItem> searchHits = elasticsearchOperations.search(query, LineItem.class);
-		return searchHits.get().map(SearchHit::getContent).collect(Collectors.toList());
+		List<LineItem> lineItems = searchHits.get().map(SearchHit::getContent).collect(toList());
+		subjectService.joinSubjects(lineItems);
+		return lineItems;
+	}
+
+	public List<LineItem> findOrderedLineItems(final String path) {
+		List<LineItem> lineItems = find(path);
+		LOGGER.info("{} line items found on path {}", lineItems.size(), path);
+		List<LineItem> topLevelItems = lineItems.stream().filter(lineItem -> lineItem.getLevel() == 1).collect(toList());
+		topLevelItems.sort(Comparator.comparing(LineItem::getSequence));
+
+		Map<String, List<LineItem>> lineItemsMappedByParent = new HashMap<>();
+		List<LineItem> subItemsWithoutParent = new ArrayList<>();
+		lineItems.stream().filter(lineItem -> lineItem.getLevel() == 2).forEach(item -> {
+			if (item.getParentId() == null) {
+				subItemsWithoutParent.add(item);
+			} else {
+				lineItemsMappedByParent.computeIfAbsent(item.getParentId(), items -> new ArrayList<>()).add(item);
+			}
+		});
+		lineItemsMappedByParent.values().forEach(items -> items.sort(Comparator.comparing(LineItem::getSequence)));
+
+		topLevelItems.forEach(topItem -> {
+			if (lineItemsMappedByParent.containsKey(topItem.getId())) {
+				topItem.setChildren(lineItemsMappedByParent.get(topItem.getId()));
+			}
+		});
+		if (!subItemsWithoutParent.isEmpty()) {
+			LOGGER.warn("{} sub line items without parent id", subItemsWithoutParent.size());
+
+			// Return these sub items without parent as well
+			topLevelItems.addAll(subItemsWithoutParent);
+		}
+		return topLevelItems;
 	}
 
 	public List<LineItem> findBySubjectId(final String subjectId) {
