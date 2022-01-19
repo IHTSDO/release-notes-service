@@ -69,7 +69,18 @@ public class LineItemService {
 			throw new ProcessingException("Line item with id '" + id + "' is already promoted to branch '" + lineItem.getPromotedBranch() + "'");
 		}
 		lineItem.setPromotedBranch(getPromotedBranch(path));
-		return lineItemRepository.save(lineItem);
+		lineItem.setEnd(LocalDate.now());
+		List<LineItem> toSave = new ArrayList<>();
+		toSave.add(lineItem);
+		// TODO need to merge with existing item based on the subject id if not
+		LineItem promotedItem = new LineItem(lineItem.getSubjectId(), lineItem.getContent(), getPromotedBranch(path));
+		promotedItem.setParentId(lineItem.getParentId());
+		promotedItem.setLevel(lineItem.getLevel());
+		promotedItem.setSequence(lineItem.getSequence());
+		toSave.add(promotedItem);
+		// batch update
+		lineItemRepository.saveAll(toSave);
+		return lineItem;
 	}
 
 	public List<LineItem> promote(final String path) throws BusinessServiceException {
