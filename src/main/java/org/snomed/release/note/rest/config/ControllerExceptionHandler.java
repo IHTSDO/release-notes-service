@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -27,6 +28,14 @@ public class ControllerExceptionHandler {
 	public Map<String, String> handleAuthenticationError(Exception exception, HttpServletRequest request) {
 		logError(request, exception);
 		return getErrorPayload(exception, HttpStatus.UNAUTHORIZED);
+	}
+
+	@ExceptionHandler(AccessDeniedException.class)
+	@ResponseStatus(HttpStatus.FORBIDDEN)
+	@ResponseBody
+	public Map<String, String> handleAccessDeniedError(Exception exception, HttpServletRequest request) {
+		logError(request, exception);
+		return getErrorPayload(exception, HttpStatus.FORBIDDEN);
 	}
 
 	@ExceptionHandler(BadRequestException.class)

@@ -7,6 +7,7 @@ import org.snomed.release.note.core.data.domain.Subject;
 import org.snomed.release.note.core.data.service.SubjectService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,6 +20,7 @@ public class SubjectController {
 	private SubjectService subjectService;
 
 	@PostMapping(value = "/{path}/subjects")
+	@PreAuthorize("hasPermission('RELEASE_LEAD', #path)")
 	public Subject createSubject(
 			@PathVariable String path,
 			@RequestBody Subject subject) throws BusinessServiceException {
@@ -39,6 +41,7 @@ public class SubjectController {
 	}
 
 	@PutMapping(value = "/{path}/subjects/{id}")
+	@PreAuthorize("hasPermission('RELEASE_LEAD', #path)")
 	public Subject updateSubject(
 			@PathVariable String path,
 			@PathVariable String id,
@@ -50,6 +53,7 @@ public class SubjectController {
 	}
 
 	@DeleteMapping(value = "/{path}/subjects/{id}")
+	@PreAuthorize("hasPermission('RELEASE_LEAD', #path)")
 	public void deleteSubject(
 			@PathVariable String path,
 			@PathVariable String id) {

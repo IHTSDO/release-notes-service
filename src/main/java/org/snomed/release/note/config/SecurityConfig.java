@@ -2,14 +2,24 @@ package org.snomed.release.note.config;
 
 import io.kaicode.rest.util.branchpathrewrite.BranchPathUriRewriteFilter;
 import org.ihtsdo.sso.integration.RequestHeaderAuthenticationDecorator;
+import org.snomed.release.note.rest.security.RequiredRoleFilter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 import org.springframework.security.web.firewall.DefaultHttpFirewall;
 import org.springframework.security.web.firewall.HttpFirewall;
 import springfox.documentation.builders.RequestHandlerSelectors;
@@ -20,8 +30,24 @@ import static java.util.function.Predicate.*;
 import static springfox.documentation.builders.PathSelectors.*;
 
 @Configuration
-@EnableWebSecurity
+@EnableWebSecurity()
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
+
+	@Value("${rnms.rest-api.readonly}")
+	private boolean restApiReadOnly;
+
+	@Value("${ims-security.roles.enabled}")
+	private boolean rolesEnabled;
+
+	@Value("${ims-security.required-role}")
+	private String requiredRole;
+
+	private final String[] excludedUrlPatterns = {
+			"/swagger-ui/**",
+			"/swagger-resources/**",
+			"/v2/api-docs",
+			"/webjars/springfox-swagger-ui/**"
+	};
 
 	@Override
 	public void configure(WebSecurity web) {
@@ -30,15 +56,44 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Override
 	public void configure(HttpSecurity http) throws Exception {
+		http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+		http.addFilterBefore(new RequestHeaderAuthenticationDecorator(), FilterSecurityInterceptor.class);
 		http.csrf().disable();
-		http.authorizeRequests()
-				.antMatchers("/swagger-ui/index.html",
-				"/swagger-resources/**",
-				"/v2/api-docs").permitAll()
-				.anyRequest().permitAll() // disable it temporarily
-				.and().httpBasic();
 
-		http.addFilterAfter(new RequestHeaderAuthenticationDecorator(), BasicAuthenticationFilter.class);
+		if (restApiReadOnly) {
+			// Read-only mode
+			// Block all POST/PUT/PATCH/DELETE
+			http.authorizeRequests()
+					.antMatchers(excludedUrlPatterns).permitAll()
+					.antMatchers(HttpMethod.POST, "/**").denyAll()
+					.antMatchers(HttpMethod.PUT, "/**").denyAll()
+					.antMatchers(HttpMethod.PATCH, "/**").denyAll()
+					.antMatchers(HttpMethod.DELETE, "/**").denyAll()
+					.anyRequest().authenticated()
+					.and().httpBasic();
+
+		} else {
+			http.authorizeRequests()
+					.antMatchers(excludedUrlPatterns).permitAll()
+					.anyRequest().authenticated() //.hasAnyAuthority(requiredRole) // change to 'authenticated()' when not behind NGINX
+					.and().httpBasic();
+		}
+	}
+
+	@Bean
+	public UserDetailsService userDetailsService(@Value("${spring.security.user.name}") final String username,
+												 @Value("${spring.security.user.password}") final String password) {
+		UserDetails user = User.builder()
+				.username(username)
+				.password(passwordEncoder().encode(password))
+				.authorities("ROLE_USER")
+				.build();
+		return new InMemoryUserDetailsManager(user);
+	}
+
+	@Bean
+	public PasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();
 	}
 
 	@Bean
@@ -67,6 +122,15 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 				.apis(RequestHandlerSelectors.any())
 				.paths(not(regex("/error")))
 				.build();
+	}
+
+	// The same as "hasAnyAuthority(requiredRole)" but configurable
+	@Bean
+	public FilterRegistrationBean<RequiredRoleFilter> getRequiredRoleFilter() {
+		RequiredRoleFilter requiredRoleFilter = new RequiredRoleFilter(requiredRole).addExcludedUrlPatterns(excludedUrlPatterns);
+		FilterRegistrationBean<RequiredRoleFilter> filterRegistrationBean = new FilterRegistrationBean<>();
+		filterRegistrationBean.setFilter(requiredRoleFilter);
+		return filterRegistrationBean;
 	}
 
 }

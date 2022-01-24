@@ -60,7 +60,7 @@ public class TestService {
 		if (obj.get("content") != JSONObject.NULL) {
 			content = obj.getString("content");
 		}
-		LineItem lineItem = new LineItem(subject.getId(), content, path);
+		LineItem lineItem = new LineItem(subject.getId(), path, content);
 		lineItem.setLevel(obj.getInt("level"));
 		lineItem.setSequence(obj.getInt("sequence"));
 		lineItem.setParentId(parentId);

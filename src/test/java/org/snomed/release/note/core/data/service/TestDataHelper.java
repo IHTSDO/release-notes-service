@@ -27,7 +27,7 @@ public class TestDataHelper {
 		return (List<Subject>) subjectRepository.saveAll(subjects);
 	}
 
-	public List<LineItem> createLineItems (String path) {
+	public List<LineItem> createLineItems(String path) {
 		// TODO Create subjects on the code system path only
 		List<Subject> topLevelSubjects = createSubjects(path, LEVEL_ONE_TITLES);
 
@@ -57,7 +57,7 @@ public class TestDataHelper {
 	}
 
 	public LineItem constructLineItem(Subject subject, String path, int level, int sequence) {
-		LineItem lineItem = new LineItem(subject, "", path);
+		LineItem lineItem = new LineItem(subject, path);
 		lineItem.setSequence(sequence);
 		lineItem.setLevel(level);
 		return lineItem;
