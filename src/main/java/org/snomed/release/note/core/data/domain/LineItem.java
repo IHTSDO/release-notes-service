@@ -59,24 +59,34 @@ public class LineItem implements LineItemView {
 		this.start = LocalDate.now();
 		this.level = 0;
 		this.sequence = 0;
+		this.content = "";
 	}
 
-	public LineItem(Subject subject, String content, String sourceBranch) {
+	public LineItem(Subject subject, String sourceBranch) {
 		this();
 		if (subject != null) {
 			this.subject = subject;
 			this.subjectId = subject.getId();
 		}
-		this.content = content;
 		this.sourceBranch = sourceBranch;
-
 	}
 
-	public LineItem(String subjectId, String content, String sourceBranch) {
+	public LineItem(String subjectId, String sourceBranch) {
 		this();
 		this.subjectId = subjectId;
-		this.content = content;
 		this.sourceBranch = sourceBranch;
+	}
+
+	public LineItem(String subjectId, String sourceBranch, String content) {
+		this(subjectId, sourceBranch);
+		this.content = content;
+	}
+
+	public LineItem(String subjectId, String sourceBranch, String parentId, int level, int sequence, String content) {
+		this(subjectId, sourceBranch, content);
+		this.parentId = parentId;
+		this.level = level;
+		this.sequence = sequence;
 	}
 
 	public String getId() {

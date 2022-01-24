@@ -5,8 +5,12 @@ import org.ihtsdo.otf.rest.exception.BadRequestException;
 import org.ihtsdo.otf.rest.exception.BusinessServiceException;
 import org.snomed.release.note.core.data.domain.LineItem;
 import org.snomed.release.note.core.data.service.LineItemService;
+import org.snomed.release.note.rest.request.VersionRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,6 +23,7 @@ public class LineItemController {
 	private LineItemService lineItemService;
 
 	@PostMapping(value = "/{path}/lineitems")
+	@PreAuthorize("hasPermission('AUTHOR', #path)")
 	public LineItem createLineItem(
 			@PathVariable String path,
 			@RequestBody LineItem lineItem) throws BusinessServiceException {
@@ -39,6 +44,7 @@ public class LineItemController {
 	}
 
 	@PutMapping(value = "/{path}/lineitems/{id}")
+	@PreAuthorize("hasPermission('AUTHOR', #path)")
 	public LineItem updateLineItem(
 			@PathVariable String path,
 			@PathVariable String id,
@@ -50,29 +56,52 @@ public class LineItemController {
 	}
 
 	@PostMapping(value = "/{path}/lineitems/{id}/promote")
-	public LineItem promoteLineItem(
+	@PreAuthorize("hasPermission('AUTHOR', #path)")
+	public ResponseEntity<String> promoteTaskLineItem(
 			@PathVariable String path,
 			@PathVariable String id) throws BusinessServiceException {
-		return lineItemService.promote(id, BranchPathUriUtil.decodePath(path));
+		String branchPath = BranchPathUriUtil.decodePath(path);
+		// TODO check branchPath
+		lineItemService.promote(id, BranchPathUriUtil.decodePath(path));
+		return new ResponseEntity<>(HttpStatus.OK);
 	}
 
 	@PostMapping(value = "/{path}/lineitems/promote")
-	public List<LineItem> promoteLineItems(
+	@PreAuthorize("hasPermission('AUTHOR', #path)")
+	public ResponseEntity<String> promoteProjectLineItems(
 			@PathVariable String path) throws BusinessServiceException {
-		return lineItemService.promote(BranchPathUriUtil.decodePath(path));
+		String branchPath = BranchPathUriUtil.decodePath(path);
+		// TODO check branchPath
+		lineItemService.promote(branchPath);
+		return new ResponseEntity<>(HttpStatus.OK);
 	}
 
-	/*@PostMapping(value = "/{path}/lineitems/publish")
-	public void publishLineItems(
+	@PostMapping(value = "/{path}/lineitems/version")
+	@PreAuthorize("hasPermission('RELEASE_ADMIN', #path) || hasPermission('RELEASE_MANAGER', #path)")
+	public ResponseEntity<String> versionLineItem(
 			@PathVariable String path,
-			@RequestBody PublishRequest publishRequest) throws BusinessServiceException {
-		if (Strings.isNullOrEmpty(publishRequest.getVersion())) {
-			throw new BadRequestException("'version' is required");
-		}
-		lineItemService.publish(path, publishRequest.getVersion());
-	}*/
+			@RequestBody VersionRequest versionRequest) throws BusinessServiceException {
+		lineItemService.version(path, versionRequest);
+		return new ResponseEntity<>(HttpStatus.OK);
+	}
+
+	@PostMapping(value = "/{path}/lineitems/publish")
+	@PreAuthorize("hasPermission('RELEASE_ADMIN', #path) || hasPermission('RELEASE_MANAGER', #path)")
+	public ResponseEntity<String> publishLineItems(
+			@PathVariable String path) throws BusinessServiceException {
+		lineItemService.publish(path);
+		return new ResponseEntity<>(HttpStatus.OK);
+	}
+
+	@GetMapping(value = "/{path}/published-lineitems")
+	public List<LineItem> getPublishedLineItems(
+			@PathVariable String path,
+			@RequestParam(defaultValue = "true") boolean ordered ) {
+		return lineItemService.findPublished(path, ordered);
+	}
 
 	@DeleteMapping(value = "/{path}/lineitems/{id}")
+	@PreAuthorize("hasPermission('RELEASE_ADMIN', #path)")
 	public void deleteLineItem(
 			@PathVariable String path,
 			@PathVariable String id) {

@@ -11,7 +11,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class TestServiceTest extends AbstractTest {
+public class TestServiceTest extends AbstractTest {
 
 	@Autowired
 	private TestService testService;

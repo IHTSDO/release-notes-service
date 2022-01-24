@@ -1,5 +1,6 @@
 package org.snomed.release.note.config;
 
+import org.snomed.release.note.config.elasticsearch.ElasticsearchConfig;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.PropertySource;

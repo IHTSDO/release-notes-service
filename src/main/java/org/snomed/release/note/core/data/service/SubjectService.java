@@ -1,11 +1,7 @@
 package org.snomed.release.note.core.data.service;
 
-import org.apache.lucene.index.DocIDMerger;
 import org.elasticsearch.common.Strings;
-import org.ihtsdo.otf.rest.exception.BadRequestException;
-import org.ihtsdo.otf.rest.exception.BusinessServiceException;
-import org.ihtsdo.otf.rest.exception.EntityAlreadyExistsException;
-import org.ihtsdo.otf.rest.exception.ResourceNotFoundException;
+import org.ihtsdo.otf.rest.exception.*;
 import org.snomed.release.note.core.data.domain.LineItem;
 import org.snomed.release.note.core.data.domain.Subject;
 import org.snomed.release.note.core.data.repository.SubjectRepository;
@@ -94,5 +90,12 @@ public class SubjectService {
 		lineItems.stream().forEach(lineItem -> {
 			lineItem.setSubject(subjectIdMap.get(lineItem.getSubjectId()));
 		});
+	}
+
+	public void joinSubject(LineItem lineItem) {
+		Optional<Subject> subject = subjectRepository.findById(lineItem.getSubjectId());
+		if (subject.isPresent()) {
+			lineItem.setSubject(subject.get());
+		}
 	}
 }
