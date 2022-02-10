@@ -4,13 +4,11 @@ import org.elasticsearch.common.Strings;
 import org.ihtsdo.sso.integration.SecurityUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
 import org.springframework.util.AntPathMatcher;
-import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -23,6 +21,7 @@ import java.util.stream.Collectors;
 public class RequiredRoleFilter extends OncePerRequestFilter {
 
 	private final String requiredRole;
+
 	private final Set<String> excludedUrlPatterns = new HashSet<>();
 
 	private final static Logger LOGGER = LoggerFactory.getLogger(RequiredRoleFilter.class);
@@ -31,32 +30,32 @@ public class RequiredRoleFilter extends OncePerRequestFilter {
 		this.requiredRole = requiredRole;
 	}
 
-	public RequiredRoleFilter addExcludedUrlPatterns(String... excludedUrlPatterns) {
-		Assert.notNull(excludedUrlPatterns, "excludedUrlPatterns must not be null");
-		Collections.addAll(this.excludedUrlPatterns, excludedUrlPatterns);
-		return this;
+	public RequiredRoleFilter(String requiredRole, String... excludedUrlPatterns) {
+		this(requiredRole);
+		if (excludedUrlPatterns != null) {
+			Collections.addAll(this.excludedUrlPatterns, excludedUrlPatterns);
+		}
 	}
 
 	@Override
 	protected boolean shouldNotFilter(HttpServletRequest request) {
-		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-		return Strings.isNullOrEmpty(requiredRole) || !(authentication instanceof PreAuthenticatedAuthenticationToken) || isPathExcluded(request);
+		Authentication authentication = SecurityUtil.getAuthentication();
+		return Strings.isNullOrEmpty(requiredRole) || isPathExcluded(request) || !(authentication instanceof PreAuthenticatedAuthenticationToken);
 	}
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-		if (authentication instanceof PreAuthenticatedAuthenticationToken) {
-			// IMS filter in use
-			List<String> roles = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList());
-			if (roles.contains(requiredRole)) {
-				filterChain.doFilter(request, response);
-				return;
-			}
+		Authentication authentication = SecurityUtil.getAuthentication();
+
+		List<String> roles = authentication.getAuthorities().stream()
+				.map(GrantedAuthority::getAuthority)
+				.collect(Collectors.toList());
+
+		if (!roles.contains(requiredRole)) {
 			LOGGER.info("User '{}' with roles '{}' does not have permission to access this resource: {}", SecurityUtil.getUsername(), roles, request.getRequestURI());
-			response.setStatus(HttpStatus.UNAUTHORIZED.value());
-			response.getWriter().println("The current user does not have permission to access this resource.");
+			throw new AccessDeniedException("The current user does not have permission to access this resource");
 		}
+		filterChain.doFilter(request, response);
 	}
 
 	private boolean isPathExcluded(HttpServletRequest request) {
@@ -75,5 +74,4 @@ public class RequiredRoleFilter extends OncePerRequestFilter {
 		}
 		return false;
 	}
-
 }

@@ -41,6 +41,9 @@ public class LineItemService {
 		if (Strings.isNullOrEmpty(lineItem.getSubjectId())) {
 			throw new BadRequestException("'subjectId' is required");
 		}
+		if (lineItem.getLevel() == null || !(lineItem.getLevel() == 1 || lineItem.getLevel() == 2)) {
+			throw new BadRequestException("'level' is required and must be equal to '1' or '2'");
+		}
 		if (!subjectService.exists(lineItem.getSubjectId())) {
 			throw new ResourceNotFoundException("No subject found for id '" + lineItem.getSubjectId() + "'");
 		}
@@ -230,30 +233,43 @@ public class LineItemService {
 	}
 
 	private List<LineItem> doOrder(List<LineItem> lineItems) {
-		List<LineItem> topLevelItems = lineItems.stream().filter(lineItem -> lineItem.getLevel() == 1).collect(toList());
-		topLevelItems.sort(Comparator.comparing(LineItem::getSequence));
+		List<LineItem> topLevelItems = lineItems.stream()
+				.filter(lineItem -> lineItem.getLevel() == 1)
+				.sorted(Comparator.comparing(LineItem::getSequence))
+				.collect(toList());
 
-		Map<String, List<LineItem>> lineItemsMappedByParent = new HashMap<>();
+		Map<String, List<LineItem>> subItemsMappedByParent = new HashMap<>();
 		List<LineItem> subItemsWithoutParent = new ArrayList<>();
-		lineItems.stream().filter(lineItem -> lineItem.getLevel() == 2).forEach(item -> {
-			if (item.getParentId() == null) {
-				subItemsWithoutParent.add(item);
-			} else {
-				lineItemsMappedByParent.computeIfAbsent(item.getParentId(), items -> new ArrayList<>()).add(item);
-			}
-		});
-		lineItemsMappedByParent.values().forEach(items -> items.sort(Comparator.comparing(LineItem::getSequence)));
 
-		topLevelItems.forEach(topItem -> {
-			if (lineItemsMappedByParent.containsKey(topItem.getId())) {
-				topItem.setChildren(lineItemsMappedByParent.get(topItem.getId()));
+		lineItems.stream().filter(lineItem -> lineItem.getLevel() == 2).forEach(lineItem -> {
+			if (lineItem.getParentId() == null) {
+				subItemsWithoutParent.add(lineItem);
+			} else {
+				subItemsMappedByParent.computeIfAbsent(lineItem.getParentId(), items -> new ArrayList<>()).add(lineItem);
 			}
 		});
+		subItemsMappedByParent.values().forEach(items -> items.sort(Comparator.comparing(LineItem::getSequence)));
+
+		topLevelItems.forEach(topLevelItem -> {
+			String parentId = topLevelItem.getId();
+			if (subItemsMappedByParent.containsKey(parentId)) {
+				topLevelItem.setChildren(subItemsMappedByParent.get(parentId));
+				subItemsMappedByParent.remove(parentId);
+			}
+		});
+
+		subItemsMappedByParent.forEach((parentId, subItems) -> {
+			LOGGER.warn("{} sub line items with parent missing, parent id: {}", subItems.size(), parentId);
+			// Return these sub items without parent as well
+			topLevelItems.addAll(subItems);
+		});
+
 		if (!subItemsWithoutParent.isEmpty()) {
 			LOGGER.warn("{} sub line items without parent id", subItemsWithoutParent.size());
 			// Return these sub items without parent as well
 			topLevelItems.addAll(subItemsWithoutParent);
 		}
+
 		return topLevelItems;
 	}
 

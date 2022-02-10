@@ -57,8 +57,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	@Override
 	public void configure(HttpSecurity http) throws Exception {
 		http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-		http.addFilterBefore(new RequestHeaderAuthenticationDecorator(), FilterSecurityInterceptor.class);
 		http.csrf().disable();
+
+		// Add custom security filters
+		http.addFilterBefore(new RequestHeaderAuthenticationDecorator(), FilterSecurityInterceptor.class);
+		http.addFilterAfter(new RequiredRoleFilter(requiredRole, excludedUrlPatterns), FilterSecurityInterceptor.class);
 
 		if (restApiReadOnly) {
 			// Read-only mode
@@ -75,7 +78,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		} else {
 			http.authorizeRequests()
 					.antMatchers(excludedUrlPatterns).permitAll()
-					.anyRequest().authenticated() //.hasAnyAuthority(requiredRole) // change to 'authenticated()' when not behind NGINX
+					.anyRequest().authenticated()
 					.and().httpBasic();
 		}
 	}
@@ -123,14 +126,4 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 				.paths(not(regex("/error")))
 				.build();
 	}
-
-	// The same as "hasAnyAuthority(requiredRole)" but configurable
-	@Bean
-	public FilterRegistrationBean<RequiredRoleFilter> getRequiredRoleFilter() {
-		RequiredRoleFilter requiredRoleFilter = new RequiredRoleFilter(requiredRole).addExcludedUrlPatterns(excludedUrlPatterns);
-		FilterRegistrationBean<RequiredRoleFilter> filterRegistrationBean = new FilterRegistrationBean<>();
-		filterRegistrationBean.setFilter(requiredRoleFilter);
-		return filterRegistrationBean;
-	}
-
 }
