@@ -2,6 +2,7 @@ package org.snomed.release.note.config;
 
 import io.kaicode.rest.util.branchpathrewrite.BranchPathUriRewriteFilter;
 import org.ihtsdo.sso.integration.RequestHeaderAuthenticationDecorator;
+import org.snomed.release.note.rest.config.AccessDeniedExceptionHandler;
 import org.snomed.release.note.rest.security.RequiredRoleFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -61,7 +62,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 		// Add custom security filters
 		http.addFilterBefore(new RequestHeaderAuthenticationDecorator(), FilterSecurityInterceptor.class);
-		http.addFilterAfter(new RequiredRoleFilter(requiredRole, excludedUrlPatterns), FilterSecurityInterceptor.class);
+		http.addFilterAt(new RequiredRoleFilter(requiredRole, excludedUrlPatterns), FilterSecurityInterceptor.class);
 
 		if (restApiReadOnly) {
 			// Read-only mode
@@ -79,6 +80,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 			http.authorizeRequests()
 					.antMatchers(excludedUrlPatterns).permitAll()
 					.anyRequest().authenticated()
+					.and().exceptionHandling().accessDeniedHandler(new AccessDeniedExceptionHandler())
 					.and().httpBasic();
 		}
 	}
