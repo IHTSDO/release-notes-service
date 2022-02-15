@@ -57,9 +57,14 @@ public class TestDataHelper {
 	}
 
 	public LineItem constructLineItem(Subject subject, String path, int level, int sequence) {
+		return constructLineItem(subject, path, level, sequence, "");
+	}
+
+	public LineItem constructLineItem(Subject subject, String path, int level, int sequence, String content) {
 		LineItem lineItem = new LineItem(subject, path);
 		lineItem.setSequence(sequence);
 		lineItem.setLevel(level);
+		lineItem.setContent(content);
 		return lineItem;
 	}
 

@@ -2,10 +2,7 @@ package org.snomed.release.note.core.data.service;
 
 import org.ihtsdo.otf.rest.exception.BusinessServiceException;
 import org.ihtsdo.otf.rest.exception.ResourceNotFoundException;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.snomed.release.note.AbstractTest;
 import org.snomed.release.note.core.data.domain.Subject;
 
@@ -14,14 +11,6 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class SubjectServiceTest extends AbstractTest {
-
-	private static final Logger logger = LoggerFactory.getLogger(SubjectServiceTest.class);
-
-	@BeforeEach
-	void setUp() {
-		List<Subject> subjects = subjectService.findAll();
-		logger.info("There are {} subjects found", subjects.size());
-	}
 
 	@Test
 	void testCreate() throws BusinessServiceException {

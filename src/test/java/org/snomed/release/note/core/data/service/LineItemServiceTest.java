@@ -2,10 +2,7 @@ package org.snomed.release.note.core.data.service;
 
 import org.ihtsdo.otf.rest.exception.BusinessServiceException;
 import org.ihtsdo.otf.rest.exception.ResourceNotFoundException;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.snomed.release.note.AbstractTest;
 import org.snomed.release.note.core.data.domain.LineItem;
 import org.snomed.release.note.core.data.domain.Subject;
@@ -21,25 +18,17 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class LineItemServiceTest extends AbstractTest {
 
-	private static final Logger logger = LoggerFactory.getLogger(LineItemServiceTest.class);
-
 	@Autowired
 	private TestDataHelper testDataHelper;
 
 	@Autowired
 	private LineItemRepository lineItemRepository;
 
-	@BeforeEach
-	void setUp() throws BusinessServiceException {
-		List<LineItem> lineItems = lineItemService.findAll();
-		logger.info("There are {} line items found", lineItems.size());
-	}
-
 	@Test
 	void testCreate() throws BusinessServiceException{
 		final String path = "MAIN/ProjectA";
 		Subject subject = subjectService.create(new Subject("Body structure", "MAIN"), "MAIN");
-		LineItem lineItem = lineItemService.create(new LineItem(subject.getId(), path, "Demonstration Release of the Anatomy Model"), path);
+		LineItem lineItem = lineItemService.create(testDataHelper.constructLineItem(subject, path, 1, 1, "Demonstration Release of the Anatomy Model"), path);
 		assertNotNull(lineItem.getId());
 		lineItem = lineItemService.find(lineItem.getId(), path);
 		assertEquals(subject.getId(), lineItem.getSubjectId());
@@ -53,7 +42,7 @@ public class LineItemServiceTest extends AbstractTest {
 	void testUpdate() throws BusinessServiceException {
 		final String path = "MAIN/ProjectA";
 		Subject subject = subjectService.create(new Subject("Body structure", "MAIN"), "MAIN");
-		LineItem lineItem = lineItemService.create(new LineItem(subject.getId(), path, "Demonstration Release of the Anatomy Model"), path);
+		LineItem lineItem = lineItemService.create(testDataHelper.constructLineItem(subject, path, 1, 1, "Demonstration Release of the Anatomy Model"), path);
 		lineItem.setContent("Final Release of the Anatomy Model");
 		lineItem.setSequence(3);
 		LineItem updated = lineItemService.update(lineItem, path);
@@ -67,7 +56,7 @@ public class LineItemServiceTest extends AbstractTest {
 	void testDelete() throws BusinessServiceException {
 		final String path = "MAIN/ProjectA";
 		Subject subject = subjectService.create(new Subject("Body structure", "MAIN"), "MAIN");
-		LineItem lineItem = lineItemService.create(new LineItem(subject.getId(), path, "Demonstration Release of the Anatomy Model"), path);
+		LineItem lineItem = lineItemService.create(testDataHelper.constructLineItem(subject, path, 1, 1), path);
 		lineItemService.delete(lineItem.getId(), path);
 		assertThrows(ResourceNotFoundException.class, () -> {
 			lineItemService.find(lineItem.getId(), path);
@@ -79,11 +68,11 @@ public class LineItemServiceTest extends AbstractTest {
 		Subject subject = subjectService.create(new Subject("Body structure", "MAIN"), "MAIN");
 		Subject anotherSubject = subjectService.create(new Subject(subject.getTitle(), "MAIN"), "MAIN");
 
-		LineItem lineItem = lineItemService.create(new LineItem(subject.getId(), "MAIN/ProjectA", "Demonstration Release of the Anatomy Model"), "MAIN/ProjectA");
-		lineItemService.create(new LineItem(anotherSubject.getId(), "MAIN/ProjectA", "Limbs/Girdles"), "MAIN/ProjectA");
-		lineItemService.create(new LineItem(subject.getId(), "MAIN/ProjectB", "Flexor annular pulley"), "MAIN/ProjectB");
-		lineItemService.create(new LineItem(anotherSubject.getId(), "MAIN/ProjectB", "Muscle tendon of toes"), "MAIN/ProjectB");
-		lineItemService.create(new LineItem(anotherSubject.getId(), "MAIN", "Muscle tendon of toes"), "MAIN");
+		LineItem lineItem = lineItemService.create(testDataHelper.constructLineItem(subject, "MAIN/ProjectA", 1, 1, "Demonstration Release of the Anatomy Model"), "MAIN/ProjectA");
+		lineItemService.create(testDataHelper.constructLineItem(anotherSubject, "MAIN/ProjectA", 1, 2, "Limbs/Girdles"), "MAIN/ProjectA");
+		lineItemService.create(testDataHelper.constructLineItem(subject, "MAIN/ProjectB", 1, 1, "Flexor annular pulley"), "MAIN/ProjectB");
+		lineItemService.create(testDataHelper.constructLineItem(anotherSubject, "MAIN/ProjectB", 1, 2, "Muscle tendon of toes"), "MAIN/ProjectB");
+		lineItemService.create(testDataHelper.constructLineItem(anotherSubject, "MAIN", 1, 1, "Muscle tendon of toes"), "MAIN");
 
 		LineItem found = lineItemService.find(lineItem.getId(), lineItem.getSourceBranch());
 		assertNotNull(found);
@@ -130,7 +119,7 @@ public class LineItemServiceTest extends AbstractTest {
 		Subject subject = subjectService.create(new Subject("Body structure", "MAIN"), "MAIN");
 
 		String sourceBranch = "MAIN/ProjectA/Task1";
-		LineItem lineItem = lineItemService.create(new LineItem(subject.getId(), sourceBranch, "Release of the Anatomy Model"), sourceBranch);
+		LineItem lineItem = lineItemService.create(testDataHelper.constructLineItem(subject, sourceBranch, 1, 1, "Release of the Anatomy Model"), sourceBranch);
 		lineItemService.promote(lineItem.getId(), sourceBranch);
 
 		lineItem = lineItemService.find(lineItem.getId(), sourceBranch);
@@ -144,7 +133,7 @@ public class LineItemServiceTest extends AbstractTest {
 		assertEquals(lineItem.getContent(), promotedLineItems.get(0).getContent());
 
 		sourceBranch = "MAIN/ProjectA/Task2";
-		LineItem lineItem2 = lineItemService.create(new LineItem(subject.getId(), sourceBranch, "COVID-19"), sourceBranch);
+		LineItem lineItem2 = lineItemService.create(testDataHelper.constructLineItem(subject, sourceBranch, 1, 2, "COVID-19"), sourceBranch);
 		lineItemService.promote(lineItem2.getId(), sourceBranch);
 
 		promotedLineItems = lineItemService.find("MAIN/ProjectA");
@@ -159,8 +148,8 @@ public class LineItemServiceTest extends AbstractTest {
 		Subject subject2 = subjectService.create(new Subject("Clinical Finding", "MAIN"), "MAIN");
 
 		final String sourceBranchA = "MAIN/ProjectA";
-		lineItemService.create(new LineItem(subject1.getId(), sourceBranchA, "Project A: Limbs/Girdles"), sourceBranchA);
-		lineItemService.create(new LineItem(subject2.getId(), sourceBranchA, "Project A: COVID-19"), sourceBranchA);
+		lineItemService.create(testDataHelper.constructLineItem(subject1, sourceBranchA, 1, 1, "Project A: Limbs/Girdles"), sourceBranchA);
+		lineItemService.create(testDataHelper.constructLineItem(subject2, sourceBranchA, 1, 2, "Project A: COVID-19"), sourceBranchA);
 		lineItemService.promote(sourceBranchA);
 
 		List<LineItem> lineItems = lineItemRepository.findBySourceBranch(sourceBranchA);
@@ -172,7 +161,7 @@ public class LineItemServiceTest extends AbstractTest {
 		});
 
 		final String sourceBranchB = "MAIN/ProjectB";
-		lineItemService.create(new LineItem(subject1.getId(), sourceBranchB, "Project B: Limbs/Girdles"), sourceBranchB);
+		lineItemService.create(testDataHelper.constructLineItem(subject1, sourceBranchB, 2, 1, "Project B: Limbs/Girdles"), sourceBranchB);
 		lineItemService.promote(sourceBranchB);
 
 		lineItems.addAll(lineItemRepository.findBySourceBranch(sourceBranchB));
@@ -191,7 +180,7 @@ public class LineItemServiceTest extends AbstractTest {
 		Subject subject = subjectService.create(new Subject("Body structure", "MAIN"), "MAIN");
 
 		String sourceBranch = "MAIN";
-		LineItem lineItem = lineItemService.create(new LineItem(subject.getId(), sourceBranch, "Demonstration Release of the Anatomy Model"), sourceBranch);
+		LineItem lineItem = lineItemService.create(testDataHelper.constructLineItem(subject, sourceBranch, 1, 1, "Demonstration Release of the Anatomy Model"), sourceBranch);
 		VersionRequest versionRequest = new VersionRequest("MAIN/2022-01-31");
 		lineItemService.version(lineItem.getSourceBranch(), versionRequest);
 
@@ -206,7 +195,7 @@ public class LineItemServiceTest extends AbstractTest {
 		Subject subject = subjectService.create(new Subject("Body structure", "MAIN"), "MAIN");
 
 		String sourceBranch = "MAIN";
-		LineItem lineItem = lineItemService.create(new LineItem(subject.getId(), sourceBranch, "Demonstration Release of the Anatomy Model"), sourceBranch);
+		LineItem lineItem = lineItemService.create(testDataHelper.constructLineItem(subject, sourceBranch, 1, 1, "Demonstration Release of the Anatomy Model"), sourceBranch);
 		assertThrows(BusinessServiceException.class, () -> {
 			lineItemService.publish(lineItem.getSourceBranch());
 		});
@@ -222,13 +211,30 @@ public class LineItemServiceTest extends AbstractTest {
 	}
 
 	@Test
-	void testFindPublishedLineItems() {
+	void testFindPublishedLineItems() throws BusinessServiceException {
+		testDataHelper.createLineItems("MAIN");
+		lineItemService.version("MAIN", new VersionRequest("MAIN/2022-01-31"));
+		lineItemService.publish("MAIN/2022-01-31");
 
-	}
+		List<LineItem> lineItemsUnordered = lineItemService.findPublished("MAIN/2022-01-31", false);
+		assertNotNull(lineItemsUnordered);
+		assertEquals(10, lineItemsUnordered.size());
+		lineItemsUnordered.forEach(item -> {
+			assertTrue(item.getChildren().isEmpty());
+		});
 
-	@Test
-	void testContentWithMarkDown_newLine() {
-
+		List<LineItem> lineItems = lineItemService.findPublished("MAIN/2022-01-31", true);
+		assertNotNull(lineItems);
+		assertEquals(3, lineItems.size());
+		lineItems.forEach(item -> {
+			assertEquals(1, item.getLevel());
+			assertTrue(TestDataHelper.LEVEL_ONE_TITLES.contains(item.getTitle()));
+			assertFalse(item.getChildren().isEmpty());
+			item.getChildren().forEach(child -> {
+				assertEquals(item.getId(), child.getParentId());
+				assertTrue(TestDataHelper.LEVEL_TWO_TITLES.contains(child.getTitle()));
+			});
+		});
 	}
 
 	private String getMergedContent(List<LineItem> lineItems, final String subjectId) {
