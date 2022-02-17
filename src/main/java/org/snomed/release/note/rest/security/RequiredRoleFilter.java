@@ -27,11 +27,11 @@ public class RequiredRoleFilter extends OncePerRequestFilter {
 	private final static Logger LOGGER = LoggerFactory.getLogger(RequiredRoleFilter.class);
 
 	public RequiredRoleFilter(String requiredRole) {
-		this.requiredRole = requiredRole;
+		this(requiredRole, null);
 	}
 
 	public RequiredRoleFilter(String requiredRole, String... excludedUrlPatterns) {
-		this(requiredRole);
+		this.requiredRole = requiredRole;
 		if (excludedUrlPatterns != null) {
 			Collections.addAll(this.excludedUrlPatterns, excludedUrlPatterns);
 		}

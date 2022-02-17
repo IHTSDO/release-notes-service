@@ -14,12 +14,6 @@ import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.firewall.DefaultHttpFirewall;
@@ -84,22 +78,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 					.and().exceptionHandling().accessDeniedHandler(new AccessDeniedExceptionHandler())
 					.and().httpBasic();
 		}
-	}
-
-	@Bean
-	public UserDetailsService userDetailsService(@Value("${spring.security.user.name}") final String username,
-												 @Value("${spring.security.user.password}") final String password) {
-		UserDetails user = User.builder()
-				.username(username)
-				.password(passwordEncoder().encode(password))
-				.authorities("ROLE_USER")
-				.build();
-		return new InMemoryUserDetailsManager(user);
-	}
-
-	@Bean
-	public PasswordEncoder passwordEncoder() {
-		return new BCryptPasswordEncoder();
 	}
 
 	@Bean

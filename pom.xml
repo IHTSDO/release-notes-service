@@ -67,7 +67,7 @@
 		<dependency>
 			<groupId>org.ihtsdo.otf.common</groupId>
 			<artifactId>otf-common</artifactId>
-			<version>5.2.0</version>
+			<version>5.2.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.ihtsdo.otf</groupId>
