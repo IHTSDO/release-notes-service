@@ -89,9 +89,6 @@ public class LineItemServiceTest extends AbstractTest {
 		foundList = lineItemService.find("MAIN/ProjectB");
 		assertEquals(2, foundList.size());
 
-		foundList = lineItemService.findBySubjectId(anotherSubject.getId());
-		assertEquals(3, foundList.size());
-
 		lineItemService.promote(lineItem.getId(), lineItem.getSourceBranch());
 		foundList = lineItemService.find("MAIN");
 		assertEquals(2, foundList.size());
@@ -161,7 +158,7 @@ public class LineItemServiceTest extends AbstractTest {
 		});
 
 		final String sourceBranchB = "MAIN/ProjectB";
-		lineItemService.create(testDataHelper.constructLineItem(subject1, sourceBranchB, 2, 1, "Project B: Limbs/Girdles"), sourceBranchB);
+		lineItemService.create(testDataHelper.constructLineItem(subject1, sourceBranchB, 1, 1, "Project B: Limbs/Girdles"), sourceBranchB);
 		lineItemService.promote(sourceBranchB);
 
 		lineItems.addAll(lineItemRepository.findBySourceBranch(sourceBranchB));

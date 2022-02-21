@@ -130,7 +130,7 @@ public class LineItem implements LineItemView {
 		this.content = content;
 	}
 
-	public int getSequence() {
+	public Integer getSequence() {
 		return sequence;
 	}
 

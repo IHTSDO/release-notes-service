@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.snomed.release.note.core.data.domain.LineItem;
 import org.snomed.release.note.core.data.repository.LineItemRepository;
+import org.snomed.release.note.core.data.repository.SubjectRepository;
 import org.snomed.release.note.core.util.BranchUtil;
 import org.snomed.release.note.rest.request.VersionRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,9 @@ public class LineItemService {
 	private SubjectService subjectService;
 
 	@Autowired
+	private SubjectRepository subjectRepository;
+
+	@Autowired
 	private LineItemRepository lineItemRepository;
 
 	@Autowired
@@ -41,9 +45,6 @@ public class LineItemService {
 		if (Strings.isNullOrEmpty(lineItem.getSubjectId())) {
 			throw new BadRequestException("'subjectId' is required");
 		}
-		if (lineItem.getLevel() == null || !(lineItem.getLevel() == 1 || lineItem.getLevel() == 2)) {
-			throw new BadRequestException("'level' is required and must be equal to '1' or '2'");
-		}
 		if (!subjectService.exists(lineItem.getSubjectId())) {
 			throw new ResourceNotFoundException("No subject found for id '" + lineItem.getSubjectId() + "'");
 		}
@@ -53,20 +54,37 @@ public class LineItemService {
 		if (findOpenLineItem(lineItem.getSubjectId(), path) != null) {
 			throw new EntityAlreadyExistsException("Line item with subjectId '" + lineItem.getSubjectId() + "' already exists on path '" + path +"'");
 		}
+
+		validateParentIdAndLevel(lineItem.getParentId(), lineItem.getLevel());
+
+		lineItem.setSubject(subjectRepository.findById(lineItem.getSubjectId()).get());
 		lineItem.setSourceBranch(path);
 		lineItem.setStart(LocalDate.now());
+
 		return lineItemRepository.save(lineItem);
 	}
 
 	public LineItem update(final LineItem lineItem, final String path) throws BusinessServiceException {
 		LineItem existing = find(lineItem.getId(), path);
+
 		if (!Strings.isNullOrEmpty(existing.getPromotedBranch())) {
 			throw new BadConfigurationException("Line item with id '" + existing.getId() + "' is already promoted to branch '" + existing.getPromotedBranch() + "' and cannot be changed");
 		}
+
+		validateParentIdAndLevel(lineItem.getParentId(), lineItem.getLevel() == null ? existing.getLevel() : lineItem.getLevel());
+
 		existing.setParentId(lineItem.getParentId());
-		existing.setLevel(lineItem.getLevel());
-		existing.setSequence(lineItem.getSequence());
-		existing.setContent(lineItem.getContent());
+
+		if (lineItem.getLevel() != null) {
+			existing.setLevel(lineItem.getLevel());
+		}
+		if (lineItem.getSequence() != null) {
+			existing.setSequence(lineItem.getSequence());
+		}
+		if (lineItem.getContent() != null) {
+			existing.setContent(lineItem.getContent());
+		}
+
 		return lineItemRepository.save(existing);
 	}
 
@@ -74,12 +92,16 @@ public class LineItemService {
 		if (BranchUtil.isCodeSystemBranch(path)) {
 			throw new BadConfigurationException("Cannot promote line item with id '" + id + "' because it is already on a code system branch '" + path + "'");
 		}
+
 		LineItem lineItem = find(id, path);
+
 		if (!Strings.isNullOrEmpty(lineItem.getPromotedBranch())) {
 			throw new BadConfigurationException("Line item with id '" + id + "' is already promoted to branch '" + lineItem.getPromotedBranch() + "'");
 		}
+
 		List<LineItem> toSave = new ArrayList<>();
 		doPromote(lineItem, getPromotedBranch(path), toSave);
+
 		// batch update
 		lineItemRepository.saveAll(toSave);
 	}
@@ -88,24 +110,30 @@ public class LineItemService {
 		if (BranchUtil.isCodeSystemBranch(path)) {
 			throw new BadConfigurationException("Cannot promote line items because they are already on a code system branch '" + path + "'");
 		}
+
 		List<LineItem> lineItems = find(path);
 
 		final String branch = getPromotedBranch(path);
 		final List<LineItem> toSave = new ArrayList<>();
+
 		lineItems.stream()
 				.filter(lineItem -> Strings.isNullOrEmpty(lineItem.getPromotedBranch()))
 				.forEach(lineItem -> doPromote(lineItem, branch, toSave));
+
 		// batch update
 		lineItemRepository.saveAll(toSave);
 	}
 
 	public LineItem find(final String id, final String path) {
-		final LineItem lineItem = lineItemRepository.findById(id).orElseThrow(() ->
-				new ResourceNotFoundException("No line item found for id '" + id + "'"));
+		LineItem lineItem = lineItemRepository.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("No line item found for id '" + id + "'"));
+
 		String sourceBranch = lineItem.getSourceBranch();
+
 		if (!path.equals(sourceBranch)) {
 			throw new ResourceNotFoundException("No line item found for id '" + id + "' and source branch '" + path + "'");
 		}
+
 		subjectService.joinSubject(lineItem);
 		return lineItem;
 	}
@@ -115,6 +143,7 @@ public class LineItemService {
 						.mustNot(QueryBuilders.existsQuery("end"))
 						.must(QueryBuilders.termQuery("sourceBranch", path)))
 				.build();
+
 		SearchHits<LineItem> searchHits = elasticsearchOperations.search(query, LineItem.class);
 
 		List<LineItem> lineItems = searchHits.get().map(SearchHit::getContent).collect(toList());
@@ -143,22 +172,16 @@ public class LineItemService {
 		LOGGER.info("{} line items found on path {}", lineItems.size(), path);
 
 		subjectService.joinSubjects(lineItems);
-
-		if (ordered) {
-			return doOrder(lineItems);
-		} else {
-			return lineItems;
-		}
-	}
-
-	public List<LineItem> findBySubjectId(final String subjectId) {
-		return lineItemRepository.findBySubjectId(subjectId);
+		return ordered ? doOrder(lineItems) : lineItems;
 	}
 
 	public List<LineItem> findAll() {
 		List<LineItem> result = new ArrayList<>();
 		Iterable<LineItem> foundLineItems = lineItemRepository.findAll();
 		foundLineItems.forEach(result::add);
+
+		subjectService.joinSubjects(result);
+
 		return result;
 	}
 
@@ -192,10 +215,12 @@ public class LineItemService {
 		}
 
 		List<LineItem> lineItems = find(path);
+
 		lineItems.forEach(lineItem -> {
 			lineItem.setSourceBranch(releaseBranch);
 			lineItem.setPromotedBranch(releaseBranch);
 		});
+
 		lineItemRepository.saveAll(lineItems);
 	}
 
@@ -203,28 +228,33 @@ public class LineItemService {
 		if (!BranchUtil.isReleaseBranch(path)) {
 			throw new BadRequestException("Branch '" + path + "' must be a release branch");
 		}
+
 		List<LineItem> lineItems = find(path);
+
 		lineItems.forEach(lineItem -> lineItem.setReleased(true));
+
 		lineItemRepository.saveAll(lineItems);
 	}
 
 	private String getPromotedBranch(final String sourceBranch) throws BusinessServiceException {
 		String promotedBranch = BranchUtil.getParentBranch(sourceBranch);
+
 		if (promotedBranch == null) {
 			throw new BadConfigurationException("Line item on source branch '" + sourceBranch + "' cannot be promoted");
 		}
+
 		return promotedBranch;
 	}
 
 	private void doPromote(LineItem lineItem, String branch, List<LineItem> toSave) {
-		// Find or create a promoted line item to merge content to
-		LineItem promotedLineItem = findOpenLineItem(lineItem.getSubjectId(), branch);
-		if (promotedLineItem == null) {
-			promotedLineItem = new LineItem(lineItem.getSubjectId(), branch, lineItem.getParentId(), lineItem.getLevel(), lineItem.getSequence(), lineItem.getContent());
+		// Find or create an open line item on the given branch to merge content to
+		LineItem openLineItem = findOpenLineItem(lineItem.getSubjectId(), branch);
+		if (openLineItem == null) {
+			openLineItem = new LineItem(lineItem.getSubjectId(), branch, lineItem.getParentId(), lineItem.getLevel(), lineItem.getSequence(), lineItem.getContent());
 		} else {
-			promotedLineItem.setContent(promotedLineItem.getContent() + '\n' + lineItem.getContent());
+			openLineItem.setContent(openLineItem.getContent() + '\n' + lineItem.getContent());
 		}
-		toSave.add(promotedLineItem);
+		toSave.add(openLineItem);
 
 		// Set promotedBranch and end
 		lineItem.setPromotedBranch(branch);
@@ -279,9 +309,27 @@ public class LineItemService {
 						.must(QueryBuilders.termQuery("sourceBranch", sourceBranch))
 						.mustNot(QueryBuilders.existsQuery("end")))
 				.build();
+
 		// Should always be just one open line item per subject, per branch
 		SearchHit<LineItem> searchHit = elasticsearchOperations.searchOne(query, LineItem.class);
+
 		return searchHit == null ? null : searchHit.getContent();
+	}
+
+	private void validateParentIdAndLevel(String parentId, Integer level) throws BusinessServiceException {
+		if (parentId != null) {
+			if (!exists(parentId)) {
+				throw new BadRequestException("Parent line item with id '" + parentId + "' does not exist");
+			}
+
+			LineItem parent = lineItemRepository.findById(parentId).get();
+
+			if (level == null || level != parent.getLevel() + 1) {
+				throw new BadRequestException("'level' must be equal to '" + (parent.getLevel() + 1) + "' for parent id '" + parentId + "' and parent level '" + parent.getLevel() + "'");
+			}
+		} else if (level == null || level != 1) {
+			throw new BadRequestException("'level' must be equal to '1' when 'parentId' is null");
+		}
 	}
 
 }
