@@ -101,7 +101,7 @@ public class LineItemController {
 	}
 
 	@DeleteMapping(value = "/{path}/lineitems/{id}")
-	@PreAuthorize("hasPermission('RELEASE_ADMIN', #path)")
+	@PreAuthorize("hasPermission('RELEASE_ADMIN', #path) || hasPermission('RELEASE_LEAD', #path)")
 	public void deleteLineItem(
 			@PathVariable String path,
 			@PathVariable String id) {
