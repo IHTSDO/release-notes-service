@@ -5,6 +5,7 @@ import org.ihtsdo.otf.rest.exception.BadRequestException;
 import org.ihtsdo.otf.rest.exception.BusinessServiceException;
 import org.snomed.release.note.core.data.domain.LineItem;
 import org.snomed.release.note.core.data.service.LineItemService;
+import org.snomed.release.note.rest.pojo.LineItemCreateRequest;
 import org.snomed.release.note.rest.pojo.VersionRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -26,8 +27,8 @@ public class LineItemController {
 	@PreAuthorize("hasPermission('AUTHOR', #path)")
 	public LineItem createLineItem(
 			@PathVariable String path,
-			@RequestBody LineItem lineItem) throws BusinessServiceException {
-		return lineItemService.create(lineItem, BranchPathUriUtil.decodePath(path));
+			@RequestBody LineItemCreateRequest lineItemCreateRequest) throws BusinessServiceException {
+		return lineItemService.create(lineItemCreateRequest, BranchPathUriUtil.decodePath(path));
 	}
 
 	@GetMapping(value = "/{path}/lineitems/{id}")

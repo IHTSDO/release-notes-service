@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.snomed.release.note.core.data.domain.LineItem;
 import org.snomed.release.note.core.data.domain.Subject;
+import org.snomed.release.note.rest.pojo.LineItemCreateRequest;
 import org.snomed.release.note.rest.request.SubjectCreateRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -58,21 +59,19 @@ public class TestService {
 	private LineItem createLineItem(final JSONObject obj, final String path, final String parentId) throws BusinessServiceException {
 		Subject subject = createSubject(obj, path);
 
-		LineItem lineItem = new LineItem();
-		lineItem.setSourceBranch(path);
-		lineItem.setSubject(subject);
-		lineItem.setSubjectId(subject.getId());
-		lineItem.setParentId(parentId);
+		LineItemCreateRequest lineItemCreateRequest = new LineItemCreateRequest();
+		lineItemCreateRequest.setSubjectId(subject.getId());
+		lineItemCreateRequest.setParentId(parentId);
 		if (!obj.isNull("level")) {
-			lineItem.setLevel(obj.getInt("level"));
+			lineItemCreateRequest.setLevel(obj.getInt("level"));
 		}
 		if (!obj.isNull("sequence")) {
-			lineItem.setSequence(obj.getInt("sequence"));
+			lineItemCreateRequest.setSequence(obj.getInt("sequence"));
 		}
 		if (!obj.isNull("content")) {
-			lineItem.setContent(obj.getString("content"));
+			lineItemCreateRequest.setContent(obj.getString("content"));
 		}
-		return lineItemService.create(lineItem, path);
+		return lineItemService.create(lineItemCreateRequest, path);
 	}
 
 	private void createLineItems(JSONArray array, String path, String parentId) throws BusinessServiceException {

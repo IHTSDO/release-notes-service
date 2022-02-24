@@ -10,6 +10,7 @@ import org.snomed.release.note.core.data.domain.Subject;
 import org.snomed.release.note.core.data.repository.LineItemRepository;
 import org.snomed.release.note.core.data.repository.SubjectRepository;
 import org.snomed.release.note.core.util.BranchUtil;
+import org.snomed.release.note.rest.pojo.LineItemCreateRequest;
 import org.snomed.release.note.rest.pojo.VersionRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
@@ -41,33 +42,34 @@ public class LineItemService {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(LineItemService.class);
 
-	public LineItem create(LineItem lineItem, final String path) throws BusinessServiceException {
-		if (Strings.isNullOrEmpty(lineItem.getSubjectId())) {
+	public LineItem create(final LineItemCreateRequest lineItemCreateRequest, final String path) throws BusinessServiceException {
+		String subjectId = lineItemCreateRequest.getSubjectId();
+
+		if (Strings.isNullOrEmpty(subjectId)) {
 			throw new BadRequestException("'subjectId' is required");
 		}
-		Optional<Subject> subject = subjectRepository.findById(lineItem.getSubjectId());
-		if (subject.isEmpty()) {
-			throw new ResourceNotFoundException("No subject found for id '" + lineItem.getSubjectId() + "'");
+		if (!subjectService.exists(subjectId)) {
+			throw new ResourceNotFoundException("No subject found for id '" + subjectId + "'");
 		}
-		if (lineItem.getId() != null && exists(lineItem.getId())) {
-			throw new EntityAlreadyExistsException("Line item with id '" + lineItem.getId() + "' already exists");
-		}
-		if (findOpenLineItem(lineItem.getSubjectId(), path) != null) {
-			throw new EntityAlreadyExistsException("Line item with subjectId '" + lineItem.getSubjectId() + "' already exists on path '" + path +"'");
+		if (findOpenLineItem(subjectId, path) != null) {
+			throw new EntityAlreadyExistsException("Line item with subjectId '" + subjectId + "' already exists on path '" + path +"'");
 		}
 
-		validateParentIdAndLevel(lineItem.getParentId(), lineItem.getLevel());
+		validateParentIdAndLevel(lineItemCreateRequest.getParentId(), lineItemCreateRequest.getLevel());
 
-		lineItem.setSubject(subject.get());
+		LineItem lineItem = new LineItem();
 		lineItem.setSourceBranch(path);
+		lineItem.setSubjectId(lineItemCreateRequest.getSubjectId());
+		lineItem.setSubject(subjectRepository.findById(subjectId).get());
+		lineItem.setParentId(lineItemCreateRequest.getParentId());
 
-		if (lineItem.getLevel() == null) {
-			lineItem.setLevel(lineItem.getParentId() == null ? 1 : 2);
+		if (lineItemCreateRequest.getLevel() == null) {
+			lineItem.setLevel(lineItemCreateRequest.getParentId() == null ? 1 : 2);
+		} else {
+			lineItem.setLevel(lineItemCreateRequest.getLevel());
 		}
-		if (lineItem.getSequence() == null) {
-			lineItem.setSequence(1);
-		}
-
+		lineItem.setSequence(lineItemCreateRequest.getSequence() == null ? 1 : lineItemCreateRequest.getSequence());
+		lineItem.setContent(lineItemCreateRequest.getContent());
 		lineItem.setStart(new Date());
 
 		return lineItemRepository.save(lineItem);
