@@ -1,4 +1,4 @@
-package org.snomed.release.note.rest.request;
+package org.snomed.release.note.rest.pojo;
 
 public class VersionRequest {
 
