@@ -5,6 +5,8 @@ import org.ihtsdo.otf.rest.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.snomed.release.note.AbstractTest;
 import org.snomed.release.note.core.data.domain.Subject;
+import org.snomed.release.note.rest.request.SubjectCreateRequest;
+import org.snomed.release.note.rest.request.SubjectUpdateRequest;
 
 import java.util.List;
 
@@ -15,7 +17,7 @@ public class SubjectServiceTest extends AbstractTest {
 	@Test
 	void testCreate() throws BusinessServiceException {
 		final String path = "MAIN";
-		Subject subject = subjectService.create(new Subject("Clinical Finding", path), path);
+		Subject subject = subjectService.create(new SubjectCreateRequest("Clinical Finding"), path);
 		assertNotNull(subject.getId());
 		assertEquals("Clinical Finding", subject.getTitle());
 		assertEquals(path, subject.getPath());
@@ -24,9 +26,9 @@ public class SubjectServiceTest extends AbstractTest {
 	@Test
 	void testUpdate() throws BusinessServiceException {
 		final String path = "MAIN";
-		Subject subject = subjectService.create(new Subject("Clinical Finding", path), path);
+		Subject subject = subjectService.create(new SubjectCreateRequest("Clinical Finding"), path);
 		subject.setTitle("Procedure");
-		Subject updated = subjectService.update(subject, path);
+		Subject updated = subjectService.update(new SubjectUpdateRequest(subject.getId(), subject.getTitle()), path);
 		assertEquals(subject.getId(), updated.getId());
 		assertEquals("Procedure", updated.getTitle());
 		assertEquals(path, updated.getPath());
@@ -35,19 +37,17 @@ public class SubjectServiceTest extends AbstractTest {
 	@Test
 	void testDelete() throws BusinessServiceException {
 		final String path = "MAIN";
-		Subject subject = subjectService.create(new Subject("Clinical Finding", path), path);
+		Subject subject = subjectService.create(new SubjectCreateRequest("Clinical Finding"), path);
 		subjectService.delete(subject.getId(), path);
-		assertThrows(ResourceNotFoundException.class, () -> {
-			subjectService.find(subject.getId(), path);
-		});
+		assertThrows(ResourceNotFoundException.class, () -> subjectService.find(subject.getId(), path));
 	}
 
 	@Test
 	void testFind() throws BusinessServiceException {
-		Subject subject = subjectService.create(new Subject("Clinical Finding", "MAIN"), "MAIN");
-		subjectService.create(new Subject("COVID-19", "MAIN"), "MAIN");
-		subjectService.create(new Subject("Procedure", "MAIN/SNOMEDCT-US"), "MAIN/SNOMEDCT-US");
-		subjectService.create(new Subject("COVID-19", "MAIN/SNOMEDCT-US"), "MAIN/SNOMEDCT-US");
+		Subject subject = subjectService.create(new SubjectCreateRequest("Clinical Finding"), "MAIN");
+		subjectService.create(new SubjectCreateRequest("COVID-19"), "MAIN");
+		subjectService.create(new SubjectCreateRequest("Procedure"), "MAIN/SNOMEDCT-US");
+		subjectService.create(new SubjectCreateRequest("COVID-19"), "MAIN/SNOMEDCT-US");
 
 		Subject found = subjectService.find(subject.getId(), subject.getPath());
 		assertNotNull(found);

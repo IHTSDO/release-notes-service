@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.snomed.release.note.core.data.domain.LineItem;
 import org.snomed.release.note.core.data.domain.Subject;
+import org.snomed.release.note.rest.request.SubjectCreateRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -45,25 +46,32 @@ public class TestService {
 	private String readFile(final String fileName) throws IOException {
 		StringBuilder sb = new StringBuilder();
 		try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)))) {
-			br.lines().forEach(line -> sb.append(line));
+			br.lines().forEach(sb::append);
 		}
 		return sb.toString();
 	}
 
 	private Subject createSubject(final JSONObject obj, final String path) throws BusinessServiceException {
-		return subjectService.create(new Subject(obj.getString("title"), path), path);
+		return subjectService.create(new SubjectCreateRequest(obj.getString("title")), path);
 	}
 
 	private LineItem createLineItem(final JSONObject obj, final String path, final String parentId) throws BusinessServiceException {
 		Subject subject = createSubject(obj, path);
-		String content = null;
-		if (obj.get("content") != JSONObject.NULL) {
-			content = obj.getString("content");
-		}
-		LineItem lineItem = new LineItem(subject.getId(), path, content);
-		lineItem.setLevel(obj.getInt("level"));
-		lineItem.setSequence(obj.getInt("sequence"));
+
+		LineItem lineItem = new LineItem();
+		lineItem.setSourceBranch(path);
+		lineItem.setSubject(subject);
+		lineItem.setSubjectId(subject.getId());
 		lineItem.setParentId(parentId);
+		if (!obj.isNull("level")) {
+			lineItem.setLevel(obj.getInt("level"));
+		}
+		if (!obj.isNull("sequence")) {
+			lineItem.setSequence(obj.getInt("sequence"));
+		}
+		if (!obj.isNull("content")) {
+			lineItem.setContent(obj.getString("content"));
+		}
 		return lineItemService.create(lineItem, path);
 	}
 

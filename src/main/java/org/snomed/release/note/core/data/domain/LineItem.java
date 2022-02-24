@@ -2,16 +2,15 @@ package org.snomed.release.note.core.data.domain;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
-import org.springframework.data.elasticsearch.annotations.DateFormat;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
+import org.springframework.data.elasticsearch.annotations.Setting;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-@Document(indexName = "lineitem")
+@Document(indexName = "#{@indexNameProvider.getIndexNameWithPrefix('lineitem')}")
+@Setting(settingPath = "elasticsearch-settings.json")
 public class LineItem implements LineItemView {
 
 	@Id
@@ -39,11 +38,11 @@ public class LineItem implements LineItemView {
 	@Field(type = FieldType.Keyword)
 	private String promotedBranch;
 
-	@Field(type = FieldType.Date, format = DateFormat.year_month_day)
-	private LocalDate start;
+	@Field(type = FieldType.Date)
+	private Date start;
 
-	@Field(type = FieldType.Date, format = DateFormat.year_month_day)
-	private LocalDate end;
+	@Field(type = FieldType.Date)
+	private Date end;
 
 	@Field(type = FieldType.Boolean)
 	private boolean released;
@@ -56,37 +55,6 @@ public class LineItem implements LineItemView {
 
 	public LineItem() {
 		this.children = new ArrayList<>();
-		this.start = LocalDate.now();
-		this.level = 0;
-		this.sequence = 0;
-		this.content = "";
-	}
-
-	public LineItem(Subject subject, String sourceBranch) {
-		this();
-		if (subject != null) {
-			this.subject = subject;
-			this.subjectId = subject.getId();
-		}
-		this.sourceBranch = sourceBranch;
-	}
-
-	public LineItem(String subjectId, String sourceBranch) {
-		this();
-		this.subjectId = subjectId;
-		this.sourceBranch = sourceBranch;
-	}
-
-	public LineItem(String subjectId, String sourceBranch, String content) {
-		this(subjectId, sourceBranch);
-		this.content = content;
-	}
-
-	public LineItem(String subjectId, String sourceBranch, String parentId, int level, int sequence, String content) {
-		this(subjectId, sourceBranch, content);
-		this.parentId = parentId;
-		this.level = level;
-		this.sequence = sequence;
 	}
 
 	public String getId() {
@@ -109,7 +77,6 @@ public class LineItem implements LineItemView {
 		return parentId;
 	}
 
-
 	public void setParentId(String parentId) {
 		this.parentId = parentId;
 	}
@@ -124,6 +91,10 @@ public class LineItem implements LineItemView {
 
 	public String getContent() {
 		return content;
+	}
+
+	public String getContentNotNull() {
+		return content == null ? "" : content;
 	}
 
 	public void setContent(String content) {
@@ -154,19 +125,19 @@ public class LineItem implements LineItemView {
 		this.promotedBranch = promotedBranch;
 	}
 
-	public LocalDate getStart() {
+	public Date getStart() {
 		return start;
 	}
 
-	public void setStart(LocalDate start) {
+	public void setStart(Date start) {
 		this.start = start;
 	}
 
-	public LocalDate getEnd() {
+	public Date getEnd() {
 		return end;
 	}
 
-	public void setEnd(LocalDate end) {
+	public void setEnd(Date end) {
 		this.end = end;
 	}
 
@@ -177,7 +148,6 @@ public class LineItem implements LineItemView {
 	public void setReleased(boolean released) {
 		this.released = released;
 	}
-
 
 	@Override
 	public List<LineItem> getChildren() {
@@ -218,10 +188,6 @@ public class LineItem implements LineItemView {
 		return Objects.hash(id, subjectId);
 	}
 
-	private String formatDate(LocalDate date) {
-		return (date == null) ? "null" : date.format(DateTimeFormatter.ISO_LOCAL_DATE);
-	}
-
 	@Override
 	public String toString() {
 		return "LineItem{" +
@@ -233,9 +199,11 @@ public class LineItem implements LineItemView {
 				", sequence=" + sequence +
 				", sourceBranch='" + sourceBranch + '\'' +
 				", promotedBranch='" + promotedBranch + '\'' +
-				", start=" + formatDate(start) +
-				", end=" + formatDate(end) +
+				", start=" + start +
+				", end=" + end +
 				", released=" + released +
+				", children=" + children +
+				", subject=" + subject +
 				'}';
 	}
 }

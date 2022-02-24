@@ -54,4 +54,9 @@ public class ElasticsearchConfig extends AbstractElasticsearchConfiguration {
 		return new ElasticsearchProperties();
 	}
 
+	@Bean
+	public IndexNameProvider indexNameProvider(ElasticsearchProperties elasticsearchProperties) {
+		return new IndexNameProvider(elasticsearchProperties);
+	}
+
 }

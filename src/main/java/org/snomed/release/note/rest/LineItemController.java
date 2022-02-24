@@ -61,7 +61,6 @@ public class LineItemController {
 			@PathVariable String path,
 			@PathVariable String id) throws BusinessServiceException {
 		String branchPath = BranchPathUriUtil.decodePath(path);
-		// TODO check branchPath
 		lineItemService.promote(id, BranchPathUriUtil.decodePath(path));
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
@@ -71,7 +70,6 @@ public class LineItemController {
 	public ResponseEntity<String> promoteProjectLineItems(
 			@PathVariable String path) throws BusinessServiceException {
 		String branchPath = BranchPathUriUtil.decodePath(path);
-		// TODO check branchPath
 		lineItemService.promote(branchPath);
 		return new ResponseEntity<>(HttpStatus.OK);
 	}

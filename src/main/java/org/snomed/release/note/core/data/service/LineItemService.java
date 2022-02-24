@@ -6,6 +6,7 @@ import org.ihtsdo.otf.rest.exception.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.snomed.release.note.core.data.domain.LineItem;
+import org.snomed.release.note.core.data.domain.Subject;
 import org.snomed.release.note.core.data.repository.LineItemRepository;
 import org.snomed.release.note.core.data.repository.SubjectRepository;
 import org.snomed.release.note.core.util.BranchUtil;
@@ -18,7 +19,6 @@ import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilde
 import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.util.*;
 
 import static java.util.stream.Collectors.toList;
@@ -45,7 +45,8 @@ public class LineItemService {
 		if (Strings.isNullOrEmpty(lineItem.getSubjectId())) {
 			throw new BadRequestException("'subjectId' is required");
 		}
-		if (!subjectService.exists(lineItem.getSubjectId())) {
+		Optional<Subject> subject = subjectRepository.findById(lineItem.getSubjectId());
+		if (subject.isEmpty()) {
 			throw new ResourceNotFoundException("No subject found for id '" + lineItem.getSubjectId() + "'");
 		}
 		if (lineItem.getId() != null && exists(lineItem.getId())) {
@@ -57,9 +58,17 @@ public class LineItemService {
 
 		validateParentIdAndLevel(lineItem.getParentId(), lineItem.getLevel());
 
-		lineItem.setSubject(subjectRepository.findById(lineItem.getSubjectId()).get());
+		lineItem.setSubject(subject.get());
 		lineItem.setSourceBranch(path);
-		lineItem.setStart(LocalDate.now());
+
+		if (lineItem.getLevel() == null) {
+			lineItem.setLevel(lineItem.getParentId() == null ? 1 : 2);
+		}
+		if (lineItem.getSequence() == null) {
+			lineItem.setSequence(1);
+		}
+
+		lineItem.setStart(new Date());
 
 		return lineItemRepository.save(lineItem);
 	}
@@ -134,7 +143,7 @@ public class LineItemService {
 			throw new ResourceNotFoundException("No line item found for id '" + id + "' and source branch '" + path + "'");
 		}
 
-		subjectService.joinSubject(lineItem);
+		subjectRepository.findById(lineItem.getSubjectId()).ifPresent(lineItem::setSubject);
 		return lineItem;
 	}
 
@@ -250,15 +259,15 @@ public class LineItemService {
 		// Find or create an open line item on the given branch to merge content to
 		LineItem openLineItem = findOpenLineItem(lineItem.getSubjectId(), branch);
 		if (openLineItem == null) {
-			openLineItem = new LineItem(lineItem.getSubjectId(), branch, lineItem.getParentId(), lineItem.getLevel(), lineItem.getSequence(), lineItem.getContent());
+			openLineItem = createLineItem(lineItem, branch);
 		} else {
-			openLineItem.setContent(openLineItem.getContent() + '\n' + lineItem.getContent());
+			openLineItem.setContent(String.join(System.lineSeparator(), openLineItem.getContentNotNull(), lineItem.getContentNotNull()));
 		}
 		toSave.add(openLineItem);
 
 		// Set promotedBranch and end
 		lineItem.setPromotedBranch(branch);
-		lineItem.setEnd(LocalDate.now());
+		lineItem.setEnd(new Date());
 		toSave.add(lineItem);
 	}
 
@@ -321,15 +330,23 @@ public class LineItemService {
 			if (!exists(parentId)) {
 				throw new BadRequestException("Parent line item with id '" + parentId + "' does not exist");
 			}
-
-			LineItem parent = lineItemRepository.findById(parentId).get();
-
-			if (level == null || level != parent.getLevel() + 1) {
-				throw new BadRequestException("'level' must be equal to '" + (parent.getLevel() + 1) + "' for parent id '" + parentId + "' and parent level '" + parent.getLevel() + "'");
+			if (level != null && level != 2) {
+				throw new BadRequestException("'level' must be equal to '2' when 'parentId' is not null");
 			}
-		} else if (level == null || level != 1) {
+		} else if (level != null && level != 1) {
 			throw new BadRequestException("'level' must be equal to '1' when 'parentId' is null");
 		}
+	}
+
+	private LineItem createLineItem(LineItem lineItem, String path) {
+		LineItem newLineItem = new LineItem();
+		newLineItem.setSourceBranch(path);
+		newLineItem.setSubjectId(lineItem.getSubjectId());
+		newLineItem.setParentId(lineItem.getParentId());
+		newLineItem.setLevel(lineItem.getLevel());
+		newLineItem.setSequence(lineItem.getSequence());
+		newLineItem.setContent(lineItem.getContentNotNull());
+		return newLineItem;
 	}
 
 }

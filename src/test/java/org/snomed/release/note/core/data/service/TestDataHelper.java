@@ -50,9 +50,8 @@ public class TestDataHelper {
 		subItems.subList(2, 5).stream().forEach(lineItem -> lineItem.setParentId(topItems.get(1).getId()));
 		subItems.subList(5, 7).stream().forEach(lineItem -> lineItem.setParentId(topItems.get(2).getId()));
 
-		List<LineItem> results = new ArrayList<>();
-		results.addAll(topItems);
-		lineItemRepository.saveAll(subItems).forEach(lineItem -> results.add(lineItem));
+		List<LineItem> results = new ArrayList<>(topItems);
+		lineItemRepository.saveAll(subItems).forEach(results::add);
 		return results;
 	}
 
@@ -61,7 +60,10 @@ public class TestDataHelper {
 	}
 
 	public LineItem constructLineItem(Subject subject, String path, int level, int sequence, String content) {
-		LineItem lineItem = new LineItem(subject, path);
+		LineItem lineItem = new LineItem();
+		lineItem.setSourceBranch(path);
+		lineItem.setSubject(subject);
+		lineItem.setSubjectId(subject.getId());
 		lineItem.setSequence(sequence);
 		lineItem.setLevel(level);
 		lineItem.setContent(content);

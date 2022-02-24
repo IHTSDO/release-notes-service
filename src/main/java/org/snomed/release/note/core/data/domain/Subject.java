@@ -1,16 +1,16 @@
 package org.snomed.release.note.core.data.domain;
 
 import org.springframework.data.annotation.Id;
-import org.springframework.data.elasticsearch.annotations.DateFormat;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
+import org.springframework.data.elasticsearch.annotations.Setting;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.util.Objects;
 
-@Document(indexName = "subject")
+@Document(indexName = "#{@indexNameProvider.getIndexNameWithPrefix('subject')}")
+@Setting(settingPath = "elasticsearch-settings.json")
 public class Subject {
 
 	@Id
@@ -23,16 +23,19 @@ public class Subject {
 	@Field(type = FieldType.Keyword)
 	private String path;
 
-	@Field(type = FieldType.Date, format = DateFormat.year_month_day)
-	private LocalDate createdDate;
+	@Field(type = FieldType.Date)
+	private Date created;
 
-	@Field(type = FieldType.Date, format = DateFormat.year_month_day)
-	private LocalDate lastModifiedDate;
+	@Field(type = FieldType.Date)
+	private Date lastModified;
+
+	public Subject() {
+	}
 
 	public Subject(String title, String path) {
+		super();
 		this.title = title;
 		this.path = path;
-		this.createdDate = LocalDate.now();
 	}
 
 	public String getId() {
@@ -59,20 +62,20 @@ public class Subject {
 		this.path = path;
 	}
 
-	public LocalDate getCreatedDate() {
-		return createdDate;
+	public Date getCreated() {
+		return created;
 	}
 
-	public void setCreatedDate(LocalDate createdDate) {
-		this.createdDate = createdDate;
+	public void setCreated(Date created) {
+		this.created = created;
 	}
 
-	public LocalDate getLastModifiedDate() {
-		return lastModifiedDate;
+	public Date getLastModified() {
+		return lastModified;
 	}
 
-	public void setLastModifiedDate(LocalDate lastModifiedDate) {
-		this.lastModifiedDate = lastModifiedDate;
+	public void setLastModified(Date lastModified) {
+		this.lastModified = lastModified;
 	}
 
 	@Override
@@ -94,18 +97,14 @@ public class Subject {
 		return Objects.hash(id);
 	}
 
-	private String formatDate(LocalDate date) {
-		return (date == null) ? "null" : date.format(DateTimeFormatter.ISO_LOCAL_DATE);
-	}
-
 	@Override
 	public String toString() {
 		return "Subject{" +
 				"id='" + id + '\'' +
 				", title='" + title + '\'' +
 				", path='" + path + '\'' +
-				", createdDate=" + formatDate(createdDate) +
-				", lastModifiedDate=" + formatDate(lastModifiedDate) +
+				", created=" + created +
+				", lastModified=" + lastModified +
 				'}';
 	}
 }

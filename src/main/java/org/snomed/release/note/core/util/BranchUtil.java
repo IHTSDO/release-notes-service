@@ -31,15 +31,16 @@ public class BranchUtil {
 			branch = branch.substring(0, branch.length() - 1);
 		}
 		String parentBranch = getParentBranch(branch);
-		if (parentBranch != null) {
-			String version = branch.substring(branch.lastIndexOf(SEPARATOR) + 1);
-			try {
-				LocalDate.parse(version, DateTimeFormatter.ISO_LOCAL_DATE);
-				return isCodeSystemBranch(parentBranch);
-			} catch (DateTimeParseException e) {
-			}
+		if (parentBranch == null) {
+			return false;
 		}
-		return false;
+		String version = branch.substring(branch.lastIndexOf(SEPARATOR) + 1);
+		try {
+			LocalDate.parse(version, DateTimeFormatter.ISO_LOCAL_DATE);
+			return isCodeSystemBranch(parentBranch);
+		} catch (DateTimeParseException e) {
+			return false;
+		}
 	}
 
 	public static String getParentBranch(String branch) {

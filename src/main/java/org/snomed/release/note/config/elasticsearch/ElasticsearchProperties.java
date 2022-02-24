@@ -8,6 +8,7 @@ public class ElasticsearchProperties {
 	private String[] urls;
 	private String username;
 	private String password;
+	private IndexProperties index = new IndexProperties();
 
 	public String[] getUrls() {
 		return urls;
@@ -32,4 +33,27 @@ public class ElasticsearchProperties {
 	public void setPassword(String password) {
 		this.password = password;
 	}
+
+	public IndexProperties getIndex() {
+		return index;
+	}
+
+	public void setIndex(IndexProperties index) {
+		this.index = index;
+	}
+
+	public static class IndexProperties {
+
+		private String prefix;
+
+		public String getPrefix() {
+			return prefix;
+		}
+
+		public void setPrefix(String prefix) {
+			this.prefix = prefix;
+		}
+
+	}
+
 }

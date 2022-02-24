@@ -5,6 +5,8 @@ import org.ihtsdo.otf.rest.exception.BadRequestException;
 import org.ihtsdo.otf.rest.exception.BusinessServiceException;
 import org.snomed.release.note.core.data.domain.Subject;
 import org.snomed.release.note.core.data.service.SubjectService;
+import org.snomed.release.note.rest.request.SubjectCreateRequest;
+import org.snomed.release.note.rest.request.SubjectUpdateRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,8 +25,8 @@ public class SubjectController {
 	@PreAuthorize("hasPermission('RELEASE_LEAD', #path)")
 	public Subject createSubject(
 			@PathVariable String path,
-			@RequestBody Subject subject) throws BusinessServiceException {
-		return subjectService.create(subject, BranchPathUriUtil.decodePath(path));
+			@RequestBody SubjectCreateRequest subjectCreateRequest) throws BusinessServiceException {
+		return subjectService.create(subjectCreateRequest, BranchPathUriUtil.decodePath(path));
 	}
 
 	@GetMapping(value = "/{path}/subjects/{id}")
@@ -45,11 +47,11 @@ public class SubjectController {
 	public Subject updateSubject(
 			@PathVariable String path,
 			@PathVariable String id,
-			@RequestBody Subject subject) throws BusinessServiceException {
-		if (!id.equals(subject.getId())) {
-			throw new BadRequestException("'id' in the request body: '" + subject.getId() + "' does not match the one in the path: '" + id + "'");
+			@RequestBody SubjectUpdateRequest subjectUpdateRequest) throws BusinessServiceException {
+		if (!id.equals(subjectUpdateRequest.getId())) {
+			throw new BadRequestException("'id' in the request body: '" + subjectUpdateRequest.getId() + "' does not match the one in the path: '" + id + "'");
 		}
-		return subjectService.update(subject, BranchPathUriUtil.decodePath(path));
+		return subjectService.update(subjectUpdateRequest, BranchPathUriUtil.decodePath(path));
 	}
 
 	@DeleteMapping(value = "/{path}/subjects/{id}")

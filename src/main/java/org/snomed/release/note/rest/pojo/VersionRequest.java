@@ -2,7 +2,7 @@ package org.snomed.release.note.rest.pojo;
 
 public class VersionRequest {
 
-	private String releaseBranch;
+	private final String releaseBranch;
 
 	public VersionRequest(String releaseBranch) {
 		this.releaseBranch = releaseBranch;

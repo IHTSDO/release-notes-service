@@ -24,7 +24,7 @@ public class TestController {
 
 	@DeleteMapping(value = "/{path}/testData")
 	public ResponseEntity<String> deleteData(
-			@PathVariable String path) throws BusinessServiceException {
+			@PathVariable String path) {
 		testService.deleteData(BranchPathUriUtil.decodePath(path));
 		return new ResponseEntity<>(HttpStatus.OK);
 	}

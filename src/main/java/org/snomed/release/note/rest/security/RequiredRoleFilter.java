@@ -27,7 +27,7 @@ public class RequiredRoleFilter extends OncePerRequestFilter {
 	private final static Logger LOGGER = LoggerFactory.getLogger(RequiredRoleFilter.class);
 
 	public RequiredRoleFilter(String requiredRole) {
-		this(requiredRole, null);
+		this(requiredRole, new String[]{});
 	}
 
 	public RequiredRoleFilter(String requiredRole, String... excludedUrlPatterns) {

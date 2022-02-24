@@ -9,30 +9,30 @@ public class BranchUtilTest extends AbstractTest {
 
 	@Test
 	void testIsReleaseBranch() {
-		assertEquals(false, BranchUtil.isReleaseBranch("MAIN/"));
-		assertEquals(false, BranchUtil.isReleaseBranch("MAIN/ProjectA"));
-		assertEquals(false, BranchUtil.isReleaseBranch("MAIN/ProjectA/Task1/"));
-		assertEquals(true, BranchUtil.isReleaseBranch("MAIN/2020-01-01"));
-		assertEquals(false, BranchUtil.isReleaseBranch("MAIN/20200101"));
-		assertEquals(false, BranchUtil.isReleaseBranch("MAIN/ProjectA/2020-01-01"));
-		assertEquals(false, BranchUtil.isReleaseBranch("MAIN/SNOMEDCT-US"));
-		assertEquals(true, BranchUtil.isReleaseBranch("MAIN/SNOMEDCT-US/2020-01-01"));
-		assertEquals(false, BranchUtil.isReleaseBranch("MAIN/SNOMEDCT-US/20200101"));
-		assertEquals(false, BranchUtil.isReleaseBranch("MAIN/SNOMEDCT-US/ProjectA/Task1/2020-01-01"));
+		assertFalse(BranchUtil.isReleaseBranch("MAIN/"));
+		assertFalse(BranchUtil.isReleaseBranch("MAIN/ProjectA"));
+		assertFalse(BranchUtil.isReleaseBranch("MAIN/ProjectA/Task1/"));
+		assertTrue(BranchUtil.isReleaseBranch("MAIN/2020-01-01"));
+		assertFalse(BranchUtil.isReleaseBranch("MAIN/20200101"));
+		assertFalse(BranchUtil.isReleaseBranch("MAIN/ProjectA/2020-01-01"));
+		assertFalse(BranchUtil.isReleaseBranch("MAIN/SNOMEDCT-US"));
+		assertTrue(BranchUtil.isReleaseBranch("MAIN/SNOMEDCT-US/2020-01-01"));
+		assertFalse(BranchUtil.isReleaseBranch("MAIN/SNOMEDCT-US/20200101"));
+		assertFalse(BranchUtil.isReleaseBranch("MAIN/SNOMEDCT-US/ProjectA/Task1/2020-01-01"));
 	}
 
 	@Test
 	void testIsCodeSystemBranch() {
-		assertEquals(true, BranchUtil.isCodeSystemBranch("MAIN/"));
-		assertEquals(false, BranchUtil.isCodeSystemBranch("MAIN/ProjectA"));
-		assertEquals(false, BranchUtil.isCodeSystemBranch("MAIN/ProjectA/Task1/"));
-		assertEquals(false, BranchUtil.isCodeSystemBranch("MAIN/2020-01-01"));
-		assertEquals(false, BranchUtil.isCodeSystemBranch("MAIN/20200101"));
-		assertEquals(false, BranchUtil.isCodeSystemBranch("MAIN/ProjectA/2020-01-01"));
-		assertEquals(true, BranchUtil.isCodeSystemBranch("MAIN/SNOMEDCT-US"));
-		assertEquals(false, BranchUtil.isCodeSystemBranch("MAIN/SNOMEDCT-US/2020-01-01"));
-		assertEquals(false, BranchUtil.isCodeSystemBranch("MAIN/SNOMEDCT-US/20200101"));
-		assertEquals(false, BranchUtil.isCodeSystemBranch("MAIN/SNOMEDCT-US/ProjectA/Task1/2020-01-01"));
+		assertTrue(BranchUtil.isCodeSystemBranch("MAIN/"));
+		assertFalse(BranchUtil.isCodeSystemBranch("MAIN/ProjectA"));
+		assertFalse(BranchUtil.isCodeSystemBranch("MAIN/ProjectA/Task1/"));
+		assertFalse(BranchUtil.isCodeSystemBranch("MAIN/2020-01-01"));
+		assertFalse(BranchUtil.isCodeSystemBranch("MAIN/20200101"));
+		assertFalse(BranchUtil.isCodeSystemBranch("MAIN/ProjectA/2020-01-01"));
+		assertTrue(BranchUtil.isCodeSystemBranch("MAIN/SNOMEDCT-US"));
+		assertFalse(BranchUtil.isCodeSystemBranch("MAIN/SNOMEDCT-US/2020-01-01"));
+		assertFalse(BranchUtil.isCodeSystemBranch("MAIN/SNOMEDCT-US/20200101"));
+		assertFalse(BranchUtil.isCodeSystemBranch("MAIN/SNOMEDCT-US/ProjectA/Task1/2020-01-01"));
 	}
 
 	@Test
@@ -51,7 +51,7 @@ public class BranchUtilTest extends AbstractTest {
 
 	@Test
 	void testGetParentBranch() {
-		assertEquals(null, BranchUtil.getParentBranch("MAIN/"));
+		assertNull(BranchUtil.getParentBranch("MAIN/"));
 		assertEquals("MAIN", BranchUtil.getParentBranch("MAIN/ProjectA"));
 		assertEquals("MAIN/ProjectA", BranchUtil.getParentBranch("MAIN/ProjectA/Task1/"));
 		assertEquals("MAIN", BranchUtil.getParentBranch("MAIN/2020-01-01"));
