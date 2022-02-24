@@ -11,6 +11,7 @@ import org.snomed.release.note.core.data.repository.LineItemRepository;
 import org.snomed.release.note.core.data.repository.SubjectRepository;
 import org.snomed.release.note.core.util.BranchUtil;
 import org.snomed.release.note.rest.pojo.LineItemCreateRequest;
+import org.snomed.release.note.rest.pojo.LineItemUpdateRequest;
 import org.snomed.release.note.rest.pojo.VersionRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
@@ -75,25 +76,25 @@ public class LineItemService {
 		return lineItemRepository.save(lineItem);
 	}
 
-	public LineItem update(final LineItem lineItem, final String path) throws BusinessServiceException {
-		LineItem existing = find(lineItem.getId(), path);
+	public LineItem update(final LineItemUpdateRequest lineItemUpdateRequest, final String path) throws BusinessServiceException {
+		LineItem existing = find(lineItemUpdateRequest.getId(), path);
 
 		if (!Strings.isNullOrEmpty(existing.getPromotedBranch())) {
 			throw new BadConfigurationException("Line item with id '" + existing.getId() + "' is already promoted to branch '" + existing.getPromotedBranch() + "' and cannot be changed");
 		}
 
-		validateParentIdAndLevel(lineItem.getParentId(), lineItem.getLevel() == null ? existing.getLevel() : lineItem.getLevel());
+		validateParentIdAndLevel(lineItemUpdateRequest.getParentId(), lineItemUpdateRequest.getLevel() == null ? existing.getLevel() : lineItemUpdateRequest.getLevel());
 
-		existing.setParentId(lineItem.getParentId());
+		existing.setParentId(lineItemUpdateRequest.getParentId());
 
-		if (lineItem.getLevel() != null) {
-			existing.setLevel(lineItem.getLevel());
+		if (lineItemUpdateRequest.getLevel() != null) {
+			existing.setLevel(lineItemUpdateRequest.getLevel());
 		}
-		if (lineItem.getSequence() != null) {
-			existing.setSequence(lineItem.getSequence());
+		if (lineItemUpdateRequest.getSequence() != null) {
+			existing.setSequence(lineItemUpdateRequest.getSequence());
 		}
-		if (lineItem.getContent() != null) {
-			existing.setContent(lineItem.getContent());
+		if (lineItemUpdateRequest.getContent() != null) {
+			existing.setContent(lineItemUpdateRequest.getContent());
 		}
 
 		return lineItemRepository.save(existing);

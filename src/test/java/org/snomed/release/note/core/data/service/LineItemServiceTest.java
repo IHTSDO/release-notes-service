@@ -9,6 +9,7 @@ import org.snomed.release.note.core.data.domain.Subject;
 import org.snomed.release.note.core.data.repository.LineItemRepository;
 import org.snomed.release.note.core.util.BranchUtil;
 import org.snomed.release.note.rest.pojo.LineItemCreateRequest;
+import org.snomed.release.note.rest.pojo.LineItemUpdateRequest;
 import org.snomed.release.note.rest.pojo.VersionRequest;
 import org.snomed.release.note.rest.request.SubjectCreateRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,7 +48,7 @@ public class LineItemServiceTest extends AbstractTest {
 		LineItem lineItem = lineItemService.create(new LineItemCreateRequest(subject.getId(), "Demonstration Release of the Anatomy Model"), path);
 		lineItem.setContent("Final Release of the Anatomy Model");
 		lineItem.setSequence(3);
-		LineItem updated = lineItemService.update(lineItem, path);
+		LineItem updated = lineItemService.update(new LineItemUpdateRequest(lineItem.getId(), lineItem.getParentId(), lineItem.getLevel(), lineItem.getSequence(), lineItem.getContent()), path);
 		assertEquals(lineItem.getId(), updated.getId());
 		assertEquals("Final Release of the Anatomy Model", updated.getContent());
 		assertEquals(3, updated.getSequence());

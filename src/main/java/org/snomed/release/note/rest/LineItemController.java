@@ -6,6 +6,7 @@ import org.ihtsdo.otf.rest.exception.BusinessServiceException;
 import org.snomed.release.note.core.data.domain.LineItem;
 import org.snomed.release.note.core.data.service.LineItemService;
 import org.snomed.release.note.rest.pojo.LineItemCreateRequest;
+import org.snomed.release.note.rest.pojo.LineItemUpdateRequest;
 import org.snomed.release.note.rest.pojo.VersionRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -49,11 +50,11 @@ public class LineItemController {
 	public LineItem updateLineItem(
 			@PathVariable String path,
 			@PathVariable String id,
-			@RequestBody LineItem lineItem) throws BusinessServiceException {
-		if (!id.equals(lineItem.getId())) {
-			throw new BadRequestException("'id' in the request body: '" + lineItem.getId() + "' does not match the one in the path: '" + id + "'");
+			@RequestBody LineItemUpdateRequest lineItemUpdateRequest) throws BusinessServiceException {
+		if (!id.equals(lineItemUpdateRequest.getId())) {
+			throw new BadRequestException("'id' in the request body: '" + lineItemUpdateRequest.getId() + "' does not match the one in the path: '" + id + "'");
 		}
-		return lineItemService.update(lineItem, BranchPathUriUtil.decodePath(path));
+		return lineItemService.update(lineItemUpdateRequest, BranchPathUriUtil.decodePath(path));
 	}
 
 	@PostMapping(value = "/{path}/lineitems/{id}/promote")
