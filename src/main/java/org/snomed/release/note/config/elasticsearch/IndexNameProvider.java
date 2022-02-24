@@ -11,7 +11,7 @@ public class IndexNameProvider {
 	}
 
 	public String getIndexNameWithPrefix(String indexName) {
-		return Strings.isNullOrEmpty(prefix) ? indexName : prefix + '-' + indexName;
+		return Strings.isNullOrEmpty(prefix) ? indexName : prefix + indexName;
 	}
 
 }
