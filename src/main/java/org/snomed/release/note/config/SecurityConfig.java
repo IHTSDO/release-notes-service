@@ -26,20 +26,21 @@ import static java.util.function.Predicate.*;
 import static springfox.documentation.builders.PathSelectors.*;
 
 @Configuration
-@EnableWebSecurity()
+@EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Value("${rnms.rest-api.readonly}")
 	private boolean restApiReadOnly;
 
-	@Value("${ims-security.roles.enabled}")
+	@Value("${rnms.ims-security.roles.enabled}")
 	private boolean rolesEnabled;
 
-	@Value("${ims-security.required-role}")
+	@Value("${rnms.ims-security.required-role}")
 	private String requiredRole;
 
 	private final String[] excludedUrlPatterns = {
 			"/swagger-ui/**",
+			"/version",
 			"/swagger-resources/**",
 			"/v2/api-docs",
 			"/webjars/springfox-swagger-ui/**"

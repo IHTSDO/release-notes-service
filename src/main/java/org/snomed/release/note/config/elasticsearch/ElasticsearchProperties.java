@@ -2,7 +2,7 @@ package org.snomed.release.note.config.elasticsearch;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties("elasticsearch")
+@ConfigurationProperties("rnms.elasticsearch")
 public class ElasticsearchProperties {
 
 	private String[] urls;

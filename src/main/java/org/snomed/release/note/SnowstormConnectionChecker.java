@@ -9,18 +9,18 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-@ConditionalOnProperty(name = "snowstorm.connection.test", havingValue = "true")
+@ConditionalOnProperty(name = "rnms.snowstorm.connection-check.enabled", havingValue = "true")
 @Component
-public class SnowstormConnectionTester implements CommandLineRunner {
+public class SnowstormConnectionChecker implements CommandLineRunner {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(SnowstormConnectionTester.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(SnowstormConnectionChecker.class);
 
-	@Value("${snowstorm.url}")
+	@Value("${rnms.snowstorm.url}")
 	private String snowstormUrl;
 
 	private final RestTemplate restTemplate;
 
-	public SnowstormConnectionTester(RestTemplateBuilder restTemplateBuilder) {
+	public SnowstormConnectionChecker(RestTemplateBuilder restTemplateBuilder) {
 		this.restTemplate = restTemplateBuilder.build();
 	}
 
