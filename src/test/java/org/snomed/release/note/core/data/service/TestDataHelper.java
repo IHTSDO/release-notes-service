@@ -1,9 +1,7 @@
 package org.snomed.release.note.core.data.service;
 
 import org.snomed.release.note.core.data.domain.LineItem;
-import org.snomed.release.note.core.data.domain.Subject;
 import org.snomed.release.note.core.data.repository.LineItemRepository;
-import org.snomed.release.note.core.data.repository.SubjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,33 +14,20 @@ public class TestDataHelper {
 	public static List<String> LEVEL_TWO_TITLES = Arrays.asList("Background", "Scope", "Body structure", "Clinical Finding", "Procedure", "Known Issues", "Resolved Issues");
 
 	@Autowired
-	private SubjectRepository subjectRepository;
-
-	@Autowired
 	private LineItemRepository lineItemRepository;
 
-	public List<Subject> createSubjects(String path, List<String> titles) {
-		List<Subject> subjects = new ArrayList<>();
-		titles.stream().forEach(title -> subjects.add(new Subject(title, path)));
-		return (List<Subject>) subjectRepository.saveAll(subjects);
-	}
-
 	public List<LineItem> createLineItems(String path) {
-		// TODO Create subjects on the code system path only
-		List<Subject> topLevelSubjects = createSubjects(path, LEVEL_ONE_TITLES);
-
-		List<Subject> subLevelSubjects = createSubjects(path, LEVEL_TWO_TITLES);
 		// Create top level items
 		List<LineItem> topItems = new ArrayList<>();
 		int topSequence = 1;
-		for (Subject subject : topLevelSubjects) {
-			topItems.add(lineItemRepository.save(constructLineItem(subject, path, 1, topSequence++)));
+		for (String title : LEVEL_ONE_TITLES) {
+			topItems.add(lineItemRepository.save(constructLineItem(path, title, 1, topSequence++)));
 		}
 		// Create sub level items
 		List<LineItem> subItems = new ArrayList<>();
 		int subSequence = 1;
-		for (Subject subject : subLevelSubjects) {
-			subItems.add(constructLineItem(subject, path, 2, subSequence++));
+		for (String title : LEVEL_TWO_TITLES) {
+			subItems.add(constructLineItem(path, title, 2, subSequence++));
 		}
 
 		// Add parents for sub line items
@@ -55,18 +40,17 @@ public class TestDataHelper {
 		return results;
 	}
 
-	public LineItem constructLineItem(Subject subject, String path, int level, int sequence) {
-		return constructLineItem(subject, path, level, sequence, "");
+	public LineItem constructLineItem(String path, String title, int level, int sequence) {
+		return constructLineItem(path, title, "", level, sequence);
 	}
 
-	public LineItem constructLineItem(Subject subject, String path, int level, int sequence, String content) {
+	public LineItem constructLineItem(String path, String title, String content, int level, int sequence) {
 		LineItem lineItem = new LineItem();
 		lineItem.setSourceBranch(path);
-		lineItem.setSubject(subject);
-		lineItem.setSubjectId(subject.getId());
-		lineItem.setSequence(sequence);
-		lineItem.setLevel(level);
+		lineItem.setTitle(title);
 		lineItem.setContent(content);
+		lineItem.setLevel(level);
+		lineItem.setSequence(sequence);
 		return lineItem;
 	}
 

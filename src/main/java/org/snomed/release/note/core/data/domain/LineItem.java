@@ -18,13 +18,13 @@ public class LineItem implements LineItemView {
 	private String id;
 
 	@Field(type = FieldType.Keyword)
-	private String subjectId;
-
-	@Field(type = FieldType.Keyword)
 	private String parentId;
 
 	@Field(type = FieldType.Integer)
 	private Integer level;
+
+	@Field(type = FieldType.Keyword)
+	private String title;
 
 	@Field(type = FieldType.Text)
 	private String content;
@@ -50,9 +50,6 @@ public class LineItem implements LineItemView {
 	@Transient
 	private List<LineItem> children;
 
-	@Transient
-	private Subject subject;
-
 	public LineItem() {
 		this.children = new ArrayList<>();
 	}
@@ -63,14 +60,6 @@ public class LineItem implements LineItemView {
 
 	public void setId(String id) {
 		this.id = id;
-	}
-
-	public String getSubjectId() {
-		return subjectId;
-	}
-
-	public void setSubjectId(String subjectId) {
-		this.subjectId = subjectId;
 	}
 
 	public String getParentId() {
@@ -91,10 +80,6 @@ public class LineItem implements LineItemView {
 
 	public String getContent() {
 		return content;
-	}
-
-	public String getContentNotNull() {
-		return content == null ? "" : content;
 	}
 
 	public void setContent(String content) {
@@ -141,12 +126,20 @@ public class LineItem implements LineItemView {
 		this.end = end;
 	}
 
-	public boolean getReleased() {
+	public boolean isReleased() {
 		return released;
 	}
 
 	public void setReleased(boolean released) {
 		this.released = released;
+	}
+
+	public String getTitle() {
+		return title;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
 	}
 
 	@Override
@@ -156,15 +149,6 @@ public class LineItem implements LineItemView {
 
 	public void setChildren(List<LineItem> children) {
 		this.children = children;
-	}
-
-	@Override
-	public String getTitle() {
-		return subject != null ? subject.getTitle() : null;
-	}
-
-	public void setSubject(Subject subject) {
-		this.subject = subject;
 	}
 
 	@Override
@@ -178,32 +162,14 @@ public class LineItem implements LineItemView {
 			return Objects.equals(id, lineItem.id);
 		}
 
-		return Objects.equals(subjectId, lineItem.subjectId)
+		return Objects.equals(title, lineItem.title)
 				&& Objects.equals(content, lineItem.content)
 				&& Objects.equals(sourceBranch, lineItem.sourceBranch);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, subjectId);
+		return Objects.hash(id, title);
 	}
 
-	@Override
-	public String toString() {
-		return "LineItem{" +
-				"id='" + id + '\'' +
-				", subjectId='" + subjectId + '\'' +
-				", parentId='" + parentId + '\'' +
-				", level=" + level +
-				", content='" + content + '\'' +
-				", sequence=" + sequence +
-				", sourceBranch='" + sourceBranch + '\'' +
-				", promotedBranch='" + promotedBranch + '\'' +
-				", start=" + start +
-				", end=" + end +
-				", released=" + released +
-				", children=" + children +
-				", subject=" + subject +
-				'}';
-	}
 }

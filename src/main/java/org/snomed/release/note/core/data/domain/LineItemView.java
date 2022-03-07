@@ -6,5 +6,4 @@ public interface LineItemView {
 
 	List<LineItem> getChildren();
 
-	String getTitle();
 }

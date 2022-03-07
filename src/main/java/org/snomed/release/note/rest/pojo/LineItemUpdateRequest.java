@@ -4,20 +4,23 @@ public class LineItemUpdateRequest {
 
 	private String id;
 	private String parentId;
+	private String title;
+	private String content;
 	private Integer level;
 	private Integer sequence;
-	private String content;
 
 	public LineItemUpdateRequest() {
+
 	}
 
-	public LineItemUpdateRequest(String id, String parentId, Integer level, Integer sequence, String content) {
-		super();
+	public LineItemUpdateRequest(String id, String parentId, String title, String content, Integer level, Integer sequence) {
+		this();
 		this.id = id;
 		this.parentId = parentId;
+		this.title = title;
+		this.content = content;
 		this.level = level;
 		this.sequence = sequence;
-		this.content = content;
 	}
 
 	public String getId() {
@@ -36,6 +39,22 @@ public class LineItemUpdateRequest {
 		this.parentId = parentId;
 	}
 
+	public String getTitle() {
+		return title;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
+	}
+
+	public String getContent() {
+		return content;
+	}
+
+	public void setContent(String content) {
+		this.content = content;
+	}
+
 	public Integer getLevel() {
 		return level;
 	}
@@ -50,13 +69,5 @@ public class LineItemUpdateRequest {
 
 	public void setSequence(Integer sequence) {
 		this.sequence = sequence;
-	}
-
-	public String getContent() {
-		return content;
-	}
-
-	public void setContent(String content) {
-		this.content = content;
 	}
 }

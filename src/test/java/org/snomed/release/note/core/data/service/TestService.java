@@ -7,9 +7,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.snomed.release.note.core.data.domain.LineItem;
-import org.snomed.release.note.core.data.domain.Subject;
 import org.snomed.release.note.rest.pojo.LineItemCreateRequest;
-import org.snomed.release.note.rest.request.SubjectCreateRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -22,9 +20,6 @@ import java.io.InputStreamReader;
 public class TestService {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(TestService.class);
-
-	@Autowired
-	private SubjectService subjectService;
 
 	@Autowired
 	private LineItemService lineItemService;
@@ -40,7 +35,6 @@ public class TestService {
 	}
 
 	public void deleteData(final String path) {
-		subjectService.find(path).forEach(subject -> subjectService.delete(subject.getId(), path));
 		lineItemService.find(path).forEach(lineItem -> lineItemService.delete(lineItem.getId(), path));
 	}
 
@@ -52,25 +46,23 @@ public class TestService {
 		return sb.toString();
 	}
 
-	private Subject createSubject(final JSONObject obj, final String path) throws BusinessServiceException {
-		return subjectService.create(new SubjectCreateRequest(obj.getString("title")), path);
-	}
-
 	private LineItem createLineItem(final JSONObject obj, final String path, final String parentId) throws BusinessServiceException {
-		Subject subject = createSubject(obj, path);
-
 		LineItemCreateRequest lineItemCreateRequest = new LineItemCreateRequest();
-		lineItemCreateRequest.setSubjectId(subject.getId());
+
 		lineItemCreateRequest.setParentId(parentId);
+		if (!obj.isNull("title")) {
+			lineItemCreateRequest.setTitle(obj.getString("title"));
+		}
+		if (!obj.isNull("content")) {
+			lineItemCreateRequest.setContent(obj.getString("content"));
+		}
 		if (!obj.isNull("level")) {
 			lineItemCreateRequest.setLevel(obj.getInt("level"));
 		}
 		if (!obj.isNull("sequence")) {
 			lineItemCreateRequest.setSequence(obj.getInt("sequence"));
 		}
-		if (!obj.isNull("content")) {
-			lineItemCreateRequest.setContent(obj.getString("content"));
-		}
+
 		return lineItemService.create(lineItemCreateRequest, path);
 	}
 

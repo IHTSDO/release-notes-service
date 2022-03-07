@@ -1,15 +1,15 @@
 package org.snomed.release.note.core.data.service;
 
 import org.elasticsearch.common.Strings;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.ihtsdo.otf.rest.exception.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.snomed.release.note.core.data.domain.LineItem;
-import org.snomed.release.note.core.data.domain.Subject;
 import org.snomed.release.note.core.data.repository.LineItemRepository;
-import org.snomed.release.note.core.data.repository.SubjectRepository;
 import org.snomed.release.note.core.util.BranchUtil;
+import org.snomed.release.note.rest.pojo.CloneRequest;
 import org.snomed.release.note.rest.pojo.LineItemCreateRequest;
 import org.snomed.release.note.rest.pojo.LineItemUpdateRequest;
 import org.snomed.release.note.rest.pojo.VersionRequest;
@@ -30,12 +30,6 @@ import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
 public class LineItemService {
 
 	@Autowired
-	private SubjectService subjectService;
-
-	@Autowired
-	private SubjectRepository subjectRepository;
-
-	@Autowired
 	private LineItemRepository lineItemRepository;
 
 	@Autowired
@@ -44,25 +38,22 @@ public class LineItemService {
 	private static final Logger LOGGER = LoggerFactory.getLogger(LineItemService.class);
 
 	public LineItem create(final LineItemCreateRequest lineItemCreateRequest, final String path) throws BusinessServiceException {
-		String subjectId = lineItemCreateRequest.getSubjectId();
+		String title = lineItemCreateRequest.getTitle();
 
-		if (Strings.isNullOrEmpty(subjectId)) {
-			throw new BadRequestException("'subjectId' is required");
+		if (Strings.isNullOrEmpty(title)) {
+			throw new BadRequestException("'title' is required");
 		}
-		if (!subjectService.exists(subjectId)) {
-			throw new ResourceNotFoundException("No subject found for id '" + subjectId + "'");
-		}
-		if (findOpenLineItem(subjectId, path) != null) {
-			throw new EntityAlreadyExistsException("Line item with subjectId '" + subjectId + "' already exists on path '" + path +"'");
+		if (findOpenLineItem(lineItemCreateRequest.getParentId(), title, path) != null) {
+			throw new EntityAlreadyExistsException("Line item with title '" + title + "' already exists on path '" + path +"'");
 		}
 
 		validateParentIdAndLevel(lineItemCreateRequest.getParentId(), lineItemCreateRequest.getLevel());
 
 		LineItem lineItem = new LineItem();
 		lineItem.setSourceBranch(path);
-		lineItem.setSubjectId(lineItemCreateRequest.getSubjectId());
-		lineItem.setSubject(subjectRepository.findById(subjectId).get());
 		lineItem.setParentId(lineItemCreateRequest.getParentId());
+		lineItem.setTitle(title);
+		lineItem.setContent(lineItemCreateRequest.getContent());
 
 		if (lineItemCreateRequest.getLevel() == null) {
 			lineItem.setLevel(lineItemCreateRequest.getParentId() == null ? 1 : 2);
@@ -70,7 +61,6 @@ public class LineItemService {
 			lineItem.setLevel(lineItemCreateRequest.getLevel());
 		}
 		lineItem.setSequence(lineItemCreateRequest.getSequence() == null ? 1 : lineItemCreateRequest.getSequence());
-		lineItem.setContent(lineItemCreateRequest.getContent());
 		lineItem.setStart(new Date());
 
 		return lineItemRepository.save(lineItem);
@@ -87,14 +77,14 @@ public class LineItemService {
 
 		existing.setParentId(lineItemUpdateRequest.getParentId());
 
+		if (lineItemUpdateRequest.getContent() != null) {
+			existing.setContent(lineItemUpdateRequest.getContent());
+		}
 		if (lineItemUpdateRequest.getLevel() != null) {
 			existing.setLevel(lineItemUpdateRequest.getLevel());
 		}
 		if (lineItemUpdateRequest.getSequence() != null) {
 			existing.setSequence(lineItemUpdateRequest.getSequence());
-		}
-		if (lineItemUpdateRequest.getContent() != null) {
-			existing.setContent(lineItemUpdateRequest.getContent());
 		}
 
 		return lineItemRepository.save(existing);
@@ -146,14 +136,28 @@ public class LineItemService {
 			throw new ResourceNotFoundException("No line item found for id '" + id + "' and source branch '" + path + "'");
 		}
 
-		subjectRepository.findById(lineItem.getSubjectId()).ifPresent(lineItem::setSubject);
 		return lineItem;
+	}
+
+	public List<LineItem> findByTitle(final String title, final String path) {
+		Query query = new NativeSearchQueryBuilder().withQuery(boolQuery()
+						.must(QueryBuilders.termQuery("title", title))
+						.must(QueryBuilders.termQuery("sourceBranch", path))
+						.mustNot(QueryBuilders.existsQuery("end")))
+				.build();
+
+		SearchHits<LineItem> searchHits = elasticsearchOperations.search(query, LineItem.class);
+
+		List<LineItem> lineItems = searchHits.get().map(SearchHit::getContent).collect(toList());
+		LOGGER.info("{} line items with title {} found on path {}", lineItems.size(), title, path);
+
+		return lineItems;
 	}
 
 	public List<LineItem> find(final String path) {
 		Query query = new NativeSearchQueryBuilder().withQuery(boolQuery()
-						.mustNot(QueryBuilders.existsQuery("end"))
-						.must(QueryBuilders.termQuery("sourceBranch", path)))
+						.must(QueryBuilders.termQuery("sourceBranch", path))
+						.mustNot(QueryBuilders.existsQuery("end")))
 				.build();
 
 		SearchHits<LineItem> searchHits = elasticsearchOperations.search(query, LineItem.class);
@@ -161,7 +165,6 @@ public class LineItemService {
 		List<LineItem> lineItems = searchHits.get().map(SearchHit::getContent).collect(toList());
 		LOGGER.info("{} line items found on path {}", lineItems.size(), path);
 
-		subjectService.joinSubjects(lineItems);
 		return lineItems;
 	}
 
@@ -183,7 +186,6 @@ public class LineItemService {
 		List<LineItem> lineItems = searchHits.get().map(SearchHit::getContent).collect(toList());
 		LOGGER.info("{} line items found on path {}", lineItems.size(), path);
 
-		subjectService.joinSubjects(lineItems);
 		return ordered ? doOrder(lineItems) : lineItems;
 	}
 
@@ -191,9 +193,6 @@ public class LineItemService {
 		List<LineItem> result = new ArrayList<>();
 		Iterable<LineItem> foundLineItems = lineItemRepository.findAll();
 		foundLineItems.forEach(result::add);
-
-		subjectService.joinSubjects(result);
-
 		return result;
 	}
 
@@ -217,7 +216,7 @@ public class LineItemService {
 			throw new BadRequestException("'releaseBranch' is required");
 		}
 		if (!BranchUtil.isReleaseBranch(releaseBranch)) {
-			throw new BadRequestException("releaseBranch '" + releaseBranch + "' is not a release branch");
+			throw new BadRequestException("Branch '" + releaseBranch + "' is not a release branch");
 		}
 		if (!BranchUtil.isCodeSystemBranch(path)) {
 			throw new BadRequestException("Branch '" + path + "' must be a code system branch");
@@ -248,6 +247,45 @@ public class LineItemService {
 		lineItemRepository.saveAll(lineItems);
 	}
 
+	public void clone(final String path, final CloneRequest cloneRequest) throws BusinessServiceException {
+		if (!BranchUtil.isReleaseBranch(path)) {
+			throw new BadRequestException("Branch '" + path + "' must be a release branch");
+		}
+
+		List<LineItem> lineItems = find(path);
+
+		List<LineItem> clonedLineItems = new ArrayList<>();
+		String destinationBranch = cloneRequest.getDestinationBranch();
+
+		lineItems.forEach(lineItem -> {
+			try {
+				LineItem clonedLineItem = create(new LineItemCreateRequest(
+						lineItem.getParentId(),
+						lineItem.getTitle(),
+						null,
+						lineItem.getLevel(),
+						lineItem.getSequence()), destinationBranch);
+				clonedLineItems.add(clonedLineItem);
+			} catch (BusinessServiceException e) {
+				throw new BusinessServiceRuntimeException("An error occurred while cloning line items", e);
+			}
+		});
+
+		lineItemRepository.saveAll(clonedLineItems);
+	}
+
+	public List<LineItem> getChildren(String id, String path) {
+		Query query = new NativeSearchQueryBuilder().withQuery(boolQuery()
+						.must(QueryBuilders.termQuery("parentId", id))
+						.must(QueryBuilders.termQuery("sourceBranch", path))
+						.mustNot(QueryBuilders.existsQuery("end")))
+				.build();
+
+		SearchHits<LineItem> searchHits = elasticsearchOperations.search(query, LineItem.class);
+
+		return searchHits.get().map(SearchHit::getContent).collect(toList());
+	}
+
 	private String getPromotedBranch(final String sourceBranch) throws BusinessServiceException {
 		String promotedBranch = BranchUtil.getParentBranch(sourceBranch);
 
@@ -260,11 +298,11 @@ public class LineItemService {
 
 	private void doPromote(LineItem lineItem, String branch, List<LineItem> toSave) {
 		// Find or create an open line item on the given branch to merge content to
-		LineItem openLineItem = findOpenLineItem(lineItem.getSubjectId(), branch);
+		LineItem openLineItem = findOpenLineItem(lineItem.getParentId(), lineItem.getTitle(), branch);
 		if (openLineItem == null) {
 			openLineItem = createLineItem(lineItem, branch);
 		} else {
-			openLineItem.setContent(String.join(System.lineSeparator(), openLineItem.getContentNotNull(), lineItem.getContentNotNull()));
+			openLineItem.setContent(String.join(System.lineSeparator(), getContentNotNull(openLineItem), getContentNotNull(lineItem)));
 		}
 		toSave.add(openLineItem);
 
@@ -315,12 +353,19 @@ public class LineItemService {
 		return topLevelItems;
 	}
 
-	private LineItem findOpenLineItem(final String subjectId, final String sourceBranch) {
-		Query query = new NativeSearchQueryBuilder().withQuery(boolQuery()
-						.must(QueryBuilders.termQuery("subjectId", subjectId))
-						.must(QueryBuilders.termQuery("sourceBranch", sourceBranch))
-						.mustNot(QueryBuilders.existsQuery("end")))
-				.build();
+	private LineItem findOpenLineItem(final String parentId, final String title, final String sourceBranch) {
+		BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery()
+				.must(QueryBuilders.termQuery("title", title))
+				.must(QueryBuilders.termQuery("sourceBranch", sourceBranch))
+				.mustNot(QueryBuilders.existsQuery("end"));
+
+		if (parentId == null) {
+			boolQueryBuilder.mustNot(QueryBuilders.existsQuery("parentId"));
+		} else {
+			boolQueryBuilder.must(QueryBuilders.termQuery("parentId", parentId));
+		}
+
+		Query query = new NativeSearchQueryBuilder().withQuery(boolQueryBuilder).build();
 
 		// Should always be just one open line item per subject, per branch
 		SearchHit<LineItem> searchHit = elasticsearchOperations.searchOne(query, LineItem.class);
@@ -344,12 +389,16 @@ public class LineItemService {
 	private LineItem createLineItem(LineItem lineItem, String path) {
 		LineItem newLineItem = new LineItem();
 		newLineItem.setSourceBranch(path);
-		newLineItem.setSubjectId(lineItem.getSubjectId());
 		newLineItem.setParentId(lineItem.getParentId());
+		newLineItem.setTitle(lineItem.getTitle());
+		newLineItem.setContent(getContentNotNull(lineItem));
 		newLineItem.setLevel(lineItem.getLevel());
 		newLineItem.setSequence(lineItem.getSequence());
-		newLineItem.setContent(lineItem.getContentNotNull());
 		return newLineItem;
+	}
+
+	private String getContentNotNull(LineItem lineItem) {
+		return lineItem.getContent() == null ? "" : lineItem.getContent();
 	}
 
 }

@@ -1,41 +1,34 @@
 package org.snomed.release.note.rest.pojo;
 
-import org.elasticsearch.common.collect.HppcMaps;
-
 public class LineItemCreateRequest {
 
-	private String subjectId;
 	private String parentId;
+	private String title;
+	private String content;
 	private Integer level;
 	private Integer sequence;
-	private String content;
 
 	public LineItemCreateRequest() {
 	}
 
-	public LineItemCreateRequest(String subjectId) {
-		this(subjectId, null, null, null, null);
+	public LineItemCreateRequest(String title) {
+		this();
+		this.title = title;
 	}
 
-	public LineItemCreateRequest(String subjectId, String content) {
-		this(subjectId, null, null, null, content);
-	}
-
-	public LineItemCreateRequest(String subjectId, String parentId, Integer level, Integer sequence, String content) {
-		super();
-		this.subjectId = subjectId;
-		this.parentId = parentId;
-		this.level = level;
-		this.sequence = sequence;
+	public LineItemCreateRequest(String title, String content) {
+		this();
+		this.title = title;
 		this.content = content;
 	}
 
-	public String getSubjectId() {
-		return subjectId;
-	}
-
-	public void setSubjectId(String subjectId) {
-		this.subjectId = subjectId;
+	public LineItemCreateRequest(String parentId, String title, String content, Integer level, Integer sequence) {
+		this();
+		this.parentId = parentId;
+		this.title = title;
+		this.content = content;
+		this.level = level;
+		this.sequence = sequence;
 	}
 
 	public String getParentId() {
@@ -44,6 +37,22 @@ public class LineItemCreateRequest {
 
 	public void setParentId(String parentId) {
 		this.parentId = parentId;
+	}
+
+	public String getTitle() {
+		return title;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
+	}
+
+	public String getContent() {
+		return content;
+	}
+
+	public void setContent(String content) {
+		this.content = content;
 	}
 
 	public Integer getLevel() {
@@ -60,13 +69,5 @@ public class LineItemCreateRequest {
 
 	public void setSequence(Integer sequence) {
 		this.sequence = sequence;
-	}
-
-	public String getContent() {
-		return content;
-	}
-
-	public void setContent(String content) {
-		this.content = content;
 	}
 }

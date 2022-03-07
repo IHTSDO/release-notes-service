@@ -1,10 +1,12 @@
 package org.snomed.release.note.rest;
 
 import io.kaicode.rest.util.branchpathrewrite.BranchPathUriUtil;
+import io.swagger.annotations.Api;
 import org.ihtsdo.otf.rest.exception.BadRequestException;
 import org.ihtsdo.otf.rest.exception.BusinessServiceException;
 import org.snomed.release.note.core.data.domain.LineItem;
 import org.snomed.release.note.core.data.service.LineItemService;
+import org.snomed.release.note.rest.pojo.CloneRequest;
 import org.snomed.release.note.rest.pojo.LineItemCreateRequest;
 import org.snomed.release.note.rest.pojo.LineItemUpdateRequest;
 import org.snomed.release.note.rest.pojo.VersionRequest;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
+@Api(tags = "Line Items")
 @RequestMapping(produces = MediaType.APPLICATION_JSON_VALUE)
 public class LineItemController {
 
@@ -41,8 +44,17 @@ public class LineItemController {
 
 	@GetMapping(value = "/{path}/lineitems")
 	public List<LineItem> findLineItems(
-			@PathVariable String path) {
-		return lineItemService.findOrderedLineItems(BranchPathUriUtil.decodePath(path));
+			@PathVariable String path,
+			@RequestParam(required = false) String title) {
+		String branch = BranchPathUriUtil.decodePath(path);
+		return (title != null) ? lineItemService.findByTitle(title, branch) : lineItemService.findOrderedLineItems(branch);
+	}
+
+	@GetMapping(value = "/{path}/lineitems/{id}/children")
+	public List<LineItem> getChildren(
+			@PathVariable String path,
+			@PathVariable String id) {
+		return lineItemService.getChildren(id, BranchPathUriUtil.decodePath(path));
 	}
 
 	@PutMapping(value = "/{path}/lineitems/{id}")
@@ -90,6 +102,15 @@ public class LineItemController {
 	public ResponseEntity<String> publishLineItems(
 			@PathVariable String path) throws BusinessServiceException {
 		lineItemService.publish(path);
+		return new ResponseEntity<>(HttpStatus.OK);
+	}
+
+	@PostMapping(value = "/{path}/lineitems/clone")
+	@PreAuthorize("hasPermission('RELEASE_ADMIN', #path) || hasPermission('RELEASE_MANAGER', #path)")
+	public ResponseEntity<String> cloneLineItems(
+			@PathVariable String path,
+			@RequestBody CloneRequest cloneRequest) throws BusinessServiceException {
+		lineItemService.clone(path, cloneRequest);
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
 
