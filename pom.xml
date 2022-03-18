@@ -15,7 +15,7 @@
 	<artifactId>release-notes-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>Release Notes Service</name>
-	<description>SNOMED CT release notes service</description>
+	<description>SNOMED CT Release Notes Service</description>
 
 	<properties>
 		<java.version>11</java.version>
