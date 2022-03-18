@@ -1,2 +1,2 @@
-# release-note-service
-SNOMED CT release notes service
+# Release Notes Service
+SNOMED CT Release Notes Service
