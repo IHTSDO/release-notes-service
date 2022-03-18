@@ -12,10 +12,10 @@
 	</parent>
 
 	<groupId>org.snomed</groupId>
-	<artifactId>release-note-service</artifactId>
+	<artifactId>release-notes-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>Release Note Service</name>
-	<description>SNOMED CT release note service</description>
+	<name>Release Notes Service</name>
+	<description>SNOMED CT release notes service</description>
 
 	<properties>
 		<java.version>11</java.version>
