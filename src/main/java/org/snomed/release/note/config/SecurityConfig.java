@@ -4,7 +4,9 @@ import io.kaicode.rest.util.branchpathrewrite.BranchPathUriRewriteFilter;
 import org.ihtsdo.sso.integration.RequestHeaderAuthenticationDecorator;
 import org.snomed.release.note.rest.config.AccessDeniedExceptionHandler;
 import org.snomed.release.note.rest.security.RequiredRoleFilter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.info.BuildProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,8 +21,12 @@ import org.springframework.security.web.authentication.www.BasicAuthenticationFi
 import org.springframework.security.web.firewall.DefaultHttpFirewall;
 import org.springframework.security.web.firewall.HttpFirewall;
 import springfox.documentation.builders.RequestHandlerSelectors;
+import springfox.documentation.service.ApiInfo;
+import springfox.documentation.service.Contact;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
+
+import java.util.Collections;
 
 import static java.util.function.Predicate.*;
 import static springfox.documentation.builders.PathSelectors.*;
@@ -28,6 +34,9 @@ import static springfox.documentation.builders.PathSelectors.*;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
+
+	@Autowired(required = false)
+	private BuildProperties buildProperties;
 
 	@Value("${rnms.rest-api.readonly}")
 	private boolean restApiReadOnly;
@@ -39,8 +48,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	private String requiredRole;
 
 	private final String[] excludedUrlPatterns = {
-			"/swagger-ui/**",
 			"/version",
+			"/swagger-ui/**",
 			"/swagger-resources/**",
 			"/v2/api-docs",
 			"/webjars/springfox-swagger-ui/**"
@@ -103,9 +112,20 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	@Bean
 	public Docket api() {
 		return new Docket(DocumentationType.SWAGGER_2)
+				.apiInfo(apiInfo())
 				.select()
 				.apis(RequestHandlerSelectors.any())
 				.paths(not(regex("/error")))
 				.build();
+	}
+
+	private ApiInfo apiInfo() {
+		final String version = buildProperties != null ? buildProperties.getVersion() : "DEV";
+		return new ApiInfo(
+				"SNOMED CT Release Notes",
+				"Standalone service for management of SNOMED CT release notes", version, null,
+				new Contact("SNOMED International", "https://github.com/IHTSDO/release-notes-service", null),
+				"Apache License, Version 2.0", "http://www.apache.org/licenses/LICENSE-2.0",
+				Collections.emptyList());
 	}
 }
