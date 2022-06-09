@@ -74,7 +74,6 @@ public class LineItemController {
 	public ResponseEntity<String> promoteTaskLineItem(
 			@PathVariable String path,
 			@PathVariable String id) throws BusinessServiceException {
-		String branchPath = BranchPathUriUtil.decodePath(path);
 		lineItemService.promote(id, BranchPathUriUtil.decodePath(path));
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
@@ -83,8 +82,7 @@ public class LineItemController {
 	@PreAuthorize("hasPermission('AUTHOR', #path)")
 	public ResponseEntity<String> promoteProjectLineItems(
 			@PathVariable String path) throws BusinessServiceException {
-		String branchPath = BranchPathUriUtil.decodePath(path);
-		lineItemService.promote(branchPath);
+		lineItemService.promote(BranchPathUriUtil.decodePath(path));
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
 
@@ -93,7 +91,7 @@ public class LineItemController {
 	public ResponseEntity<String> versionLineItem(
 			@PathVariable String path,
 			@RequestBody VersionRequest versionRequest) throws BusinessServiceException {
-		lineItemService.version(path, versionRequest);
+		lineItemService.version(BranchPathUriUtil.decodePath(path), versionRequest);
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
 
@@ -101,7 +99,7 @@ public class LineItemController {
 	@PreAuthorize("hasPermission('RELEASE_ADMIN', #path) || hasPermission('RELEASE_MANAGER', #path)")
 	public ResponseEntity<String> publishLineItems(
 			@PathVariable String path) throws BusinessServiceException {
-		lineItemService.publish(path);
+		lineItemService.publish(BranchPathUriUtil.decodePath(path));
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
 
@@ -110,7 +108,7 @@ public class LineItemController {
 	public ResponseEntity<String> cloneLineItems(
 			@PathVariable String path,
 			@RequestBody CloneRequest cloneRequest) throws BusinessServiceException {
-		lineItemService.clone(path, cloneRequest);
+		lineItemService.clone(BranchPathUriUtil.decodePath(path), cloneRequest);
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
 
@@ -118,7 +116,7 @@ public class LineItemController {
 	public List<LineItem> getPublishedLineItems(
 			@PathVariable String path,
 			@RequestParam(defaultValue = "true") boolean ordered ) {
-		return lineItemService.findPublished(path, ordered);
+		return lineItemService.findPublished(BranchPathUriUtil.decodePath(path), ordered);
 	}
 
 	@DeleteMapping(value = "/{path}/lineitems/{id}")
@@ -128,5 +126,4 @@ public class LineItemController {
 			@PathVariable String id) {
 		lineItemService.delete(id, BranchPathUriUtil.decodePath(path));
 	}
-
 }

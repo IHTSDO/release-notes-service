@@ -11,43 +11,50 @@ public class BranchUtil {
 	private BranchUtil() {
 	}
 
-	public static String extractCodeSystem(String branch) {
-		if (branch.contains("SNOMEDCT-")) {
-			return branch.substring(branch.lastIndexOf("SNOMEDCT-")).replaceAll("/.*", "");
+	public static String extractCodeSystem(String path) {
+		if (path.contains("SNOMEDCT-")) {
+			return path.substring(path.lastIndexOf("SNOMEDCT-")).replaceAll("/.*", "");
 		} else {
 			return "SNOMEDCT";
 		}
 	}
 
-	public static boolean isCodeSystemBranch(String branch) {
-		if (branch.endsWith(SEPARATOR)) {
-			branch = branch.substring(0, branch.length() - 1);
+	public static LocalDate extractVersionDate(String path) {
+		String branchPath = removeTrailingSeparator(path);
+		if (!isReleaseBranch(branchPath)) {
+			return null;
 		}
-		return branch.equals("MAIN") || branch.startsWith("SNOMEDCT-", branch.lastIndexOf(SEPARATOR) + 1);
+		String version = branchPath.substring(branchPath.lastIndexOf(SEPARATOR) + 1);
+		return LocalDate.parse(version, DateTimeFormatter.ISO_LOCAL_DATE);
 	}
 
-	public static boolean isReleaseBranch(String branch) {
-		if (branch.endsWith(SEPARATOR)) {
-			branch = branch.substring(0, branch.length() - 1);
-		}
-		String parentBranch = getParentBranch(branch);
-		if (parentBranch == null) {
+	public static boolean isCodeSystemBranch(String path) {
+		String branchPath = removeTrailingSeparator(path);
+		return branchPath.equals("MAIN") || branchPath.startsWith("SNOMEDCT-", branchPath.lastIndexOf(SEPARATOR) + 1);
+	}
+
+	public static boolean isReleaseBranch(String path) {
+		String branchPath = removeTrailingSeparator(path);
+		String parentBranchPath = getParentBranch(branchPath);
+		if (parentBranchPath == null) {
 			return false;
 		}
-		String version = branch.substring(branch.lastIndexOf(SEPARATOR) + 1);
+		String version = branchPath.substring(branchPath.lastIndexOf(SEPARATOR) + 1);
 		try {
 			LocalDate.parse(version, DateTimeFormatter.ISO_LOCAL_DATE);
-			return isCodeSystemBranch(parentBranch);
+			return isCodeSystemBranch(parentBranchPath);
 		} catch (DateTimeParseException e) {
 			return false;
 		}
 	}
 
-	public static String getParentBranch(String branch) {
-		if (branch.endsWith(SEPARATOR)) {
-			branch = branch.substring(0, branch.length() - 1);
-		}
-		int lastIndex = branch.lastIndexOf(SEPARATOR);
-		return lastIndex == -1 ? null : branch.substring(0, lastIndex);
+	public static String getParentBranch(String path) {
+		String branchPath = removeTrailingSeparator(path);
+		int lastIndex = branchPath.lastIndexOf(SEPARATOR);
+		return lastIndex == -1 ? null : branchPath.substring(0, lastIndex);
+	}
+
+	private static String removeTrailingSeparator(String path) {
+		return path.endsWith(SEPARATOR) ? path.substring(0, path.length() - 1) : path;
 	}
 }

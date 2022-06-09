@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@Api(tags = "Version", value = "Build Version")
+@Api(tags = "Build Version")
 public class BuildVersionController {
 
 	@Autowired(required = false)
@@ -23,6 +23,5 @@ public class BuildVersionController {
 	public BuildVersion getBuildInformation() {
 		return new BuildVersion(buildProperties.getVersion(), buildProperties.getTime().toString());
 	}
-
 
 }

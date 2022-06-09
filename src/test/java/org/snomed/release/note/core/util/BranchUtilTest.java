@@ -3,6 +3,8 @@ package org.snomed.release.note.core.util;
 import org.junit.jupiter.api.Test;
 import org.snomed.release.note.AbstractTest;
 
+import java.time.LocalDate;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class BranchUtilTest extends AbstractTest {
@@ -47,6 +49,20 @@ public class BranchUtilTest extends AbstractTest {
 		assertEquals("SNOMEDCT-US", BranchUtil.extractCodeSystem("MAIN/SNOMEDCT-US/2020-01-01"));
 		assertEquals("SNOMEDCT-US", BranchUtil.extractCodeSystem("MAIN/SNOMEDCT-US/20200101"));
 		assertEquals("SNOMEDCT-US", BranchUtil.extractCodeSystem("MAIN/SNOMEDCT-US/ProjectA/Task1/2020-01-01"));
+	}
+
+	@Test
+	void testExtractVersionDate() {
+		assertNull(BranchUtil.extractVersionDate("MAIN/"));
+		assertNull(BranchUtil.extractVersionDate("MAIN/ProjectA"));
+		assertNull(BranchUtil.extractVersionDate("MAIN/ProjectA/Task1/"));
+		assertEquals(LocalDate.of(2020, 1, 1), BranchUtil.extractVersionDate("MAIN/2020-01-01"));
+		assertNull(BranchUtil.extractVersionDate("MAIN/20200101"));
+		assertNull(BranchUtil.extractVersionDate("MAIN/ProjectA/2020-01-01"));
+		assertNull(BranchUtil.extractVersionDate("MAIN/SNOMEDCT-US"));
+		assertEquals(LocalDate.of(2020, 1, 1), BranchUtil.extractVersionDate("MAIN/SNOMEDCT-US/2020-01-01"));
+		assertNull(BranchUtil.extractVersionDate("MAIN/SNOMEDCT-US/20200101"));
+		assertNull(BranchUtil.extractVersionDate("MAIN/SNOMEDCT-US/ProjectA/Task1/2020-01-01"));
 	}
 
 	@Test
