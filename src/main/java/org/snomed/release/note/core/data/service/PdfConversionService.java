@@ -12,6 +12,7 @@ import org.snomed.release.note.core.data.domain.LineItem;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -48,6 +49,9 @@ public class PdfConversionService {
 
 	private void collectContent(StringBuilder contentTotal, List<LineItem> lineItems) {
 		lineItems.forEach(lineItem -> {
+			contentTotal.append(formatTitle(lineItem));
+			contentTotal.append("\n\n");
+
 			String content = lineItem.getContent();
 			if (!Strings.isNullOrEmpty(content)) {
 				contentTotal.append(content);
@@ -55,5 +59,12 @@ public class PdfConversionService {
 			}
 			collectContent(contentTotal, lineItem.getChildren());
 		});
+	}
+
+	private String formatTitle(LineItem lineItem) {
+		char[] heading = new char[lineItem.getLevel()];
+		Arrays.fill(heading, '#');
+
+		return String.valueOf(heading) + " " + lineItem.getTitle();
 	}
 }
