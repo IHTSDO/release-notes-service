@@ -29,12 +29,24 @@ public class LineItemServiceTest extends AbstractTest {
 	@Test
 	void testCreate() throws BusinessServiceException{
 		final String path = "MAIN/ProjectA";
+
 		LineItem lineItem = lineItemService.create(new LineItemCreateRequest("Body structure", "Demonstration Release of the Anatomy Model"), path);
 		assertNotNull(lineItem.getId());
 		lineItem = lineItemService.find(lineItem.getId(), path);
 		assertEquals("Body structure", lineItem.getTitle());
 		assertEquals("Demonstration Release of the Anatomy Model", lineItem.getContent());
 		assertEquals(path, lineItem.getSourceBranch());
+		assertEquals(1, lineItem.getSequence());
+		assertFalse(lineItem.isReleased());
+		assertNull(lineItem.getPromotedBranch());
+
+		lineItem = lineItemService.create(new LineItemCreateRequest("Clinical finding", "Allergy"), path);
+		assertNotNull(lineItem.getId());
+		lineItem = lineItemService.find(lineItem.getId(), path);
+		assertEquals("Clinical finding", lineItem.getTitle());
+		assertEquals("Allergy", lineItem.getContent());
+		assertEquals(path, lineItem.getSourceBranch());
+		assertEquals(2, lineItem.getSequence());
 		assertFalse(lineItem.isReleased());
 		assertNull(lineItem.getPromotedBranch());
 	}

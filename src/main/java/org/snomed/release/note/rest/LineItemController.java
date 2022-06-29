@@ -115,7 +115,7 @@ public class LineItemController {
 	@GetMapping(value = "/{path}/published-lineitems")
 	public List<LineItem> getPublishedLineItems(
 			@PathVariable String path,
-			@RequestParam(defaultValue = "true") boolean ordered ) {
+			@RequestParam(defaultValue = "true") boolean ordered) {
 		return lineItemService.findPublished(BranchPathUriUtil.decodePath(path), ordered);
 	}
 

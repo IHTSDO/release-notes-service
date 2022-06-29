@@ -60,7 +60,11 @@ public class LineItemService {
 		} else {
 			lineItem.setLevel(lineItemCreateRequest.getLevel());
 		}
-		lineItem.setSequence(lineItemCreateRequest.getSequence() == null ? 1 : lineItemCreateRequest.getSequence());
+		if (lineItemCreateRequest.getSequence() == null) {
+			lineItem.setSequence(getMaxSequence(lineItemCreateRequest.getParentId(), path) + 1);
+		} else {
+			lineItem.setSequence(lineItemCreateRequest.getSequence());
+		}
 		lineItem.setStart(new Date());
 
 		return lineItemRepository.save(lineItem);
@@ -274,13 +278,18 @@ public class LineItemService {
 		lineItemRepository.saveAll(clonedLineItems);
 	}
 
-	public List<LineItem> getChildren(String id, String path) {
-		Query query = new NativeSearchQueryBuilder().withQuery(boolQuery()
-						.must(QueryBuilders.termQuery("parentId", id))
-						.must(QueryBuilders.termQuery("sourceBranch", path))
-						.mustNot(QueryBuilders.existsQuery("end")))
-				.build();
+	public List<LineItem> getChildren(String parentId, String path) {
+		BoolQueryBuilder queryBuilder = boolQuery()
+				.must(QueryBuilders.termQuery("sourceBranch", path))
+				.mustNot(QueryBuilders.existsQuery("end"));
 
+		if (parentId == null) {
+			queryBuilder.mustNot(QueryBuilders.existsQuery("parentId"));
+		} else {
+			queryBuilder.must(QueryBuilders.termQuery("parentId", parentId));
+		}
+
+		Query query = new NativeSearchQueryBuilder().withQuery(queryBuilder).build();
 		SearchHits<LineItem> searchHits = elasticsearchOperations.search(query, LineItem.class);
 
 		return searchHits.get().map(SearchHit::getContent).collect(toList());
@@ -399,6 +408,12 @@ public class LineItemService {
 
 	private String getContentNotNull(LineItem lineItem) {
 		return lineItem.getContent() == null ? "" : lineItem.getContent();
+	}
+
+	private int getMaxSequence(String parentId, String path) {
+		List<LineItem> lineItems = getChildren(parentId, path);
+		Optional<Integer> sequence = lineItems.stream().map(lineItem -> lineItem.getSequence()).max(Comparator.naturalOrder());
+		return sequence.isEmpty() ? 0 : sequence.get();
 	}
 
 }
