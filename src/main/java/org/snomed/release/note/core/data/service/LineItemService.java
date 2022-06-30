@@ -193,6 +193,20 @@ public class LineItemService {
 		return ordered ? doOrder(lineItems) : lineItems;
 	}
 
+	public List<LineItem> findUnpublished(final String path, final boolean ordered) {
+		Query query = new NativeSearchQueryBuilder().withQuery(boolQuery()
+						.must(QueryBuilders.termQuery("released", false))
+						.must(QueryBuilders.termQuery("sourceBranch", path)))
+				.build();
+
+		SearchHits<LineItem> searchHits = elasticsearchOperations.search(query, LineItem.class);
+
+		List<LineItem> lineItems = searchHits.get().map(SearchHit::getContent).collect(toList());
+		LOGGER.info("{} line items found on path {}", lineItems.size(), path);
+
+		return ordered ? doOrder(lineItems) : lineItems;
+	}
+
 	public List<LineItem> findAll() {
 		List<LineItem> result = new ArrayList<>();
 		Iterable<LineItem> foundLineItems = lineItemRepository.findAll();

@@ -239,12 +239,12 @@ public class LineItemServiceTest extends AbstractTest {
 		lineItemService.version("MAIN", new VersionRequest("MAIN/2022-01-31"));
 		lineItemService.publish("MAIN/2022-01-31");
 
-		List<LineItem> lineItemsUnordered = lineItemService.findPublished("MAIN/2022-01-31", false);
+		List<LineItem> lineItemsUnordered = lineItemService.findPublished("MAIN", false);
 		assertNotNull(lineItemsUnordered);
 		assertEquals(10, lineItemsUnordered.size());
 		lineItemsUnordered.forEach(item -> assertTrue(item.getChildren().isEmpty()));
 
-		List<LineItem> lineItems = lineItemService.findPublished("MAIN/2022-01-31", true);
+		List<LineItem> lineItems = lineItemService.findPublished("MAIN", true);
 		assertNotNull(lineItems);
 		assertEquals(3, lineItems.size());
 		lineItems.forEach(item -> {
@@ -256,6 +256,19 @@ public class LineItemServiceTest extends AbstractTest {
 				assertTrue(TestDataHelper.LEVEL_TWO_TITLES.contains(child.getTitle()));
 			});
 		});
+	}
+
+	@Test
+	void testFindUnpublishedLineItems() throws BusinessServiceException {
+		testDataHelper.createLineItems("MAIN");
+		lineItemService.version("MAIN", new VersionRequest("MAIN/2022-01-31"));
+		lineItemService.publish("MAIN/2022-01-31");
+
+		lineItemService.create(new LineItemCreateRequest("Body structure", "Demonstration Release of the Anatomy Model"), "MAIN");
+
+		List<LineItem> lineItems = lineItemService.findUnpublished("MAIN", false);
+		assertNotNull(lineItems);
+		assertEquals(1, lineItems.size());
 	}
 
 	private String getMergedContent(List<LineItem> lineItems, final String title) {

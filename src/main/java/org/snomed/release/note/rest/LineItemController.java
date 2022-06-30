@@ -112,11 +112,18 @@ public class LineItemController {
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
 
-	@GetMapping(value = "/{path}/published-lineitems")
+	@GetMapping(value = "/{path}/lineitems/published")
 	public List<LineItem> getPublishedLineItems(
 			@PathVariable String path,
 			@RequestParam(defaultValue = "true") boolean ordered) {
 		return lineItemService.findPublished(BranchPathUriUtil.decodePath(path), ordered);
+	}
+
+	@GetMapping(value = "/{path}/lineitems/unpublished")
+	public List<LineItem> getUnpublishedLineItems(
+			@PathVariable String path,
+			@RequestParam(defaultValue = "true") boolean ordered) {
+		return lineItemService.findUnpublished(BranchPathUriUtil.decodePath(path), ordered);
 	}
 
 	@DeleteMapping(value = "/{path}/lineitems/{id}")
