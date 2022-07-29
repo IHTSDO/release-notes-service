@@ -7,6 +7,7 @@ import org.ihtsdo.otf.rest.exception.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.snomed.release.note.core.data.domain.LineItem;
+import org.snomed.release.note.core.data.domain.LineItemComparator;
 import org.snomed.release.note.core.data.repository.LineItemRepository;
 import org.snomed.release.note.core.util.BranchUtil;
 import org.snomed.release.note.rest.pojo.CloneRequest;
@@ -309,6 +310,19 @@ public class LineItemService {
 		return searchHits.get().map(SearchHit::getContent).collect(toList());
 	}
 
+	public void updateSequence(String path) {
+		updateSequence(findOrderedLineItems(path));
+	}
+
+	private void updateSequence(List<LineItem> lineItems) {
+		int sequence = 0;
+		for (LineItem lineItem : lineItems) {
+			lineItem.setSequence(++sequence);
+			updateSequence(lineItem.getChildren());
+		}
+		lineItemRepository.saveAll(lineItems);
+	}
+
 	private String getPromotedBranch(final String sourceBranch) throws BusinessServiceException {
 		String promotedBranch = BranchUtil.getParentBranch(sourceBranch);
 
@@ -336,9 +350,11 @@ public class LineItemService {
 	}
 
 	private List<LineItem> doOrder(List<LineItem> lineItems) {
+		LineItemComparator lineItemComparator = new LineItemComparator();
+
 		List<LineItem> topLevelItems = lineItems.stream()
 				.filter(lineItem -> lineItem.getLevel() == 1)
-				.sorted(Comparator.comparing(LineItem::getSequence))
+				.sorted(lineItemComparator)
 				.collect(toList());
 
 		Map<String, List<LineItem>> subItemsMappedByParent = new HashMap<>();
@@ -351,7 +367,7 @@ public class LineItemService {
 				subItemsMappedByParent.computeIfAbsent(lineItem.getParentId(), items -> new ArrayList<>()).add(lineItem);
 			}
 		});
-		subItemsMappedByParent.values().forEach(items -> items.sort(Comparator.comparing(LineItem::getSequence)));
+		subItemsMappedByParent.values().forEach(items -> items.sort(lineItemComparator));
 
 		topLevelItems.forEach(topLevelItem -> {
 			String parentId = topLevelItem.getId();
@@ -416,7 +432,7 @@ public class LineItemService {
 		newLineItem.setTitle(lineItem.getTitle());
 		newLineItem.setContent(getContentNotNull(lineItem));
 		newLineItem.setLevel(lineItem.getLevel());
-		newLineItem.setSequence(lineItem.getSequence());
+		newLineItem.setSequence(getMaxSequence(lineItem.getParentId(), path) + 1);
 		return newLineItem;
 	}
 
