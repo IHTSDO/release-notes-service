@@ -1,17 +1,21 @@
 package org.snomed.release.note.core.data.service;
 
-import com.qkyrie.markdown2pdf.internal.converting.Html2PdfConverter;
-import com.qkyrie.markdown2pdf.internal.converting.HtmlCleaner;
-import com.qkyrie.markdown2pdf.internal.converting.Markdown2HtmlConverter;
-import com.qkyrie.markdown2pdf.internal.exceptions.ConversionException;
+import com.lowagie.text.DocumentException;
+import org.commonmark.node.Node;
+import org.commonmark.parser.Parser;
+import org.commonmark.renderer.html.HtmlRenderer;
 import org.elasticsearch.common.Strings;
 import org.ihtsdo.otf.rest.exception.BusinessServiceException;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.snomed.release.note.core.data.domain.LineItem;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.xhtmlrenderer.pdf.ITextRenderer;
 
+import java.io.*;
 import java.util.Arrays;
 import java.util.List;
 
@@ -24,24 +28,33 @@ public class PdfConversionService {
 	private static final Logger LOGGER = LoggerFactory.getLogger(PdfConversionService.class);
 
 	public byte[] convertToPdf(String path) throws BusinessServiceException {
-		List<LineItem> lineItems = lineItemService.findOrderedLineItems(path);
+		LOGGER.info("Collecting the release notes on path {}", path);
 
 		StringBuilder content = new StringBuilder();
-		collectContent(content, lineItems);
+		collectContent(content, lineItemService.findOrderedLineItems(path));
 
-		String originalMarkdownFile = content.toString();
+		LOGGER.info("Converting the release notes on path {} to PDF", path);
+
+		Parser parser = Parser.builder().build();
+		Node node = parser.parse(content.toString());
+		HtmlRenderer htmlRenderer = HtmlRenderer.builder().build();
+		String html = htmlRenderer.render(node);
+
+		Document document = Jsoup.parse(html);
+		document.outputSettings().syntax(Document.OutputSettings.Syntax.xml);
 
 		try {
-			LOGGER.info("Converting the release notes on path {} to PDF", path);
-
-			String htmlFile = new Markdown2HtmlConverter().convert(originalMarkdownFile);
-			String cleanedHtmlFile = new HtmlCleaner().clean(htmlFile);
-			byte[] convertedPdfFile = new Html2PdfConverter().convert(cleanedHtmlFile);
+			ITextRenderer renderer = new ITextRenderer();
+			renderer.setDocumentFromString(document.html());
+			renderer.layout();
+			ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+			renderer.createPDF(outputStream);
+			byte[] pdf = outputStream.toByteArray();
 
 			LOGGER.info("Successfully converted the release notes on path {} to PDF", path);
 
-			return convertedPdfFile;
-		} catch (ConversionException e) {
+			return pdf;
+		} catch (DocumentException e) {
 			LOGGER.error("Failed to convert the release notes on path {} to PDF", path, e);
 			throw new BusinessServiceException("Failed to convert the release notes on path " + path + " to PDF", e);
 		}
