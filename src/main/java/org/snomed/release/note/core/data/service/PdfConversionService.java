@@ -8,6 +8,7 @@ import org.elasticsearch.common.Strings;
 import org.ihtsdo.otf.rest.exception.BusinessServiceException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Entities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.snomed.release.note.core.data.domain.LineItem;
@@ -42,6 +43,7 @@ public class PdfConversionService {
 
 		Document document = Jsoup.parse(html);
 		document.outputSettings().syntax(Document.OutputSettings.Syntax.xml);
+		document.outputSettings().escapeMode(Entities.EscapeMode.xhtml);
 
 		try {
 			ITextRenderer renderer = new ITextRenderer();
