@@ -10,6 +10,7 @@ import org.snomed.release.note.core.data.domain.LineItem;
 import org.snomed.release.note.core.data.domain.LineItemComparator;
 import org.snomed.release.note.core.data.repository.LineItemRepository;
 import org.snomed.release.note.core.util.BranchUtil;
+import org.snomed.release.note.core.util.ContentUtil;
 import org.snomed.release.note.rest.pojo.CloneRequest;
 import org.snomed.release.note.rest.pojo.LineItemCreateRequest;
 import org.snomed.release.note.rest.pojo.LineItemUpdateRequest;
@@ -38,58 +39,41 @@ public class LineItemService {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(LineItemService.class);
 
-	public LineItem create(final LineItemCreateRequest lineItemCreateRequest, final String path) throws BusinessServiceException {
-		String title = lineItemCreateRequest.getTitle();
+	public LineItem create(final LineItemCreateRequest createRequest, final String path) throws BusinessServiceException {
+		String title = createRequest.getTitle();
 
 		if (Strings.isNullOrEmpty(title)) {
 			throw new BadRequestException("'title' is required");
 		}
-		if (findOpenLineItem(lineItemCreateRequest.getParentId(), title, path) != null) {
+		if (findOpenLineItem(createRequest.getParentId(), title, path) != null) {
 			throw new EntityAlreadyExistsException("Line item with title '" + title + "' already exists on path '" + path +"'");
 		}
 
-		validateParentIdAndLevel(lineItemCreateRequest.getParentId(), lineItemCreateRequest.getLevel());
+		validateParentIdAndLevel(createRequest.getParentId(), createRequest.getLevel());
 
-		LineItem lineItem = new LineItem();
-		lineItem.setSourceBranch(path);
-		lineItem.setParentId(lineItemCreateRequest.getParentId());
-		lineItem.setTitle(title);
-		lineItem.setContent(lineItemCreateRequest.getContent());
-
-		if (lineItemCreateRequest.getLevel() == null) {
-			lineItem.setLevel(lineItemCreateRequest.getParentId() == null ? 1 : 2);
-		} else {
-			lineItem.setLevel(lineItemCreateRequest.getLevel());
-		}
-		if (lineItemCreateRequest.getSequence() == null) {
-			lineItem.setSequence(getMaxSequence(lineItemCreateRequest.getParentId(), path) + 1);
-		} else {
-			lineItem.setSequence(lineItemCreateRequest.getSequence());
-		}
-		lineItem.setStart(new Date());
-
+		LineItem lineItem = createFromRequest(createRequest, path);
 		return lineItemRepository.save(lineItem);
 	}
 
-	public LineItem update(final LineItemUpdateRequest lineItemUpdateRequest, final String path) throws BusinessServiceException {
-		LineItem existing = find(lineItemUpdateRequest.getId(), path);
+	public LineItem update(final LineItemUpdateRequest updateRequest, final String path) throws BusinessServiceException {
+		LineItem existing = find(updateRequest.getId(), path);
 
 		if (!Strings.isNullOrEmpty(existing.getPromotedBranch())) {
 			throw new BadConfigurationException("Line item with id '" + existing.getId() + "' is already promoted to branch '" + existing.getPromotedBranch() + "' and cannot be changed");
 		}
 
-		validateParentIdAndLevel(lineItemUpdateRequest.getParentId(), lineItemUpdateRequest.getLevel() == null ? existing.getLevel() : lineItemUpdateRequest.getLevel());
+		validateParentIdAndLevel(updateRequest.getParentId(), updateRequest.getLevel() == null ? existing.getLevel() : updateRequest.getLevel());
 
-		existing.setParentId(lineItemUpdateRequest.getParentId());
+		existing.setParentId(updateRequest.getParentId());
 
-		if (lineItemUpdateRequest.getContent() != null) {
-			existing.setContent(lineItemUpdateRequest.getContent());
+		if (updateRequest.getContent() != null) {
+			existing.setContent(updateRequest.getContent());
 		}
-		if (lineItemUpdateRequest.getLevel() != null) {
-			existing.setLevel(lineItemUpdateRequest.getLevel());
+		if (updateRequest.getLevel() != null) {
+			existing.setLevel(updateRequest.getLevel());
 		}
-		if (lineItemUpdateRequest.getSequence() != null) {
-			existing.setSequence(lineItemUpdateRequest.getSequence());
+		if (updateRequest.getSequence() != null) {
+			existing.setSequence(updateRequest.getSequence());
 		}
 
 		return lineItemRepository.save(existing);
@@ -271,26 +255,34 @@ public class LineItemService {
 			throw new BadRequestException("Branch '" + path + "' must be a release branch");
 		}
 
-		List<LineItem> lineItems = find(path);
+		List<LineItem> lineItems = findOrderedLineItems(path);
 
-		List<LineItem> clonedLineItems = new ArrayList<>();
 		String destinationBranch = cloneRequest.getDestinationBranch();
 
 		lineItems.forEach(lineItem -> {
-			try {
-				LineItem clonedLineItem = create(new LineItemCreateRequest(
-						lineItem.getParentId(),
-						lineItem.getTitle(),
-						null,
-						lineItem.getLevel(),
-						lineItem.getSequence()), destinationBranch);
-				clonedLineItems.add(clonedLineItem);
-			} catch (BusinessServiceException e) {
-				throw new BusinessServiceRuntimeException("An error occurred while cloning line items", e);
-			}
-		});
+			LineItem clonedLineItem = createFromRequest(new LineItemCreateRequest(
+					lineItem.getParentId(),
+					lineItem.getTitle(),
+					null,
+					lineItem.getLevel(),
+					lineItem.getSequence()), destinationBranch);
 
-		lineItemRepository.saveAll(clonedLineItems);
+			clonedLineItem = lineItemRepository.save(clonedLineItem);
+
+			List<LineItem> clonedChildLineItems = new ArrayList<>();
+
+			for (LineItem childLineItem : lineItem.getChildren()) {
+				LineItem clonedChildLineItem = createFromRequest(new LineItemCreateRequest(
+						clonedLineItem.getId(),
+						childLineItem.getTitle(),
+						null,
+						childLineItem.getLevel(),
+						childLineItem.getSequence()), destinationBranch);
+
+				clonedChildLineItems.add(clonedChildLineItem);
+			}
+			lineItemRepository.saveAll(clonedChildLineItems);
+		});
 	}
 
 	public List<LineItem> getChildren(String parentId, String path) {
@@ -333,18 +325,24 @@ public class LineItemService {
 		return promotedBranch;
 	}
 
-	private void doPromote(LineItem lineItem, String branch, List<LineItem> toSave) {
-		// Find or create an open line item on the given branch to merge content to
-		LineItem openLineItem = findOpenLineItem(lineItem.getParentId(), lineItem.getTitle(), branch);
+	private void doPromote(LineItem lineItem, String path, List<LineItem> toSave) {
+		// Find or create an open line item on the given branch to merge the content to
+		LineItem openLineItem = findOpenLineItem(lineItem.getParentId(), lineItem.getTitle(), path);
+
 		if (openLineItem == null) {
-			openLineItem = createLineItem(lineItem, branch);
+			openLineItem = createFromRequest(new LineItemCreateRequest(
+					lineItem.getParentId(),
+					lineItem.getTitle(),
+					lineItem.getContent(),
+					lineItem.getLevel(),
+					null), path);
 		} else {
-			openLineItem.setContent(String.join(System.lineSeparator(), getContentNotNull(openLineItem), getContentNotNull(lineItem)));
+			openLineItem.setContent(ContentUtil.merge(openLineItem.getContent(), lineItem.getContent()));
 		}
 		toSave.add(openLineItem);
 
 		// Set promotedBranch and end
-		lineItem.setPromotedBranch(branch);
+		lineItem.setPromotedBranch(path);
 		lineItem.setEnd(new Date());
 		toSave.add(lineItem);
 	}
@@ -425,19 +423,27 @@ public class LineItemService {
 		}
 	}
 
-	private LineItem createLineItem(LineItem lineItem, String path) {
-		LineItem newLineItem = new LineItem();
-		newLineItem.setSourceBranch(path);
-		newLineItem.setParentId(lineItem.getParentId());
-		newLineItem.setTitle(lineItem.getTitle());
-		newLineItem.setContent(getContentNotNull(lineItem));
-		newLineItem.setLevel(lineItem.getLevel());
-		newLineItem.setSequence(getMaxSequence(lineItem.getParentId(), path) + 1);
-		return newLineItem;
-	}
+	private LineItem createFromRequest(LineItemCreateRequest lineItemCreateRequest, String path) {
+		LineItem lineItem = new LineItem();
+		lineItem.setSourceBranch(path);
+		lineItem.setParentId(lineItemCreateRequest.getParentId());
+		lineItem.setTitle(lineItemCreateRequest.getTitle());
+		lineItem.setContent(lineItemCreateRequest.getContent());
 
-	private String getContentNotNull(LineItem lineItem) {
-		return lineItem.getContent() == null ? "" : lineItem.getContent();
+		if (lineItemCreateRequest.getLevel() == null) {
+			lineItem.setLevel(lineItemCreateRequest.getParentId() == null ? 1 : 2);
+		} else {
+			lineItem.setLevel(lineItemCreateRequest.getLevel());
+		}
+
+		if (lineItemCreateRequest.getSequence() == null) {
+			lineItem.setSequence(getMaxSequence(lineItemCreateRequest.getParentId(), path) + 1);
+		} else {
+			lineItem.setSequence(lineItemCreateRequest.getSequence());
+		}
+
+		lineItem.setStart(new Date());
+		return lineItem;
 	}
 
 	private int getMaxSequence(String parentId, String path) {

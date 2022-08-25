@@ -7,6 +7,7 @@ import org.snomed.release.note.AbstractTest;
 import org.snomed.release.note.core.data.domain.LineItem;
 import org.snomed.release.note.core.data.repository.LineItemRepository;
 import org.snomed.release.note.core.util.BranchUtil;
+import org.snomed.release.note.core.util.ContentUtil;
 import org.snomed.release.note.rest.pojo.CloneRequest;
 import org.snomed.release.note.rest.pojo.LineItemCreateRequest;
 import org.snomed.release.note.rest.pojo.LineItemUpdateRequest;
@@ -14,7 +15,6 @@ import org.snomed.release.note.rest.pojo.VersionRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -134,18 +134,18 @@ public class LineItemServiceTest extends AbstractTest {
 	@Test
 	void testPromote_oneLineItem() throws BusinessServiceException {
 		String sourceBranch = "MAIN/ProjectA/Task1";
-		LineItem lineItem = lineItemService.create(new LineItemCreateRequest("Body structure", "Release of the Anatomy Model"), sourceBranch);
-		lineItemService.promote(lineItem.getId(), sourceBranch);
+		LineItem lineItem1 = lineItemService.create(new LineItemCreateRequest("Body structure", "Release of the Anatomy Model"), sourceBranch);
+		lineItemService.promote(lineItem1.getId(), sourceBranch);
 
-		lineItem = lineItemService.find(lineItem.getId(), sourceBranch);
-		assertNotNull(lineItem.getPromotedBranch());
-		assertEquals("MAIN/ProjectA", lineItem.getPromotedBranch());
-		assertNotNull(lineItem.getEnd());
+		lineItem1 = lineItemService.find(lineItem1.getId(), sourceBranch);
+		assertNotNull(lineItem1.getPromotedBranch());
+		assertEquals("MAIN/ProjectA", lineItem1.getPromotedBranch());
+		assertNotNull(lineItem1.getEnd());
 
 		List<LineItem> promotedLineItems = lineItemService.find("MAIN/ProjectA");
 		assertEquals(1, promotedLineItems.size());
 		assertEquals("MAIN/ProjectA", promotedLineItems.get(0).getSourceBranch());
-		assertEquals(lineItem.getContent(), promotedLineItems.get(0).getContent());
+		assertEquals(lineItem1.getContent(), promotedLineItems.get(0).getContent());
 
 		sourceBranch = "MAIN/ProjectA/Task2";
 		LineItem lineItem2 = lineItemService.create(new LineItemCreateRequest("Body structure", "COVID-19"), sourceBranch);
@@ -154,7 +154,7 @@ public class LineItemServiceTest extends AbstractTest {
 		promotedLineItems = lineItemService.find("MAIN/ProjectA");
 		assertEquals(1, promotedLineItems.size());
 		assertEquals("MAIN/ProjectA", promotedLineItems.get(0).getSourceBranch());
-		assertEquals(lineItem.getContent() + System.lineSeparator() + lineItem2.getContent(), promotedLineItems.get(0).getContent());
+		assertEquals(ContentUtil.merge(lineItem1.getContent(), lineItem2.getContent()), promotedLineItems.get(0).getContent());
 	}
 
 	@Test
@@ -217,20 +217,45 @@ public class LineItemServiceTest extends AbstractTest {
 	}
 
 	@Test
-	void testClone() throws BusinessServiceException {
+	void testCloneWithoutHierarchy() throws BusinessServiceException {
 		lineItemService.create(new LineItemCreateRequest("Body structure", "Demonstration Release of the Anatomy Model"), "MAIN");
+		assertEquals(1, lineItemService.find("MAIN").size());
+
 		lineItemService.version("MAIN", new VersionRequest("MAIN/2022-01-31"));
 		List<LineItem> versioned = lineItemService.find("MAIN/2022-01-31");
+		assertEquals(1, versioned.size());
+		assertEquals(0, lineItemService.find("MAIN").size());
 
 		lineItemService.clone("MAIN/2022-01-31", new CloneRequest("MAIN"));
 		List<LineItem> cloned = lineItemService.find("MAIN");
-
 		assertEquals(1, cloned.size());
-		assertEquals(versioned.get(0).getParentId(), cloned.get(0).getParentId());
+		assertNull(cloned.get(0).getParentId());
 		assertEquals(versioned.get(0).getTitle(), cloned.get(0).getTitle());
 		assertEquals(versioned.get(0).getLevel(), cloned.get(0).getLevel());
 		assertEquals(versioned.get(0).getSequence(), cloned.get(0).getSequence());
 		assertNull(cloned.get(0).getContent());
+	}
+
+	@Test
+	void testCloneWithHierarchy() throws BusinessServiceException {
+		List<LineItem> lineItems = testDataHelper.createLineItems("MAIN");
+
+		lineItemService.version("MAIN", new VersionRequest("MAIN/2022-01-31"));
+		assertEquals(lineItems.size(), lineItemService.find("MAIN/2022-01-31").size());
+		assertEquals(0, lineItemService.find("MAIN").size());
+
+		lineItemService.clone("MAIN/2022-01-31", new CloneRequest("MAIN"));
+		assertEquals(lineItems.size(), lineItemService.find("MAIN").size());
+
+		List<LineItem> cloned = lineItemService.findOrderedLineItems("MAIN");
+		List<LineItem> children = lineItemService.getChildren(cloned.get(0).getId(), "MAIN");
+		assertEquals(2, children.size());
+
+		children = lineItemService.getChildren(cloned.get(1).getId(), "MAIN");
+		assertEquals(3, children.size());
+
+		children = lineItemService.getChildren(cloned.get(2).getId(), "MAIN");
+		assertEquals(2, children.size());
 	}
 
 	@Test
@@ -272,10 +297,11 @@ public class LineItemServiceTest extends AbstractTest {
 	}
 
 	private String getMergedContent(List<LineItem> lineItems, final String title) {
-		return lineItems.stream()
+		String[] lines = lineItems.stream()
 				.filter(lineItem -> title.equals(lineItem.getTitle()))
 				.map(LineItem::getContent)
-				.collect(Collectors.joining(System.lineSeparator()));
+				.toArray(String[]::new);
+		return ContentUtil.merge(lines);
 	}
 
 }
