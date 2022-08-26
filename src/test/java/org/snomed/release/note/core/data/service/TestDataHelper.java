@@ -41,16 +41,18 @@ public class TestDataHelper {
 	}
 
 	public LineItem constructLineItem(String path, String title, int level, int sequence) {
-		return constructLineItem(path, title, "", level, sequence);
+		return constructLineItem(null, path, title, "", level, sequence);
 	}
 
-	public LineItem constructLineItem(String path, String title, String content, int level, int sequence) {
+	public LineItem constructLineItem(String parentId, String path, String title, String content, int level, int sequence) {
 		LineItem lineItem = new LineItem();
+		lineItem.setParentId(parentId);
 		lineItem.setSourceBranch(path);
 		lineItem.setTitle(title);
 		lineItem.setContent(content);
 		lineItem.setLevel(level);
 		lineItem.setSequence(sequence);
+		lineItem.setStart(new Date());
 		return lineItem;
 	}
 
