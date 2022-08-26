@@ -2,6 +2,7 @@ package org.snomed.release.note.rest;
 
 import io.kaicode.rest.util.branchpathrewrite.BranchPathUriUtil;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.ihtsdo.otf.rest.exception.BadRequestException;
 import org.ihtsdo.otf.rest.exception.BusinessServiceException;
 import org.snomed.release.note.core.data.domain.LineItem;
@@ -124,6 +125,13 @@ public class LineItemController {
 			@PathVariable String path,
 			@RequestParam(defaultValue = "true") boolean ordered) {
 		return lineItemService.findUnpublished(BranchPathUriUtil.decodePath(path), ordered);
+	}
+
+	@GetMapping(value = "/{path}/lineitems/categories")
+	@ApiOperation("Retrieve available categories for content development.")
+	public List<String> getCategories(
+			@PathVariable String path) {
+		return lineItemService.findCategories(BranchPathUriUtil.decodePath(path));
 	}
 
 	@DeleteMapping(value = "/{path}/lineitems/{id}")

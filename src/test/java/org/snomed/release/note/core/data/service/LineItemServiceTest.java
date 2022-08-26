@@ -219,43 +219,44 @@ public class LineItemServiceTest extends AbstractTest {
 	@Test
 	void testCloneWithoutHierarchy() throws BusinessServiceException {
 		lineItemService.create(new LineItemCreateRequest("Body structure", "Demonstration Release of the Anatomy Model"), "MAIN");
-		assertEquals(1, lineItemService.find("MAIN").size());
 
 		lineItemService.version("MAIN", new VersionRequest("MAIN/2022-01-31"));
 		List<LineItem> versioned = lineItemService.find("MAIN/2022-01-31");
-		assertEquals(1, versioned.size());
-		assertEquals(0, lineItemService.find("MAIN").size());
 
 		lineItemService.clone("MAIN/2022-01-31", new CloneRequest("MAIN"));
 		List<LineItem> cloned = lineItemService.find("MAIN");
-		assertEquals(1, cloned.size());
-		assertNull(cloned.get(0).getParentId());
+
+		assertEquals(versioned.size(), cloned.size());
+		assertEquals(versioned.get(0).getParentId(), cloned.get(0).getParentId());
 		assertEquals(versioned.get(0).getTitle(), cloned.get(0).getTitle());
 		assertEquals(versioned.get(0).getLevel(), cloned.get(0).getLevel());
 		assertEquals(versioned.get(0).getSequence(), cloned.get(0).getSequence());
-		assertNull(cloned.get(0).getContent());
+		assertEquals(versioned.get(0).getContent(), cloned.get(0).getContent());
 	}
 
 	@Test
 	void testCloneWithHierarchy() throws BusinessServiceException {
-		List<LineItem> lineItems = testDataHelper.createLineItems("MAIN");
+		testDataHelper.createLineItems("MAIN");
 
 		lineItemService.version("MAIN", new VersionRequest("MAIN/2022-01-31"));
-		assertEquals(lineItems.size(), lineItemService.find("MAIN/2022-01-31").size());
-		assertEquals(0, lineItemService.find("MAIN").size());
+		List<LineItem> versioned = lineItemService.find("MAIN/2022-01-31");
 
 		lineItemService.clone("MAIN/2022-01-31", new CloneRequest("MAIN"));
-		assertEquals(lineItems.size(), lineItemService.find("MAIN").size());
+		List<LineItem> cloned = lineItemService.find("MAIN");
 
-		List<LineItem> cloned = lineItemService.findOrderedLineItems("MAIN");
-		List<LineItem> children = lineItemService.getChildren(cloned.get(0).getId(), "MAIN");
-		assertEquals(2, children.size());
+		assertEquals(versioned.size(), cloned.size());
 
-		children = lineItemService.getChildren(cloned.get(1).getId(), "MAIN");
-		assertEquals(3, children.size());
+		List<LineItem> clonedWithHierarchy = lineItemService.findOrderedLineItems("MAIN");
+		assertEquals(3, clonedWithHierarchy.size());
 
-		children = lineItemService.getChildren(cloned.get(2).getId(), "MAIN");
-		assertEquals(2, children.size());
+		LineItem clonedTopLevel1 = clonedWithHierarchy.get(0);
+		assertEquals(2, clonedTopLevel1.getChildren().size());
+
+		LineItem clonedTopLevel2 = clonedWithHierarchy.get(1);
+		assertEquals(3, clonedTopLevel2.getChildren().size());
+
+		LineItem clonedTopLevel3 = clonedWithHierarchy.get(2);
+		assertEquals(2, clonedTopLevel3.getChildren().size());
 	}
 
 	@Test
@@ -294,6 +295,21 @@ public class LineItemServiceTest extends AbstractTest {
 		List<LineItem> lineItems = lineItemService.findUnpublished("MAIN", false);
 		assertNotNull(lineItems);
 		assertEquals(1, lineItems.size());
+	}
+
+	@Test
+	void testFindCategories() throws BusinessServiceException {
+		LineItem contentDevelopmentActivity = lineItemService.create(new LineItemCreateRequest(LineItemService.CONTENT_DEVELOPMENT_ACTIVITY, "Content Development"), "MAIN");
+
+		lineItemService.create(new LineItemCreateRequest("Introduction", null), "MAIN");
+		lineItemService.create(new LineItemCreateRequest(contentDevelopmentActivity.getId(), "Body structure", "Body structure content"), "MAIN");
+		lineItemService.create(new LineItemCreateRequest(contentDevelopmentActivity.getId(), "Procedure", "Procedure content"), "MAIN");
+		lineItemService.create(new LineItemCreateRequest("Technical notes", null), "MAIN");
+
+		List<String> categories = lineItemService.findCategories("MAIN");
+		assertEquals(2, categories.size());
+		assertTrue(categories.contains("Body structure"));
+		assertTrue(categories.contains("Procedure"));
 	}
 
 	private String getMergedContent(List<LineItem> lineItems, final String title) {

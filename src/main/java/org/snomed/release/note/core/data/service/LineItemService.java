@@ -37,6 +37,8 @@ public class LineItemService {
 	@Autowired
 	private ElasticsearchOperations elasticsearchOperations;
 
+	public static final String CONTENT_DEVELOPMENT_ACTIVITY = "Content Development Activity";
+
 	private static final Logger LOGGER = LoggerFactory.getLogger(LineItemService.class);
 
 	public LineItem create(final LineItemCreateRequest createRequest, final String path) throws BusinessServiceException {
@@ -192,6 +194,31 @@ public class LineItemService {
 		return ordered ? doOrder(lineItems) : lineItems;
 	}
 
+	public List<String> findCategories(final String path) {
+		List<String> categories = new ArrayList<>();
+
+		LineItem contentDevelopmentActivity = getContentDevelopmentActivity(path);
+
+		if (contentDevelopmentActivity != null) {
+			getChildren(contentDevelopmentActivity.getId(), path).forEach(child -> categories.add(child.getTitle()));
+		}
+		return categories;
+	}
+
+	public LineItem getContentDevelopmentActivity(String path) {
+		List<LineItem> contentDevelopmentActivity = findByTitle(CONTENT_DEVELOPMENT_ACTIVITY, path);
+
+		if (contentDevelopmentActivity.isEmpty()) {
+			LOGGER.warn("Line item with title {} is not found on path {}", CONTENT_DEVELOPMENT_ACTIVITY, path);
+			return null;
+		}
+		if (contentDevelopmentActivity.size() > 1) {
+			LOGGER.warn("There are multiple line items with title {} found on path {}", CONTENT_DEVELOPMENT_ACTIVITY, path);
+			return null;
+		}
+		return contentDevelopmentActivity.get(0);
+	}
+
 	public List<LineItem> findAll() {
 		List<LineItem> result = new ArrayList<>();
 		Iterable<LineItem> foundLineItems = lineItemRepository.findAll();
@@ -251,19 +278,25 @@ public class LineItemService {
 	}
 
 	public void clone(final String path, final CloneRequest cloneRequest) throws BusinessServiceException {
+		final String destinationBranch = cloneRequest.getDestinationBranch();
+
+		if (Strings.isNullOrEmpty(destinationBranch)) {
+			throw new BadRequestException("'destinationBranch' is required");
+		}
+		if (!BranchUtil.isCodeSystemBranch(destinationBranch)) {
+			throw new BadRequestException("Branch '" + destinationBranch + "' is not a code system branch");
+		}
 		if (!BranchUtil.isReleaseBranch(path)) {
 			throw new BadRequestException("Branch '" + path + "' must be a release branch");
 		}
 
 		List<LineItem> lineItems = findOrderedLineItems(path);
 
-		String destinationBranch = cloneRequest.getDestinationBranch();
-
 		lineItems.forEach(lineItem -> {
 			LineItem clonedLineItem = createFromRequest(new LineItemCreateRequest(
 					lineItem.getParentId(),
 					lineItem.getTitle(),
-					null,
+					lineItem.getContent(),
 					lineItem.getLevel(),
 					lineItem.getSequence()), destinationBranch);
 
@@ -271,11 +304,13 @@ public class LineItemService {
 
 			List<LineItem> clonedChildLineItems = new ArrayList<>();
 
+			boolean shouldClearContent = CONTENT_DEVELOPMENT_ACTIVITY.equals(lineItem.getTitle());
+
 			for (LineItem childLineItem : lineItem.getChildren()) {
 				LineItem clonedChildLineItem = createFromRequest(new LineItemCreateRequest(
 						clonedLineItem.getId(),
 						childLineItem.getTitle(),
-						null,
+						(shouldClearContent ? null : childLineItem.getContent()),
 						childLineItem.getLevel(),
 						childLineItem.getSequence()), destinationBranch);
 
@@ -333,9 +368,7 @@ public class LineItemService {
 			openLineItem = createFromRequest(new LineItemCreateRequest(
 					lineItem.getParentId(),
 					lineItem.getTitle(),
-					lineItem.getContent(),
-					lineItem.getLevel(),
-					null), path);
+					lineItem.getContent()), path);
 		} else {
 			openLineItem.setContent(ContentUtil.merge(openLineItem.getContent(), lineItem.getContent()));
 		}

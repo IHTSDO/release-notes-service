@@ -22,6 +22,13 @@ public class LineItemCreateRequest {
 		this.content = content;
 	}
 
+	public LineItemCreateRequest(String parentId, String title, String content) {
+		this();
+		this.parentId = parentId;
+		this.title = title;
+		this.content = content;
+	}
+
 	public LineItemCreateRequest(String parentId, String title, String content, Integer level, Integer sequence) {
 		this();
 		this.parentId = parentId;
