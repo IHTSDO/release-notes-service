@@ -3,7 +3,6 @@ package org.snomed.release.note.config;
 import io.kaicode.rest.util.branchpathrewrite.BranchPathUriRewriteFilter;
 import org.ihtsdo.sso.integration.RequestHeaderAuthenticationDecorator;
 import org.snomed.release.note.rest.config.AccessDeniedExceptionHandler;
-import org.snomed.release.note.rest.security.RequiredRoleFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.info.BuildProperties;
@@ -15,6 +14,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.annotation.web.configurers.ExpressionUrlAuthorizationConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 import org.springframework.security.web.firewall.DefaultHttpFirewall;
@@ -64,27 +64,32 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 		http.csrf().disable();
 
-		// Add custom security filters
-		http.addFilterBefore(new RequestHeaderAuthenticationDecorator(), FilterSecurityInterceptor.class);
-		http.addFilterAt(new RequiredRoleFilter(requiredRole, excludedUrlPatterns), FilterSecurityInterceptor.class);
+		ExpressionUrlAuthorizationConfigurer<HttpSecurity>.ExpressionInterceptUrlRegistry authorizeRequests = http.authorizeRequests();
 
 		if (restApiReadOnly) {
 			// Read-only mode
 			// Block all POST/PUT/PATCH/DELETE
-			http.authorizeRequests()
-					.antMatchers(excludedUrlPatterns).permitAll()
+			authorizeRequests
 					.antMatchers(HttpMethod.POST, "/**").denyAll()
 					.antMatchers(HttpMethod.PUT, "/**").denyAll()
 					.antMatchers(HttpMethod.PATCH, "/**").denyAll()
 					.antMatchers(HttpMethod.DELETE, "/**").denyAll()
-					.anyRequest().authenticated()
-					.and().exceptionHandling().accessDeniedHandler(new AccessDeniedExceptionHandler())
-					.and().httpBasic();
-
+					.anyRequest().permitAll();
 		} else {
-			http.authorizeRequests()
-					.antMatchers(excludedUrlPatterns).permitAll()
-					.anyRequest().authenticated()
+			authorizeRequests.antMatchers(excludedUrlPatterns).permitAll();
+
+			if (rolesEnabled) {
+				http.addFilterBefore(new RequestHeaderAuthenticationDecorator(), FilterSecurityInterceptor.class);
+				if (requiredRole != null && !requiredRole.isEmpty()) {
+					authorizeRequests.anyRequest().hasAuthority(requiredRole);
+				} else {
+					authorizeRequests.anyRequest().authenticated();
+				}
+			} else {
+				authorizeRequests.anyRequest().authenticated();
+			}
+
+			authorizeRequests
 					.and().exceptionHandling().accessDeniedHandler(new AccessDeniedExceptionHandler())
 					.and().httpBasic();
 		}

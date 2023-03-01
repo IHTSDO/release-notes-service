@@ -65,7 +65,6 @@
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-consul-config</artifactId>
 		</dependency>
-
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-vault-config</artifactId>
@@ -87,7 +86,7 @@
 		<dependency>
 			<groupId>org.ihtsdo.otf</groupId>
 			<artifactId>ihtsdo-spring-sso</artifactId>
-			<version>3.1.0</version>
+			<version>3.1.2</version>
 		</dependency>
 		<dependency>
 			<groupId>io.kaicode</groupId>

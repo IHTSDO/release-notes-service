@@ -23,6 +23,8 @@ import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilde
 import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Service;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static java.util.stream.Collectors.toList;
@@ -40,6 +42,8 @@ public class LineItemService {
 	public static final String CONTENT_DEVELOPMENT_ACTIVITY = "Content Development Activity";
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(LineItemService.class);
+
+	private final DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
 
 	public LineItem create(final LineItemCreateRequest createRequest, final String path) throws BusinessServiceException {
 		String title = createRequest.getTitle();
@@ -240,22 +244,18 @@ public class LineItemService {
 	}
 
 	public void version(final String path, final VersionRequest versionRequest) throws BusinessServiceException {
-		final String releaseBranch = versionRequest.getReleaseBranch();
+		final Date effectiveTime = versionRequest.getEffectiveTime();
 
-		if (Strings.isNullOrEmpty(releaseBranch)) {
-			throw new BadRequestException("'releaseBranch' is required");
-		}
-		if (!BranchUtil.isReleaseBranch(releaseBranch)) {
-			throw new BadRequestException("Branch '" + releaseBranch + "' is not a release branch");
+		if (effectiveTime == null) {
+			throw new BadRequestException("'effectiveTime' is required");
 		}
 		if (!BranchUtil.isCodeSystemBranch(path)) {
 			throw new BadRequestException("Branch '" + path + "' must be a code system branch");
 		}
-		if (!BranchUtil.extractCodeSystem(path).equals(BranchUtil.extractCodeSystem(releaseBranch))) {
-			throw new BadRequestException("Branch '" + path + "' and release branch '" + releaseBranch + "' must be from the same code system");
-		}
 
 		List<LineItem> lineItems = find(path);
+
+		String releaseBranch = path + BranchUtil.SEPARATOR + formatter.format(effectiveTime);
 
 		lineItems.forEach(lineItem -> {
 			lineItem.setSourceBranch(releaseBranch);
@@ -481,8 +481,8 @@ public class LineItemService {
 
 	private int getMaxSequence(String parentId, String path) {
 		List<LineItem> lineItems = getChildren(parentId, path);
-		Optional<Integer> sequence = lineItems.stream().map(lineItem -> lineItem.getSequence()).max(Comparator.naturalOrder());
-		return sequence.isEmpty() ? 0 : sequence.get();
+		Optional<Integer> sequence = lineItems.stream().map(LineItem::getSequence).max(Comparator.naturalOrder());
+		return sequence.orElse(0);
 	}
 
 }

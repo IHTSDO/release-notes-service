@@ -14,6 +14,8 @@ import org.snomed.release.note.rest.pojo.LineItemUpdateRequest;
 import org.snomed.release.note.rest.pojo.VersionRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -25,6 +27,8 @@ public class LineItemServiceTest extends AbstractTest {
 
 	@Autowired
 	private LineItemRepository lineItemRepository;
+
+	private final DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
 
 	@Test
 	void testCreate() throws BusinessServiceException{
@@ -188,25 +192,26 @@ public class LineItemServiceTest extends AbstractTest {
 	}
 
 	@Test
-	void testVersion() throws BusinessServiceException {
+	void testVersion() throws Exception {
 		String sourceBranch = "MAIN";
 		LineItem lineItem = lineItemService.create(new LineItemCreateRequest("Body structure", "Demonstration Release of the Anatomy Model"), sourceBranch);
-		VersionRequest versionRequest = new VersionRequest("MAIN/2022-01-31");
+
+		VersionRequest versionRequest = new VersionRequest(formatter.parse("2022-01-31"));
 		lineItemService.version(lineItem.getSourceBranch(), versionRequest);
 
 		lineItem = lineItemRepository.findById(lineItem.getId()).get();
 		assertNotNull(lineItem.getPromotedBranch());
-		assertEquals(versionRequest.getReleaseBranch(), lineItem.getSourceBranch());
-		assertEquals(versionRequest.getReleaseBranch(), lineItem.getPromotedBranch());
+		assertEquals("MAIN/2022-01-31", lineItem.getSourceBranch());
+		assertEquals("MAIN/2022-01-31", lineItem.getPromotedBranch());
 	}
 
 	@Test
-	void testPublish() throws BusinessServiceException {
+	void testPublish() throws Exception {
 		String sourceBranch = "MAIN";
 		LineItem lineItem = lineItemService.create(new LineItemCreateRequest("Body structure", "Demonstration Release of the Anatomy Model"), sourceBranch);
 		assertThrows(BusinessServiceException.class, () -> lineItemService.publish(lineItem.getSourceBranch()));
 
-		VersionRequest versionRequest = new VersionRequest("MAIN/2022-01-31");
+		VersionRequest versionRequest = new VersionRequest(formatter.parse("2022-01-31"));
 		lineItemService.version(lineItem.getSourceBranch(), versionRequest);
 		LineItem versioned = lineItemRepository.findById(lineItem.getId()).get();
 		assertFalse(versioned.isReleased());
@@ -217,10 +222,10 @@ public class LineItemServiceTest extends AbstractTest {
 	}
 
 	@Test
-	void testCloneWithoutHierarchy() throws BusinessServiceException {
+	void testCloneWithoutHierarchy() throws Exception {
 		lineItemService.create(new LineItemCreateRequest("Body structure", "Demonstration Release of the Anatomy Model"), "MAIN");
 
-		lineItemService.version("MAIN", new VersionRequest("MAIN/2022-01-31"));
+		lineItemService.version("MAIN", new VersionRequest(formatter.parse("2022-01-31")));
 		List<LineItem> versioned = lineItemService.find("MAIN/2022-01-31");
 
 		lineItemService.clone("MAIN/2022-01-31", new CloneRequest("MAIN"));
@@ -235,10 +240,10 @@ public class LineItemServiceTest extends AbstractTest {
 	}
 
 	@Test
-	void testCloneWithHierarchy() throws BusinessServiceException {
+	void testCloneWithHierarchy() throws Exception {
 		testDataHelper.createLineItems("MAIN");
 
-		lineItemService.version("MAIN", new VersionRequest("MAIN/2022-01-31"));
+		lineItemService.version("MAIN", new VersionRequest(formatter.parse("2022-01-31")));
 		List<LineItem> versioned = lineItemService.find("MAIN/2022-01-31");
 
 		lineItemService.clone("MAIN/2022-01-31", new CloneRequest("MAIN"));
@@ -260,9 +265,9 @@ public class LineItemServiceTest extends AbstractTest {
 	}
 
 	@Test
-	void testFindPublishedLineItems() throws BusinessServiceException {
+	void testFindPublishedLineItems() throws Exception {
 		testDataHelper.createLineItems("MAIN");
-		lineItemService.version("MAIN", new VersionRequest("MAIN/2022-01-31"));
+		lineItemService.version("MAIN", new VersionRequest(formatter.parse("2022-01-31")));
 		lineItemService.publish("MAIN/2022-01-31");
 
 		List<LineItem> lineItemsUnordered = lineItemService.findPublished("MAIN", false);
@@ -285,9 +290,9 @@ public class LineItemServiceTest extends AbstractTest {
 	}
 
 	@Test
-	void testFindUnpublishedLineItems() throws BusinessServiceException {
+	void testFindUnpublishedLineItems() throws Exception {
 		testDataHelper.createLineItems("MAIN");
-		lineItemService.version("MAIN", new VersionRequest("MAIN/2022-01-31"));
+		lineItemService.version("MAIN", new VersionRequest(formatter.parse("2022-01-31")));
 		lineItemService.publish("MAIN/2022-01-31");
 
 		lineItemService.create(new LineItemCreateRequest("Body structure", "Demonstration Release of the Anatomy Model"), "MAIN");

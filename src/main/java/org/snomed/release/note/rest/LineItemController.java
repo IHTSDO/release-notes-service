@@ -72,6 +72,7 @@ public class LineItemController {
 
 	@PostMapping(value = "/{path}/lineitems/{id}/promote")
 	@PreAuthorize("hasPermission('AUTHOR', #path)")
+	@ApiOperation(value = "Promote task line item", notes = "'id' - line item id, 'path' - task branch")
 	public ResponseEntity<String> promoteTaskLineItem(
 			@PathVariable String path,
 			@PathVariable String id) throws BusinessServiceException {
@@ -81,6 +82,7 @@ public class LineItemController {
 
 	@PostMapping(value = "/{path}/lineitems/promote")
 	@PreAuthorize("hasPermission('AUTHOR', #path)")
+	@ApiOperation(value = "Promote project line item(s)", notes = "'path' is a project branch")
 	public ResponseEntity<String> promoteProjectLineItems(
 			@PathVariable String path) throws BusinessServiceException {
 		lineItemService.promote(BranchPathUriUtil.decodePath(path));
@@ -89,6 +91,7 @@ public class LineItemController {
 
 	@PostMapping(value = "/{path}/lineitems/version")
 	@PreAuthorize("hasPermission('RELEASE_ADMIN', #path) || hasPermission('RELEASE_MANAGER', #path)")
+	@ApiOperation(value = "Version line items", notes = "Move all line items from the code system branch 'path' to a release branch 'path/effectiveTime', e.g. 'MAIN/2022-01-31'")
 	public ResponseEntity<String> versionLineItem(
 			@PathVariable String path,
 			@RequestBody VersionRequest versionRequest) throws BusinessServiceException {
@@ -98,6 +101,7 @@ public class LineItemController {
 
 	@PostMapping(value = "/{path}/lineitems/publish")
 	@PreAuthorize("hasPermission('RELEASE_ADMIN', #path) || hasPermission('RELEASE_MANAGER', #path)")
+	@ApiOperation(value = "Publish versioned line items", notes = "Set 'released' flag to 'true' for versioned line items on the release branch 'path'")
 	public ResponseEntity<String> publishLineItems(
 			@PathVariable String path) throws BusinessServiceException {
 		lineItemService.publish(BranchPathUriUtil.decodePath(path));
