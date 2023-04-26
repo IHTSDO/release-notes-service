@@ -138,6 +138,13 @@ public class LineItemController {
 		return lineItemService.findCategories(BranchPathUriUtil.decodePath(path));
 	}
 
+	@GetMapping(value = "/{path}/lineitems/versions")
+	@ApiOperation("Retrieve existing versions for a given code system branch 'path'.")
+	public List<String> getVersions(
+			@PathVariable String path) throws BusinessServiceException {
+		return lineItemService.getVersions(BranchPathUriUtil.decodePath(path));
+	}
+
 	@DeleteMapping(value = "/{path}/lineitems/{id}")
 	@PreAuthorize("hasPermission('AUTHOR', #path) || hasPermission('RELEASE_ADMIN', #path) || hasPermission('RELEASE_LEAD', #path) || hasPermission('PROJECT_LEAD', #path)")
 	public void deleteLineItem(

@@ -3,6 +3,10 @@ package org.snomed.release.note.core.data.service;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.aggregations.Aggregation;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.ihtsdo.otf.rest.exception.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
+import org.springframework.data.elasticsearch.core.clients.elasticsearch7.ElasticsearchAggregations;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Service;
@@ -29,6 +34,7 @@ import java.util.*;
 
 import static java.util.stream.Collectors.toList;
 import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
+import static org.elasticsearch.index.query.QueryBuilders.regexpQuery;
 
 @Service
 public class LineItemService {
@@ -207,6 +213,38 @@ public class LineItemService {
 			getChildren(contentDevelopmentActivity.getId(), path).forEach(child -> categories.add(child.getTitle()));
 		}
 		return categories;
+	}
+
+	public List<String> getVersions(final String path) throws BusinessServiceException {
+		if (!BranchUtil.isCodeSystemBranch(path)) {
+			throw new BadRequestException("Path '" + path + "' must be a code system branch");
+		}
+
+		List<String> versions = new ArrayList<>();
+
+		final String regexp = path + BranchUtil.SEPARATOR + "[0-9]{4}-[0-9]{2}-[0-9]{2}";
+		final String aggregationName = "versions";
+
+		Query aggregateQuery = new NativeSearchQueryBuilder()
+				.withQuery(regexpQuery("promotedBranch", regexp))
+				.withAggregations(AggregationBuilders
+						.terms(aggregationName)
+						.field("promotedBranch"))
+				.withMaxResults(0)
+				.build();
+
+		SearchHits<LineItem> searchHits = elasticsearchOperations.search(aggregateQuery, LineItem.class);
+
+		Aggregation aggregation = ((ElasticsearchAggregations) searchHits.getAggregations()).aggregations().get(aggregationName);
+
+		if (aggregation instanceof ParsedStringTerms) {
+			ParsedStringTerms termsAggregation = (ParsedStringTerms) aggregation;
+			for (Terms.Bucket bucket : termsAggregation.getBuckets()) {
+				String bucketKey = bucket.getKeyAsString();
+				versions.add(bucketKey);
+			}
+		}
+		return versions;
 	}
 
 	public LineItem getContentDevelopmentActivity(String path) {

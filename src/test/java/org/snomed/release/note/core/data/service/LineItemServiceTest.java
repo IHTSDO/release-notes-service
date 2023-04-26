@@ -317,6 +317,37 @@ public class LineItemServiceTest extends AbstractTest {
 		assertTrue(categories.contains("Procedure"));
 	}
 
+	@Test
+	void testGetVersions() throws Exception {
+		String sourceBranch = "MAIN";
+
+		lineItemService.create(new LineItemCreateRequest("Body structure", "Release 2022-01-31"), sourceBranch);
+		lineItemService.create(new LineItemCreateRequest("Finding", "Release 2022-01-31"), sourceBranch);
+		lineItemService.create(new LineItemCreateRequest("Procedure", "Release 2022-01-31"), sourceBranch);
+		lineItemService.version(sourceBranch, new VersionRequest(formatter.parse("2022-01-31")));
+
+		lineItemService.create(new LineItemCreateRequest("Procedure", "Release 2022-07-31"), sourceBranch);
+		lineItemService.create(new LineItemCreateRequest("COVID-19", "Release 2022-07-31"), sourceBranch);
+		lineItemService.version(sourceBranch, new VersionRequest(formatter.parse("2022-07-31")));
+
+		lineItemService.create(new LineItemCreateRequest("Body structure", "Release 2023-01-31"), sourceBranch);
+		lineItemService.create(new LineItemCreateRequest("Procedure", "Release 2023-01-31"), sourceBranch);
+		lineItemService.version(sourceBranch, new VersionRequest(formatter.parse("2023-01-31")));
+
+		String projectBranch = "MAIN/Project1";
+		lineItemService.create(new LineItemCreateRequest("Finding", "Not versioned"), projectBranch);
+		lineItemService.create(new LineItemCreateRequest("Procedure", "Not versioned"), projectBranch);
+		lineItemService.promote(projectBranch);
+
+		List<String> versions = lineItemService.getVersions("MAIN");
+
+		assertEquals(3, versions.size());
+		assertTrue(versions.contains("MAIN/2022-01-31"));
+		assertTrue(versions.contains("MAIN/2022-07-31"));
+		assertTrue(versions.contains("MAIN/2023-01-31"));
+		assertFalse(versions.contains("MAIN/Project1"));
+	}
+
 	private String getMergedContent(List<LineItem> lineItems, final String title) {
 		String[] lines = lineItems.stream()
 				.filter(lineItem -> title.equals(lineItem.getTitle()))
