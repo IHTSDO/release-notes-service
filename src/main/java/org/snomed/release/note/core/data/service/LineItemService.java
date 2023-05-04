@@ -192,6 +192,7 @@ public class LineItemService {
 
 	public List<LineItem> findUnpublished(final String path, final boolean ordered) {
 		Query query = new NativeSearchQueryBuilder().withQuery(boolQuery()
+						.mustNot(QueryBuilders.existsQuery("end"))
 						.must(QueryBuilders.termQuery("released", false))
 						.must(QueryBuilders.termQuery("sourceBranch", path)))
 				.build();
