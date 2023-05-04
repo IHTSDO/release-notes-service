@@ -281,7 +281,18 @@ public class LineItemService {
 		return lineItemRepository.existsById(id);
 	}
 
-	public void version(final String path, final VersionRequest versionRequest) throws BusinessServiceException {
+	private void move(final String pathFrom, final String pathTo) {
+		List<LineItem> lineItems = find(pathFrom);
+
+		lineItems.forEach(lineItem -> {
+			lineItem.setSourceBranch(pathTo);
+			lineItem.setPromotedBranch(pathTo);
+		});
+
+		lineItemRepository.saveAll(lineItems);
+	}
+
+	/*public void version(final String path, final VersionRequest versionRequest) throws BusinessServiceException {
 		final Date effectiveTime = versionRequest.getEffectiveTime();
 
 		if (effectiveTime == null) {
@@ -301,6 +312,22 @@ public class LineItemService {
 		});
 
 		lineItemRepository.saveAll(lineItems);
+	}*/
+
+	public void version(final String path, final VersionRequest versionRequest) throws BusinessServiceException {
+		final Date effectiveTime = versionRequest.getEffectiveTime();
+
+		if (effectiveTime == null) {
+			throw new BadRequestException("'effectiveTime' is required");
+		}
+		if (!BranchUtil.isCodeSystemBranch(path)) {
+			throw new BadRequestException("Branch '" + path + "' must be a code system branch");
+		}
+
+		String releaseBranch = path + BranchUtil.SEPARATOR + formatter.format(effectiveTime);
+
+		move(path, releaseBranch);
+		clone(releaseBranch, new CloneRequest(path));
 	}
 
 	public void publish(final String path) throws BusinessServiceException {
