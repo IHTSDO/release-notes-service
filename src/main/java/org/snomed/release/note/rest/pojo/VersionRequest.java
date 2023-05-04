@@ -9,7 +9,7 @@ import java.util.Date;
 public class VersionRequest {
 
 	@JsonFormat(pattern = "yyyy-MM-dd")
-	@ApiModelProperty(example = "2023-01-01")
+	@ApiModelProperty(example = "2023-01-31")
 	private final Date effectiveTime;
 
 	@JsonCreator
