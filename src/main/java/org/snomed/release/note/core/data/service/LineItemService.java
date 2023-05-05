@@ -317,6 +317,7 @@ public class LineItemService {
 
 	public void version(final String path, final VersionRequest versionRequest) throws BusinessServiceException {
 		final Date effectiveTime = versionRequest.getEffectiveTime();
+		final String releaseBranch = path + BranchUtil.SEPARATOR + formatter.format(effectiveTime);
 
 		if (effectiveTime == null) {
 			throw new BadRequestException("'effectiveTime' is required");
@@ -324,8 +325,9 @@ public class LineItemService {
 		if (!BranchUtil.isCodeSystemBranch(path)) {
 			throw new BadRequestException("Branch '" + path + "' must be a code system branch");
 		}
-
-		String releaseBranch = path + BranchUtil.SEPARATOR + formatter.format(effectiveTime);
+		if (!find(releaseBranch).isEmpty()) {
+			throw new BadConfigurationException("Line items already exist on branch '" + releaseBranch + "'");
+		}
 
 		move(path, releaseBranch);
 		clone(releaseBranch, new CloneRequest(path));

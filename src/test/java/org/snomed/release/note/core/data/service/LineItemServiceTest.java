@@ -1,5 +1,6 @@
 package org.snomed.release.note.core.data.service;
 
+import org.ihtsdo.otf.rest.exception.BadConfigurationException;
 import org.ihtsdo.otf.rest.exception.BusinessServiceException;
 import org.ihtsdo.otf.rest.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.Test;
@@ -193,16 +194,30 @@ public class LineItemServiceTest extends AbstractTest {
 
 	@Test
 	void testVersion() throws Exception {
-		String sourceBranch = "MAIN";
-		LineItem lineItem = lineItemService.create(new LineItemCreateRequest("Body structure", "Demonstration Release of the Anatomy Model"), sourceBranch);
+		testDataHelper.createLineItems("MAIN");
+		List<LineItem> created = lineItemService.find("MAIN");
 
-		VersionRequest versionRequest = new VersionRequest(formatter.parse("2022-01-31"));
-		lineItemService.version(lineItem.getSourceBranch(), versionRequest);
+		lineItemService.version("MAIN", new VersionRequest(formatter.parse("2022-01-31")));
+		List<LineItem> versioned = lineItemService.find("MAIN/2022-01-31");
+		List<LineItem> cloned = lineItemService.find("MAIN");
 
-		lineItem = lineItemRepository.findById(lineItem.getId()).get();
-		assertNotNull(lineItem.getPromotedBranch());
-		assertEquals("MAIN/2022-01-31", lineItem.getSourceBranch());
-		assertEquals("MAIN/2022-01-31", lineItem.getPromotedBranch());
+		assertEquals(created.size(), versioned.size());
+		assertEquals(created.size(), cloned.size());
+
+		for (int i = 0; i < created.size(); i++) {
+			assertEquals("MAIN/2022-01-31", versioned.get(i).getPromotedBranch());
+			assertNull(cloned.get(i).getPromotedBranch());
+		}
+	}
+
+	@Test
+	void testVersion_throwExceptionWhenLineItemsExist() throws Exception {
+		testDataHelper.createLineItems("MAIN");
+		lineItemService.version("MAIN", new VersionRequest(formatter.parse("2022-01-31")));
+
+		assertThrows(BadConfigurationException.class,
+				() -> lineItemService.version("MAIN", new VersionRequest(formatter.parse("2022-01-31"))),
+				"Line items already exist on branch '" + "MAIN/2022-01-31" + "'");
 	}
 
 	@Test
@@ -227,8 +242,6 @@ public class LineItemServiceTest extends AbstractTest {
 
 		lineItemService.version("MAIN", new VersionRequest(formatter.parse("2022-01-31")));
 		List<LineItem> versioned = lineItemService.find("MAIN/2022-01-31");
-
-		//lineItemService.clone("MAIN/2022-01-31", new CloneRequest("MAIN"));
 		List<LineItem> cloned = lineItemService.find("MAIN");
 
 		assertEquals(versioned.size(), cloned.size());
@@ -245,8 +258,6 @@ public class LineItemServiceTest extends AbstractTest {
 
 		lineItemService.version("MAIN", new VersionRequest(formatter.parse("2022-01-31")));
 		List<LineItem> versioned = lineItemService.find("MAIN/2022-01-31");
-
-		//lineItemService.clone("MAIN/2022-01-31", new CloneRequest("MAIN"));
 		List<LineItem> cloned = lineItemService.find("MAIN");
 
 		assertEquals(versioned.size(), cloned.size());
