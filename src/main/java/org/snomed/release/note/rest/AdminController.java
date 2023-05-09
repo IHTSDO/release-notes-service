@@ -2,7 +2,6 @@ package org.snomed.release.note.rest;
 
 import io.kaicode.rest.util.branchpathrewrite.BranchPathUriUtil;
 import io.swagger.annotations.Api;
-import org.ihtsdo.otf.rest.exception.BusinessServiceException;
 import org.snomed.release.note.core.data.service.LineItemService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,7 +21,7 @@ public class AdminController {
 	@PostMapping(value = "/{path}/lineitems/updateSequence")
 	@PreAuthorize("hasPermission('RELEASE_ADMIN', #path)")
 	public ResponseEntity<String> updateSequence(
-			@PathVariable String path) throws BusinessServiceException {
+			@PathVariable String path) {
 		lineItemService.updateSequence(BranchPathUriUtil.decodePath(path));
 		return new ResponseEntity<>(HttpStatus.OK);
 	}

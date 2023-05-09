@@ -15,7 +15,6 @@ import org.snomed.release.note.core.data.domain.LineItemComparator;
 import org.snomed.release.note.core.data.repository.LineItemRepository;
 import org.snomed.release.note.core.util.BranchUtil;
 import org.snomed.release.note.core.util.ContentUtil;
-import org.snomed.release.note.rest.pojo.CloneRequest;
 import org.snomed.release.note.rest.pojo.LineItemCreateRequest;
 import org.snomed.release.note.rest.pojo.LineItemUpdateRequest;
 import org.snomed.release.note.rest.pojo.VersionRequest;
@@ -282,39 +281,6 @@ public class LineItemService {
 		return lineItemRepository.existsById(id);
 	}
 
-	private void move(final String pathFrom, final String pathTo) {
-		List<LineItem> lineItems = find(pathFrom);
-
-		lineItems.forEach(lineItem -> {
-			lineItem.setSourceBranch(pathTo);
-			lineItem.setPromotedBranch(pathTo);
-		});
-
-		lineItemRepository.saveAll(lineItems);
-	}
-
-	/*public void version(final String path, final VersionRequest versionRequest) throws BusinessServiceException {
-		final Date effectiveTime = versionRequest.getEffectiveTime();
-
-		if (effectiveTime == null) {
-			throw new BadRequestException("'effectiveTime' is required");
-		}
-		if (!BranchUtil.isCodeSystemBranch(path)) {
-			throw new BadRequestException("Branch '" + path + "' must be a code system branch");
-		}
-
-		List<LineItem> lineItems = find(path);
-
-		String releaseBranch = path + BranchUtil.SEPARATOR + formatter.format(effectiveTime);
-
-		lineItems.forEach(lineItem -> {
-			lineItem.setSourceBranch(releaseBranch);
-			lineItem.setPromotedBranch(releaseBranch);
-		});
-
-		lineItemRepository.saveAll(lineItems);
-	}*/
-
 	public void version(final String path, final VersionRequest versionRequest) throws BusinessServiceException {
 		final Date effectiveTime = versionRequest.getEffectiveTime();
 		final String releaseBranch = path + BranchUtil.SEPARATOR + formatter.format(effectiveTime);
@@ -329,8 +295,42 @@ public class LineItemService {
 			throw new BadConfigurationException("Line items already exist on branch '" + releaseBranch + "'");
 		}
 
-		move(path, releaseBranch);
-		clone(releaseBranch, new CloneRequest(path));
+		List<LineItem> lineItems = findOrderedLineItems(path);
+
+		List<LineItem> lineItemsToSave = new ArrayList<>();
+
+		lineItems.forEach(lineItem -> {
+			LineItemCreateRequest createParentRequest = new LineItemCreateRequest(
+					lineItem.getParentId(),
+					lineItem.getTitle(),
+					lineItem.getContent(),
+					lineItem.getLevel(),
+					lineItem.getSequence());
+
+			LineItem clonedParent = lineItemRepository.save(createFromRequest(createParentRequest, releaseBranch, releaseBranch));
+
+			boolean shouldClearContent = CONTENT_DEVELOPMENT_ACTIVITY.equals(lineItem.getTitle());
+
+			for (LineItem child : lineItem.getChildren()) {
+				LineItemCreateRequest createChildRequest = new LineItemCreateRequest(
+						clonedParent.getId(),
+						child.getTitle(),
+						child.getContent(),
+						child.getLevel(),
+						child.getSequence());
+
+				LineItem clonedChild = createFromRequest(createChildRequest, releaseBranch, releaseBranch);
+
+				lineItemsToSave.add(clonedChild);
+
+				if (shouldClearContent) {
+					child.setContent(null);
+					lineItemsToSave.add(child);
+				}
+			}
+		});
+
+		lineItemRepository.saveAll(lineItemsToSave);
 	}
 
 	public void publish(final String path) throws BusinessServiceException {
@@ -343,49 +343,6 @@ public class LineItemService {
 		lineItems.forEach(lineItem -> lineItem.setReleased(true));
 
 		lineItemRepository.saveAll(lineItems);
-	}
-
-	public void clone(final String path, final CloneRequest cloneRequest) throws BusinessServiceException {
-		final String destinationBranch = cloneRequest.getDestinationBranch();
-
-		if (Strings.isNullOrEmpty(destinationBranch)) {
-			throw new BadRequestException("'destinationBranch' is required");
-		}
-		if (!BranchUtil.isCodeSystemBranch(destinationBranch)) {
-			throw new BadRequestException("Branch '" + destinationBranch + "' is not a code system branch");
-		}
-		if (!BranchUtil.isReleaseBranch(path)) {
-			throw new BadRequestException("Branch '" + path + "' must be a release branch");
-		}
-
-		List<LineItem> lineItems = findOrderedLineItems(path);
-
-		lineItems.forEach(lineItem -> {
-			LineItem clonedLineItem = createFromRequest(new LineItemCreateRequest(
-					lineItem.getParentId(),
-					lineItem.getTitle(),
-					lineItem.getContent(),
-					lineItem.getLevel(),
-					lineItem.getSequence()), destinationBranch);
-
-			clonedLineItem = lineItemRepository.save(clonedLineItem);
-
-			List<LineItem> clonedChildLineItems = new ArrayList<>();
-
-			boolean shouldClearContent = CONTENT_DEVELOPMENT_ACTIVITY.equals(lineItem.getTitle());
-
-			for (LineItem childLineItem : lineItem.getChildren()) {
-				LineItem clonedChildLineItem = createFromRequest(new LineItemCreateRequest(
-						clonedLineItem.getId(),
-						childLineItem.getTitle(),
-						(shouldClearContent ? null : childLineItem.getContent()),
-						childLineItem.getLevel(),
-						childLineItem.getSequence()), destinationBranch);
-
-				clonedChildLineItems.add(clonedChildLineItem);
-			}
-			lineItemRepository.saveAll(clonedChildLineItems);
-		});
 	}
 
 	public List<LineItem> getChildren(String parentId, String path) {
@@ -525,8 +482,12 @@ public class LineItemService {
 	}
 
 	private LineItem createFromRequest(LineItemCreateRequest lineItemCreateRequest, String path) {
+		return createFromRequest(lineItemCreateRequest, path, null);
+	}
+
+	private LineItem createFromRequest(LineItemCreateRequest lineItemCreateRequest, String sourceBranch, String promotedBranch) {
 		LineItem lineItem = new LineItem();
-		lineItem.setSourceBranch(path);
+
 		lineItem.setParentId(lineItemCreateRequest.getParentId());
 		lineItem.setTitle(lineItemCreateRequest.getTitle());
 		lineItem.setContent(lineItemCreateRequest.getContent());
@@ -538,12 +499,15 @@ public class LineItemService {
 		}
 
 		if (lineItemCreateRequest.getSequence() == null) {
-			lineItem.setSequence(getMaxSequence(lineItemCreateRequest.getParentId(), path) + 1);
+			lineItem.setSequence(getMaxSequence(lineItemCreateRequest.getParentId(), sourceBranch) + 1);
 		} else {
 			lineItem.setSequence(lineItemCreateRequest.getSequence());
 		}
 
 		lineItem.setStart(new Date());
+		lineItem.setSourceBranch(sourceBranch);
+		lineItem.setPromotedBranch(promotedBranch);
+
 		return lineItem;
 	}
 

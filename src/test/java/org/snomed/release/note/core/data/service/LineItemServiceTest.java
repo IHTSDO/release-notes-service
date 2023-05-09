@@ -9,7 +9,6 @@ import org.snomed.release.note.core.data.domain.LineItem;
 import org.snomed.release.note.core.data.repository.LineItemRepository;
 import org.snomed.release.note.core.util.BranchUtil;
 import org.snomed.release.note.core.util.ContentUtil;
-import org.snomed.release.note.rest.pojo.CloneRequest;
 import org.snomed.release.note.rest.pojo.LineItemCreateRequest;
 import org.snomed.release.note.rest.pojo.LineItemUpdateRequest;
 import org.snomed.release.note.rest.pojo.VersionRequest;
@@ -199,14 +198,11 @@ public class LineItemServiceTest extends AbstractTest {
 
 		lineItemService.version("MAIN", new VersionRequest(formatter.parse("2022-01-31")));
 		List<LineItem> versioned = lineItemService.find("MAIN/2022-01-31");
-		List<LineItem> cloned = lineItemService.find("MAIN");
 
 		assertEquals(created.size(), versioned.size());
-		assertEquals(created.size(), cloned.size());
 
 		for (int i = 0; i < created.size(); i++) {
 			assertEquals("MAIN/2022-01-31", versioned.get(i).getPromotedBranch());
-			assertNull(cloned.get(i).getPromotedBranch());
 		}
 	}
 
@@ -215,64 +211,65 @@ public class LineItemServiceTest extends AbstractTest {
 		testDataHelper.createLineItems("MAIN");
 		lineItemService.version("MAIN", new VersionRequest(formatter.parse("2022-01-31")));
 
-		assertThrows(BadConfigurationException.class,
-				() -> lineItemService.version("MAIN", new VersionRequest(formatter.parse("2022-01-31"))),
+		assertThrows(BadConfigurationException.class, () ->
+						lineItemService.version("MAIN", new VersionRequest(formatter.parse("2022-01-31"))),
 				"Line items already exist on branch '" + "MAIN/2022-01-31" + "'");
 	}
 
 	@Test
 	void testPublish() throws Exception {
 		String sourceBranch = "MAIN";
-		LineItem lineItem = lineItemService.create(new LineItemCreateRequest("Body structure", "Demonstration Release of the Anatomy Model"), sourceBranch);
-		assertThrows(BusinessServiceException.class, () -> lineItemService.publish(lineItem.getSourceBranch()));
 
-		VersionRequest versionRequest = new VersionRequest(formatter.parse("2022-01-31"));
-		lineItemService.version(lineItem.getSourceBranch(), versionRequest);
-		LineItem versioned = lineItemRepository.findById(lineItem.getId()).get();
-		assertFalse(versioned.isReleased());
+		lineItemService.create(new LineItemCreateRequest("Body structure", "Demonstration Release of the Anatomy Model"), sourceBranch);
+		assertThrows(BusinessServiceException.class, () -> lineItemService.publish(sourceBranch));
 
-		lineItemService.publish(versioned.getSourceBranch());
-		LineItem published = lineItemRepository.findById(lineItem.getId()).get();
-		assertTrue(published.isReleased());
+		lineItemService.version(sourceBranch, new VersionRequest(formatter.parse("2022-01-31")));
+		List<LineItem> versioned = lineItemService.find("MAIN/2022-01-31");
+		assertEquals(1, versioned.size());
+		versioned.forEach(lineItem -> assertFalse(lineItem.isReleased()));
+
+		lineItemService.publish("MAIN/2022-01-31");
+		List<LineItem> published = lineItemService.find("MAIN/2022-01-31");
+		assertEquals(1, published.size());
+		published.forEach(lineItem -> assertTrue(lineItem.isReleased()));
 	}
 
 	@Test
-	void testCloneWithoutHierarchy() throws Exception {
+	void testVersionWithoutHierarchy() throws Exception {
 		lineItemService.create(new LineItemCreateRequest("Body structure", "Demonstration Release of the Anatomy Model"), "MAIN");
-
 		lineItemService.version("MAIN", new VersionRequest(formatter.parse("2022-01-31")));
-		List<LineItem> versioned = lineItemService.find("MAIN/2022-01-31");
-		List<LineItem> cloned = lineItemService.find("MAIN");
 
-		assertEquals(versioned.size(), cloned.size());
-		assertEquals(versioned.get(0).getParentId(), cloned.get(0).getParentId());
-		assertEquals(versioned.get(0).getTitle(), cloned.get(0).getTitle());
-		assertEquals(versioned.get(0).getLevel(), cloned.get(0).getLevel());
-		assertEquals(versioned.get(0).getSequence(), cloned.get(0).getSequence());
-		assertEquals(versioned.get(0).getContent(), cloned.get(0).getContent());
+		List<LineItem> created = lineItemService.find("MAIN");
+		List<LineItem> versioned = lineItemService.find("MAIN/2022-01-31");
+
+		assertEquals(created.size(), versioned.size());
+		assertEquals(created.get(0).getTitle(), versioned.get(0).getTitle());
+		assertEquals(created.get(0).getLevel(), versioned.get(0).getLevel());
+		assertEquals(created.get(0).getSequence(), versioned.get(0).getSequence());
+		assertEquals(created.get(0).getContent(), versioned.get(0).getContent());
 	}
 
 	@Test
-	void testCloneWithHierarchy() throws Exception {
+	void testVersionWithHierarchy() throws Exception {
 		testDataHelper.createLineItems("MAIN");
-
 		lineItemService.version("MAIN", new VersionRequest(formatter.parse("2022-01-31")));
+
+		List<LineItem> created = lineItemService.find("MAIN");
 		List<LineItem> versioned = lineItemService.find("MAIN/2022-01-31");
-		List<LineItem> cloned = lineItemService.find("MAIN");
 
-		assertEquals(versioned.size(), cloned.size());
+		assertEquals(created.size(), versioned.size());
 
-		List<LineItem> clonedWithHierarchy = lineItemService.findOrderedLineItems("MAIN");
-		assertEquals(3, clonedWithHierarchy.size());
+		List<LineItem> versionedWithHierarchy = lineItemService.findOrderedLineItems("MAIN/2022-01-31");
+		assertEquals(3, versionedWithHierarchy.size());
 
-		LineItem clonedTopLevel1 = clonedWithHierarchy.get(0);
-		assertEquals(2, clonedTopLevel1.getChildren().size());
+		LineItem versionedTopLevel1 = versionedWithHierarchy.get(0);
+		assertEquals(2, versionedTopLevel1.getChildren().size());
 
-		LineItem clonedTopLevel2 = clonedWithHierarchy.get(1);
-		assertEquals(3, clonedTopLevel2.getChildren().size());
+		LineItem versionedTopLevel2 = versionedWithHierarchy.get(1);
+		assertEquals(3, versionedTopLevel2.getChildren().size());
 
-		LineItem clonedTopLevel3 = clonedWithHierarchy.get(2);
-		assertEquals(2, clonedTopLevel3.getChildren().size());
+		LineItem versionedTopLevel3 = versionedWithHierarchy.get(2);
+		assertEquals(2, versionedTopLevel3.getChildren().size());
 	}
 
 	@Test

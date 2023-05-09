@@ -2,8 +2,8 @@ package org.snomed.release.note.rest.pojo;
 
 public class BuildVersion {
 
-	private String version;
-	private String time;
+	private final String version;
+	private final String time;
 
 	public BuildVersion(String version, String time) {
 		this.version = version;

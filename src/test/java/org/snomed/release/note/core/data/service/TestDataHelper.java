@@ -10,8 +10,8 @@ import java.util.*;
 @Service
 public class TestDataHelper {
 
-	public static List<String> LEVEL_ONE_TITLES = Arrays.asList("Introduction", "Content Development Activity", "Technical notes");
-	public static List<String> LEVEL_TWO_TITLES = Arrays.asList("Background", "Scope", "Body structure", "Clinical Finding", "Procedure", "Known Issues", "Resolved Issues");
+	public static final List<String> LEVEL_ONE_TITLES = Arrays.asList("Introduction", "Content Development Activity", "Technical notes");
+	public static final List<String> LEVEL_TWO_TITLES = Arrays.asList("Background", "Scope", "Body structure", "Clinical Finding", "Procedure", "Known Issues", "Resolved Issues");
 
 	@Autowired
 	private LineItemRepository lineItemRepository;

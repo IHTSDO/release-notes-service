@@ -7,7 +7,6 @@ import org.ihtsdo.otf.rest.exception.BadRequestException;
 import org.ihtsdo.otf.rest.exception.BusinessServiceException;
 import org.snomed.release.note.core.data.domain.LineItem;
 import org.snomed.release.note.core.data.service.LineItemService;
-import org.snomed.release.note.rest.pojo.CloneRequest;
 import org.snomed.release.note.rest.pojo.LineItemCreateRequest;
 import org.snomed.release.note.rest.pojo.LineItemUpdateRequest;
 import org.snomed.release.note.rest.pojo.VersionRequest;
@@ -105,15 +104,6 @@ public class LineItemController {
 	public ResponseEntity<String> publishLineItems(
 			@PathVariable String path) throws BusinessServiceException {
 		lineItemService.publish(BranchPathUriUtil.decodePath(path));
-		return new ResponseEntity<>(HttpStatus.OK);
-	}
-
-	@PostMapping(value = "/{path}/lineitems/clone")
-	@PreAuthorize("hasPermission('RELEASE_ADMIN', #path) || hasPermission('RELEASE_MANAGER', #path)")
-	public ResponseEntity<String> cloneLineItems(
-			@PathVariable String path,
-			@RequestBody CloneRequest cloneRequest) throws BusinessServiceException {
-		lineItemService.clone(BranchPathUriUtil.decodePath(path), cloneRequest);
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
 
