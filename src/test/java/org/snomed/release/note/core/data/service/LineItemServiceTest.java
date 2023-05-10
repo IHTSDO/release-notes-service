@@ -14,11 +14,11 @@ import org.snomed.release.note.rest.pojo.LineItemUpdateRequest;
 import org.snomed.release.note.rest.pojo.VersionRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.snomed.release.note.core.data.service.LineItemService.DATE_FORMATTER;
 
 public class LineItemServiceTest extends AbstractTest {
 
@@ -27,8 +27,6 @@ public class LineItemServiceTest extends AbstractTest {
 
 	@Autowired
 	private LineItemRepository lineItemRepository;
-
-	private final DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
 
 	@Test
 	void testCreate() throws BusinessServiceException{
@@ -196,7 +194,7 @@ public class LineItemServiceTest extends AbstractTest {
 		testDataHelper.createLineItems("MAIN");
 		List<LineItem> created = lineItemService.find("MAIN");
 
-		lineItemService.version("MAIN", new VersionRequest(formatter.parse("2022-01-31")));
+		lineItemService.version("MAIN", new VersionRequest(DATE_FORMATTER.parse("2022-01-31")));
 		List<LineItem> versioned = lineItemService.find("MAIN/2022-01-31");
 
 		assertEquals(created.size(), versioned.size());
@@ -209,10 +207,10 @@ public class LineItemServiceTest extends AbstractTest {
 	@Test
 	void testVersion_throwExceptionWhenLineItemsExist() throws Exception {
 		testDataHelper.createLineItems("MAIN");
-		lineItemService.version("MAIN", new VersionRequest(formatter.parse("2022-01-31")));
+		lineItemService.version("MAIN", new VersionRequest(DATE_FORMATTER.parse("2022-01-31")));
 
 		assertThrows(BadConfigurationException.class, () ->
-						lineItemService.version("MAIN", new VersionRequest(formatter.parse("2022-01-31"))),
+						lineItemService.version("MAIN", new VersionRequest(DATE_FORMATTER.parse("2022-01-31"))),
 				"Line items already exist on branch '" + "MAIN/2022-01-31" + "'");
 	}
 
@@ -223,7 +221,7 @@ public class LineItemServiceTest extends AbstractTest {
 		lineItemService.create(new LineItemCreateRequest("Body structure", "Demonstration Release of the Anatomy Model"), sourceBranch);
 		assertThrows(BusinessServiceException.class, () -> lineItemService.publish(sourceBranch));
 
-		lineItemService.version(sourceBranch, new VersionRequest(formatter.parse("2022-01-31")));
+		lineItemService.version(sourceBranch, new VersionRequest(DATE_FORMATTER.parse("2022-01-31")));
 		List<LineItem> versioned = lineItemService.find("MAIN/2022-01-31");
 		assertEquals(1, versioned.size());
 		versioned.forEach(lineItem -> assertFalse(lineItem.isReleased()));
@@ -237,7 +235,7 @@ public class LineItemServiceTest extends AbstractTest {
 	@Test
 	void testVersionWithoutHierarchy() throws Exception {
 		lineItemService.create(new LineItemCreateRequest("Body structure", "Demonstration Release of the Anatomy Model"), "MAIN");
-		lineItemService.version("MAIN", new VersionRequest(formatter.parse("2022-01-31")));
+		lineItemService.version("MAIN", new VersionRequest(DATE_FORMATTER.parse("2022-01-31")));
 
 		List<LineItem> created = lineItemService.find("MAIN");
 		List<LineItem> versioned = lineItemService.find("MAIN/2022-01-31");
@@ -252,7 +250,7 @@ public class LineItemServiceTest extends AbstractTest {
 	@Test
 	void testVersionWithHierarchy() throws Exception {
 		testDataHelper.createLineItems("MAIN");
-		lineItemService.version("MAIN", new VersionRequest(formatter.parse("2022-01-31")));
+		lineItemService.version("MAIN", new VersionRequest(DATE_FORMATTER.parse("2022-01-31")));
 
 		List<LineItem> created = lineItemService.find("MAIN");
 		List<LineItem> versioned = lineItemService.find("MAIN/2022-01-31");
@@ -275,7 +273,7 @@ public class LineItemServiceTest extends AbstractTest {
 	@Test
 	void testFindPublishedLineItems() throws Exception {
 		testDataHelper.createLineItems("MAIN");
-		lineItemService.version("MAIN", new VersionRequest(formatter.parse("2022-01-31")));
+		lineItemService.version("MAIN", new VersionRequest(DATE_FORMATTER.parse("2022-01-31")));
 		lineItemService.publish("MAIN/2022-01-31");
 
 		List<LineItem> lineItemsUnordered = lineItemService.findPublished("MAIN", false);
@@ -301,7 +299,7 @@ public class LineItemServiceTest extends AbstractTest {
 	void testFindUnpublishedLineItems() throws Exception {
 		// Create 10 line items
 		testDataHelper.createLineItems("MAIN");
-		lineItemService.version("MAIN", new VersionRequest(formatter.parse("2022-01-31")));
+		lineItemService.version("MAIN", new VersionRequest(DATE_FORMATTER.parse("2022-01-31")));
 		List<LineItem> lineItems = lineItemService.findUnpublished("MAIN/2022-01-31", false);
 		assertEquals(10, lineItems.size());
 
@@ -332,13 +330,13 @@ public class LineItemServiceTest extends AbstractTest {
 		lineItemService.create(new LineItemCreateRequest("Body Structure", "Release 2022-01-31"), sourceBranch);
 		lineItemService.create(new LineItemCreateRequest("Clinical Finding", "Release 2022-01-31"), sourceBranch);
 		lineItemService.create(new LineItemCreateRequest("Procedure", "Release 2022-01-31"), sourceBranch);
-		lineItemService.version(sourceBranch, new VersionRequest(formatter.parse("2022-01-31")));
+		lineItemService.version(sourceBranch, new VersionRequest(DATE_FORMATTER.parse("2022-01-31")));
 
 		lineItemService.create(new LineItemCreateRequest("COVID-19", "Release 2022-07-31"), sourceBranch);
-		lineItemService.version(sourceBranch, new VersionRequest(formatter.parse("2022-07-31")));
+		lineItemService.version(sourceBranch, new VersionRequest(DATE_FORMATTER.parse("2022-07-31")));
 
 		lineItemService.create(new LineItemCreateRequest("Collaboration/Harmonization Agreements\"", "Release 2023-01-31"), sourceBranch);
-		lineItemService.version(sourceBranch, new VersionRequest(formatter.parse("2023-01-31")));
+		lineItemService.version(sourceBranch, new VersionRequest(DATE_FORMATTER.parse("2023-01-31")));
 
 		String projectBranch = "MAIN/Project1";
 		lineItemService.create(new LineItemCreateRequest("Finding", "Not versioned"), projectBranch);
@@ -352,6 +350,23 @@ public class LineItemServiceTest extends AbstractTest {
 		assertTrue(versions.contains("MAIN/2022-07-31"));
 		assertTrue(versions.contains("MAIN/2023-01-31"));
 		assertFalse(versions.contains("MAIN/Project1"));
+	}
+
+	@Test
+	void testGetMoreThanTenVersions() throws Exception {
+		int numberOfVersions = 30;
+		testDataHelper.createLineItems("MAIN");
+
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTime(DATE_FORMATTER.parse("2020-01-01"));
+
+		for (int i = 0; i < numberOfVersions; i++) {
+			lineItemService.version("MAIN", new VersionRequest(calendar.getTime()));
+			calendar.add(Calendar.MONTH, 1);
+		}
+
+		List<String> versions = lineItemService.getVersions("MAIN");
+		assertEquals(numberOfVersions, versions.size());
 	}
 
 	private String getMergedContent(List<LineItem> lineItems, final String title) {

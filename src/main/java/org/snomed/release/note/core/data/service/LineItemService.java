@@ -3,10 +3,8 @@ package org.snomed.release.note.core.data.service;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
-import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.ihtsdo.otf.rest.exception.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,9 +44,11 @@ public class LineItemService {
 
 	public static final String CONTENT_DEVELOPMENT_ACTIVITY = "Content Development Activity";
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(LineItemService.class);
+	public static final int AGGREGATION_SEARCH_SIZE = 200;
 
-	private final DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+	public static final DateFormat DATE_FORMATTER = new SimpleDateFormat("yyyy-MM-dd");
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(LineItemService.class);
 
 	public LineItem create(final LineItemCreateRequest createRequest, final String path) throws BusinessServiceException {
 		String title = createRequest.getTitle();
@@ -229,21 +229,20 @@ public class LineItemService {
 				.withQuery(regexpQuery("promotedBranch", regexp))
 				.withAggregations(AggregationBuilders
 						.terms(aggregationName)
-						.field("promotedBranch"))
+						.field("promotedBranch")
+						.size(AGGREGATION_SEARCH_SIZE))
 				.withMaxResults(0)
 				.build();
 
 		SearchHits<LineItem> searchHits = elasticsearchOperations.search(aggregateQuery, LineItem.class);
 
-		Aggregation aggregation = ((ElasticsearchAggregations) searchHits.getAggregations()).aggregations().get(aggregationName);
+		ElasticsearchAggregations elasticsearchAggregations = (ElasticsearchAggregations) searchHits.getAggregations();
 
-		if (aggregation instanceof ParsedStringTerms) {
-			ParsedStringTerms termsAggregation = (ParsedStringTerms) aggregation;
-			for (Terms.Bucket bucket : termsAggregation.getBuckets()) {
-				String bucketKey = bucket.getKeyAsString();
-				versions.add(bucketKey);
-			}
+		if (elasticsearchAggregations != null) {
+			ParsedStringTerms terms = elasticsearchAggregations.aggregations().get(aggregationName);
+			terms.getBuckets().forEach(bucket -> versions.add(bucket.getKeyAsString()));
 		}
+
 		return versions;
 	}
 
@@ -283,7 +282,7 @@ public class LineItemService {
 
 	public void version(final String path, final VersionRequest versionRequest) throws BusinessServiceException {
 		final Date effectiveTime = versionRequest.getEffectiveTime();
-		final String releaseBranch = path + BranchUtil.SEPARATOR + formatter.format(effectiveTime);
+		final String releaseBranch = path + BranchUtil.SEPARATOR + DATE_FORMATTER.format(effectiveTime);
 
 		if (effectiveTime == null) {
 			throw new BadRequestException("'effectiveTime' is required");
