@@ -63,6 +63,7 @@ public class LineItemService {
 		validateParentIdAndLevel(createRequest.getParentId(), createRequest.getLevel());
 
 		LineItem lineItem = createFromRequest(createRequest, path);
+		lineItem.generateContent();
 		return lineItemRepository.save(lineItem);
 	}
 
@@ -79,12 +80,50 @@ public class LineItemService {
 
 		if (updateRequest.getContent() != null) {
 			existing.setContent(updateRequest.getContent());
-		}
-		if (updateRequest.getLevel() != null) {
-			existing.setLevel(updateRequest.getLevel());
-		}
-		if (updateRequest.getSequence() != null) {
-			existing.setSequence(updateRequest.getSequence());
+		} else {
+			if (updateRequest.getLevel() != null) {
+				existing.setLevel(updateRequest.getLevel());
+			}
+			if (updateRequest.getSequence() != null) {
+				existing.setSequence(updateRequest.getSequence());
+			}
+			if (updateRequest.getChangeType() != null) {
+				existing.setChangeType(updateRequest.getChangeType());
+			}
+			if (updateRequest.getAdditionalChangeTypes() != null) {
+				existing.setAdditionalChangeTypes(updateRequest.getAdditionalChangeTypes());
+			}
+			if (updateRequest.getHierarchy() != null) {
+				existing.setHierarchy(updateRequest.getHierarchy());
+			}
+			if (updateRequest.getChangedInAdditionalHierarchy() != null) {
+				existing.setChangedInAdditionalHierarchy(updateRequest.getChangedInAdditionalHierarchy());
+			}
+			if (updateRequest.getNumberEditedConcepts() != null) {
+				existing.setNumberEditedConcepts(updateRequest.getNumberEditedConcepts());
+			}
+			if (updateRequest.getFutureChangesPlanned() != null) {
+				existing.setFutureChangesPlanned(updateRequest.getFutureChangesPlanned());
+			}
+			if (updateRequest.getLinkContentTracker() != null) {
+				existing.setLinkContentTracker(updateRequest.getLinkContentTracker());
+			}
+			if (updateRequest.getConceptInactivations() != null) {
+				existing.setConceptInactivations(updateRequest.getConceptInactivations());
+			}
+			if (updateRequest.getLinkBriefingNote() != null) {
+				existing.setLinkBriefingNote(updateRequest.getLinkBriefingNote());
+			}
+			if (updateRequest.getLinkToTemplate() != null) {
+				existing.setLinkToTemplate(updateRequest.getLinkToTemplate());
+			}
+			if (updateRequest.getDescriptionChanges() != null) {
+				existing.setDescriptionChanges(updateRequest.getDescriptionChanges());
+			}
+			if (updateRequest.getNotes() != null) {
+				existing.setNotes(updateRequest.getNotes());
+			}
+			existing.generateContent();
 		}
 
 		return lineItemRepository.save(existing);
@@ -317,7 +356,6 @@ public class LineItemService {
 						child.getContent(),
 						child.getLevel(),
 						child.getSequence());
-
 				LineItem clonedChild = createFromRequest(createChildRequest, releaseBranch, releaseBranch);
 
 				lineItemsToSave.add(clonedChild);
@@ -490,7 +528,18 @@ public class LineItemService {
 		lineItem.setParentId(lineItemCreateRequest.getParentId());
 		lineItem.setTitle(lineItemCreateRequest.getTitle());
 		lineItem.setContent(lineItemCreateRequest.getContent());
-
+		lineItem.setChangeType(lineItemCreateRequest.getChangeType());
+		lineItem.setAdditionalChangeTypes(lineItemCreateRequest.getAdditionalChangeTypes());
+		lineItem.setHierarchy(lineItemCreateRequest.getHierarchy());
+		lineItem.setChangedInAdditionalHierarchy(lineItemCreateRequest.getChangedInAdditionalHierarchy());
+		lineItem.setNumberEditedConcepts(lineItemCreateRequest.getNumberEditedConcepts());
+		lineItem.setFutureChangesPlanned(lineItemCreateRequest.getFutureChangesPlanned());
+		lineItem.setLinkContentTracker(lineItemCreateRequest.getLinkContentTracker());
+		lineItem.setConceptInactivations(lineItemCreateRequest.getConceptInactivations());
+		lineItem.setLinkBriefingNote(lineItemCreateRequest.getLinkBriefingNote());
+		lineItem.setLinkToTemplate(lineItemCreateRequest.getLinkToTemplate());
+		lineItem.setDescriptionChanges(lineItemCreateRequest.getDescriptionChanges());
+		lineItem.setNotes(lineItemCreateRequest.getNotes());
 		if (lineItemCreateRequest.getLevel() == null) {
 			lineItem.setLevel(lineItemCreateRequest.getParentId() == null ? 1 : 2);
 		} else {
