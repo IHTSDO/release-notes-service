@@ -1,5 +1,6 @@
 package org.snomed.release.note.core.data.domain;
 
+import org.ihtsdo.sso.integration.SecurityUtil;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.elasticsearch.annotations.Document;
@@ -8,7 +9,13 @@ import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.Setting;
 import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+
+import static org.snomed.release.note.core.util.ContentUtil.LINE_BREAK;
+import static org.snomed.release.note.core.util.ContentUtil.SPACE_CHAR;
 
 @Document(indexName = "#{@indexNameProvider.getIndexNameWithPrefix('lineitem')}")
 @Setting(settingPath = "elasticsearch-settings.json")
@@ -286,44 +293,48 @@ public class LineItem implements LineItemView {
 
 	public void generateContent() {
 		StringBuilder builder = new StringBuilder();
+		builder.append(getSourceBranch()).append(" - ").append(SecurityUtil.getUsername()).append(LINE_BREAK + SPACE_CHAR + LINE_BREAK);
 		if (StringUtils.hasLength(changeType)) {
-			builder.append("Change Type: ").append(changeType).append(System.lineSeparator());
+			builder.append("Change Type: ").append(changeType).append(LINE_BREAK);
 		}
 		if (StringUtils.hasLength(additionalChangeTypes)) {
-			builder.append("Additional change types: ").append(additionalChangeTypes).append(System.lineSeparator());
+			builder.append("Additional change types: ").append(additionalChangeTypes).append(LINE_BREAK);
 		}
 		if (StringUtils.hasLength(hierarchy)) {
-			builder.append("Hierarchy: ").append(hierarchy).append(System.lineSeparator());
+			builder.append("Hierarchy: ").append(hierarchy).append(LINE_BREAK);
 		}
 		if (StringUtils.hasLength(changedInAdditionalHierarchy)) {
-			builder.append("Changes in additional hierarchies: ").append(changedInAdditionalHierarchy).append(System.lineSeparator());
+			builder.append("Changes in additional hierarchies: ").append(changedInAdditionalHierarchy).append(LINE_BREAK);
 		}
 		if (numberEditedConcepts != null) {
-			builder.append("Number of concepts edited (approx): ").append(numberEditedConcepts).append(System.lineSeparator());
+			builder.append("Number of concepts edited (approx): ").append(numberEditedConcepts).append(LINE_BREAK);
 		}
 		if (StringUtils.hasLength(futureChangesPlanned)) {
-			builder.append("Future changes planned: ").append(futureChangesPlanned).append(System.lineSeparator());
+			builder.append("Future changes planned: ").append(futureChangesPlanned).append(LINE_BREAK);
 		}
 		if (StringUtils.hasLength(linkContentTracker)) {
-			builder.append("Link to content tracker: ").append(linkContentTracker).append(System.lineSeparator());
+			builder.append("Link to content tracker: ").append(linkContentTracker).append(LINE_BREAK);
 		}
 		if (StringUtils.hasLength(conceptInactivations)) {
-			builder.append("Concept inactivations: ").append(conceptInactivations).append(System.lineSeparator());
+			builder.append("Concept inactivations: ").append(conceptInactivations).append(LINE_BREAK);
 		}
 		if (StringUtils.hasLength(linkBriefingNote)) {
-			builder.append("Link to briefing note: ").append(linkBriefingNote).append(System.lineSeparator());
+			builder.append("Link to briefing note: ").append(linkBriefingNote).append(LINE_BREAK);
 		}
 		if (StringUtils.hasLength(linkToTemplate)) {
-			builder.append("Link to template: ").append(linkToTemplate).append(System.lineSeparator());
+			builder.append("Link to template: ").append(linkToTemplate).append(LINE_BREAK);
 		}
 		if (StringUtils.hasLength(descriptionChanges)) {
-			builder.append("Description changes: ").append(descriptionChanges).append(System.lineSeparator());
+			builder.append("Description changes: ").append(descriptionChanges).append(LINE_BREAK);
 		}
 		if (StringUtils.hasLength(notes)) {
-			builder.append("Notes: ").append(notes).append(System.lineSeparator());
+			builder.append("Notes: ").append(notes).append(LINE_BREAK);
 		}
-
-		this.setContent(builder.toString());
+		String content = builder.toString();
+		if (content != null && content.endsWith(LINE_BREAK)) {
+			content = content.replaceAll(LINE_BREAK + "$", "");
+		}
+		this.setContent(content);
 	}
 
 	@Override
