@@ -13,7 +13,7 @@
 
 	<groupId>org.snomed</groupId>
 	<artifactId>release-notes-service</artifactId>
-	<version>1.3.0</version>
+	<version>1.4.0-SNAPSHOT</version>
 	<name>Release Notes Service</name>
 	<description>SNOMED CT Release Notes Service</description>
 
