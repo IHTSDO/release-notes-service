@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Objects;
 
 import static org.snomed.release.note.core.util.ContentUtil.LINE_BREAK;
-import static org.snomed.release.note.core.util.ContentUtil.SPACE_CHAR;
 
 @Document(indexName = "#{@indexNameProvider.getIndexNameWithPrefix('lineitem')}")
 @Setting(settingPath = "elasticsearch-settings.json")
@@ -293,7 +292,6 @@ public class LineItem implements LineItemView {
 
 	public void generateContent() {
 		StringBuilder builder = new StringBuilder();
-		builder.append(getSourceBranch()).append(" - ").append(SecurityUtil.getUsername()).append(LINE_BREAK + SPACE_CHAR + LINE_BREAK);
 		if (StringUtils.hasLength(changeType)) {
 			builder.append("Change Type: ").append(changeType).append(LINE_BREAK);
 		}
