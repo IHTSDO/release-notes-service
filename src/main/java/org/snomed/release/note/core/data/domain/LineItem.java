@@ -1,6 +1,5 @@
 package org.snomed.release.note.core.data.domain;
 
-import org.ihtsdo.sso.integration.SecurityUtil;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.elasticsearch.annotations.Document;

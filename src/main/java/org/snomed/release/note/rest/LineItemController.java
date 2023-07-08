@@ -32,7 +32,7 @@ public class LineItemController {
 	public LineItem createLineItem(
 			@PathVariable String path,
 			@RequestBody LineItemCreateRequest lineItemCreateRequest) throws BusinessServiceException {
-		return lineItemService.create(lineItemCreateRequest, BranchPathUriUtil.decodePath(path));
+		return lineItemService.create(lineItemCreateRequest, BranchPathUriUtil.decodePath(path), false);
 	}
 
 	@GetMapping(value = "/{path}/lineitems/{id}")

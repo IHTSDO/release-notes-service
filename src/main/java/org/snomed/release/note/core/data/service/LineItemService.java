@@ -50,7 +50,7 @@ public class LineItemService {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(LineItemService.class);
 
-	public LineItem create(final LineItemCreateRequest createRequest, final String path) throws BusinessServiceException {
+	public LineItem create(final LineItemCreateRequest createRequest, final String path, final boolean skipGeneratingContent) throws BusinessServiceException {
 		String title = createRequest.getTitle();
 
 		if (Strings.isNullOrEmpty(title)) {
@@ -63,7 +63,10 @@ public class LineItemService {
 		validateParentIdAndLevel(createRequest.getParentId(), createRequest.getLevel());
 
 		LineItem lineItem = createFromRequest(createRequest, path);
-		lineItem.generateContent();
+		if (!skipGeneratingContent) {
+			lineItem.generateContent();
+		}
+
 		return lineItemRepository.save(lineItem);
 	}
 
@@ -77,16 +80,16 @@ public class LineItemService {
 		validateParentIdAndLevel(updateRequest.getParentId(), updateRequest.getLevel() == null ? existing.getLevel() : updateRequest.getLevel());
 
 		existing.setParentId(updateRequest.getParentId());
+		if (updateRequest.getLevel() != null) {
+			existing.setLevel(updateRequest.getLevel());
+		}
+		if (updateRequest.getSequence() != null) {
+			existing.setSequence(updateRequest.getSequence());
+		}
 
 		if (updateRequest.getContent() != null) {
 			existing.setContent(updateRequest.getContent());
 		} else {
-			if (updateRequest.getLevel() != null) {
-				existing.setLevel(updateRequest.getLevel());
-			}
-			if (updateRequest.getSequence() != null) {
-				existing.setSequence(updateRequest.getSequence());
-			}
 			if (updateRequest.getChangeType() != null) {
 				existing.setChangeType(updateRequest.getChangeType());
 			}
