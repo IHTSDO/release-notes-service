@@ -84,13 +84,6 @@ public class LineItemService {
 		if (updateRequest.getSequence() != null) {
 			existing.setSequence(updateRequest.getSequence());
 		}
-
-		if (updateRequest.getLevel() != null) {
-			existing.setLevel(updateRequest.getLevel());
-		}
-		if (updateRequest.getSequence() != null) {
-			existing.setSequence(updateRequest.getSequence());
-		}
 		if (updateRequest.getContent() != null) {
 			existing.setContent(updateRequest.getContent());
 		} else {
