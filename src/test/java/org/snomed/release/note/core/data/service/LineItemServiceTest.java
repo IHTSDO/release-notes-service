@@ -34,7 +34,7 @@ public class LineItemServiceTest extends AbstractTest {
 	void testCreate() throws BusinessServiceException{
 		final String path = "MAIN/ProjectA";
 
-		LineItem lineItem = lineItemService.create(new LineItemCreateRequest("Body structure", "Demonstration Release of the Anatomy Model"), path, true);
+		LineItem lineItem = lineItemService.create(new LineItemCreateRequest("Body structure", "Demonstration Release of the Anatomy Model"), path);
 		assertNotNull(lineItem.getId());
 		lineItem = lineItemService.find(lineItem.getId(), path);
 		assertEquals("Body structure", lineItem.getTitle());
@@ -44,7 +44,7 @@ public class LineItemServiceTest extends AbstractTest {
 		assertFalse(lineItem.isReleased());
 		assertNull(lineItem.getPromotedBranch());
 
-		lineItem = lineItemService.create(new LineItemCreateRequest("Clinical finding", "Allergy"), path, true);
+		lineItem = lineItemService.create(new LineItemCreateRequest("Clinical finding", "Allergy"), path);
 		assertNotNull(lineItem.getId());
 		lineItem = lineItemService.find(lineItem.getId(), path);
 		assertEquals("Clinical finding", lineItem.getTitle());
@@ -58,7 +58,7 @@ public class LineItemServiceTest extends AbstractTest {
 		lineItemCreateRequest.setChangeType("New Concept");
 		lineItemCreateRequest.setAdditionalChangeTypes("Additional Change Type");
 		lineItemCreateRequest.setNotes("Notes");
-		lineItem = lineItemService.create(lineItemCreateRequest, path, false);
+		lineItem = lineItemService.create(lineItemCreateRequest, path);
 		assertNotNull(lineItem.getId());
 		lineItem = lineItemService.find(lineItem.getId(), path);
 		assertEquals("COVID-19", lineItem.getTitle());
@@ -72,7 +72,7 @@ public class LineItemServiceTest extends AbstractTest {
 	@Test
 	void testUpdate() throws BusinessServiceException {
 		final String path = "MAIN/ProjectA";
-		LineItem lineItem = lineItemService.create(new LineItemCreateRequest("Body structure", "Demonstration Release of the Anatomy Model"), path, true);
+		LineItem lineItem = lineItemService.create(new LineItemCreateRequest("Body structure", "Demonstration Release of the Anatomy Model"), path);
 		lineItem.setContent("Final Release of the Anatomy Model");
 		lineItem.setSequence(3);
 		LineItem updated = lineItemService.update(new LineItemUpdateRequest(lineItem.getId(), lineItem.getParentId(), lineItem.getTitle(), lineItem.getContent(), lineItem.getLevel(), lineItem.getSequence()), path);
@@ -85,18 +85,18 @@ public class LineItemServiceTest extends AbstractTest {
 	@Test
 	void testDelete() throws BusinessServiceException {
 		final String path = "MAIN/ProjectA";
-		LineItem lineItem = lineItemService.create(new LineItemCreateRequest("Body structure"), path, true);
+		LineItem lineItem = lineItemService.create(new LineItemCreateRequest("Body structure"), path);
 		lineItemService.delete(lineItem.getId(), path);
 		assertThrows(ResourceNotFoundException.class, () -> lineItemService.find(lineItem.getId(), path));
 	}
 
 	@Test
 	void testFind() throws BusinessServiceException {
-		LineItem lineItem = lineItemService.create(new LineItemCreateRequest("Background","Demonstration Release of the Anatomy Model"), "MAIN/ProjectA", true);
-		lineItemService.create(new LineItemCreateRequest("Scope", "Limbs/Girdles"), "MAIN/ProjectA", true);
-		lineItemService.create(new LineItemCreateRequest("ScopeBody structure", "Flexor annular pulley"), "MAIN/ProjectB", true);
-		lineItemService.create(new LineItemCreateRequest("Clinical Finding", "Muscle tendon of toes"), "MAIN/ProjectB", true);
-		lineItemService.create(new LineItemCreateRequest("Procedure", "Muscle tendon of toes"), "MAIN", true);
+		LineItem lineItem = lineItemService.create(new LineItemCreateRequest("Background","Demonstration Release of the Anatomy Model"), "MAIN/ProjectA");
+		lineItemService.create(new LineItemCreateRequest("Scope", "Limbs/Girdles"), "MAIN/ProjectA");
+		lineItemService.create(new LineItemCreateRequest("ScopeBody structure", "Flexor annular pulley"), "MAIN/ProjectB");
+		lineItemService.create(new LineItemCreateRequest("Clinical Finding", "Muscle tendon of toes"), "MAIN/ProjectB");
+		lineItemService.create(new LineItemCreateRequest("Procedure", "Muscle tendon of toes"), "MAIN");
 
 		LineItem found = lineItemService.find(lineItem.getId(), lineItem.getSourceBranch());
 		assertNotNull(found);
@@ -152,7 +152,7 @@ public class LineItemServiceTest extends AbstractTest {
 	@Test
 	void testPromote_oneLineItem() throws BusinessServiceException {
 		String sourceBranch = "MAIN/ProjectA/Task1";
-		LineItem lineItem1 = lineItemService.create(new LineItemCreateRequest("Body structure", "Release of the Anatomy Model"), sourceBranch, true);
+		LineItem lineItem1 = lineItemService.create(new LineItemCreateRequest("Body structure", "Release of the Anatomy Model"), sourceBranch);
 		lineItemService.promote(lineItem1.getId(), sourceBranch);
 
 		lineItem1 = lineItemService.find(lineItem1.getId(), sourceBranch);
@@ -166,7 +166,7 @@ public class LineItemServiceTest extends AbstractTest {
 		assertEquals(lineItem1.getContent(), promotedLineItems.get(0).getContent());
 
 		sourceBranch = "MAIN/ProjectA/Task2";
-		LineItem lineItem2 = lineItemService.create(new LineItemCreateRequest("Body structure", "COVID-19"), sourceBranch, true);
+		LineItem lineItem2 = lineItemService.create(new LineItemCreateRequest("Body structure", "COVID-19"), sourceBranch);
 		lineItemService.promote(lineItem2.getId(), sourceBranch);
 
 		promotedLineItems = lineItemService.find("MAIN/ProjectA");
@@ -178,8 +178,8 @@ public class LineItemServiceTest extends AbstractTest {
 	@Test
 	void testPromote_manyLineItems() throws BusinessServiceException {
 		final String sourceBranchA = "MAIN/ProjectA";
-		lineItemService.create(new LineItemCreateRequest("Body structure", "Project A: Limbs/Girdles"), sourceBranchA, true);
-		lineItemService.create(new LineItemCreateRequest("Clinical Finding", "Project A: COVID-19"), sourceBranchA, true);
+		lineItemService.create(new LineItemCreateRequest("Body structure", "Project A: Limbs/Girdles"), sourceBranchA);
+		lineItemService.create(new LineItemCreateRequest("Clinical Finding", "Project A: COVID-19"), sourceBranchA);
 		lineItemService.promote(sourceBranchA);
 
 		List<LineItem> lineItems = lineItemRepository.findBySourceBranch(sourceBranchA);
@@ -191,7 +191,7 @@ public class LineItemServiceTest extends AbstractTest {
 		});
 
 		final String sourceBranchB = "MAIN/ProjectB";
-		lineItemService.create(new LineItemCreateRequest("Body structure", "Project B: Limbs/Girdles"), sourceBranchB, true);
+		lineItemService.create(new LineItemCreateRequest("Body structure", "Project B: Limbs/Girdles"), sourceBranchB);
 		lineItemService.promote(sourceBranchB);
 
 		lineItems.addAll(lineItemRepository.findBySourceBranch(sourceBranchB));
@@ -234,7 +234,7 @@ public class LineItemServiceTest extends AbstractTest {
 	void testPublish() throws Exception {
 		String sourceBranch = "MAIN";
 
-		lineItemService.create(new LineItemCreateRequest("Body structure", "Demonstration Release of the Anatomy Model"), sourceBranch, true);
+		lineItemService.create(new LineItemCreateRequest("Body structure", "Demonstration Release of the Anatomy Model"), sourceBranch);
 		assertThrows(BusinessServiceException.class, () -> lineItemService.publish(sourceBranch));
 
 		lineItemService.version(sourceBranch, new VersionRequest(DATE_FORMATTER.parse("2022-01-31")));
@@ -250,7 +250,7 @@ public class LineItemServiceTest extends AbstractTest {
 
 	@Test
 	void testVersionWithoutHierarchy() throws Exception {
-		lineItemService.create(new LineItemCreateRequest("Body structure", "Demonstration Release of the Anatomy Model"), "MAIN", true);
+		lineItemService.create(new LineItemCreateRequest("Body structure", "Demonstration Release of the Anatomy Model"), "MAIN");
 		lineItemService.version("MAIN", new VersionRequest(DATE_FORMATTER.parse("2022-01-31")));
 
 		List<LineItem> created = lineItemService.find("MAIN");
@@ -326,12 +326,12 @@ public class LineItemServiceTest extends AbstractTest {
 
 	@Test
 	void testFindCategories() throws BusinessServiceException {
-		LineItem contentDevelopmentActivity = lineItemService.create(new LineItemCreateRequest(LineItemService.CONTENT_DEVELOPMENT_ACTIVITY, "Content Development"), "MAIN", true);
+		LineItem contentDevelopmentActivity = lineItemService.create(new LineItemCreateRequest(LineItemService.CONTENT_DEVELOPMENT_ACTIVITY, "Content Development"), "MAIN");
 
-		lineItemService.create(new LineItemCreateRequest("Introduction", null), "MAIN", true);
-		lineItemService.create(new LineItemCreateRequest(contentDevelopmentActivity.getId(), "Body structure", "Body structure content"), "MAIN", true);
-		lineItemService.create(new LineItemCreateRequest(contentDevelopmentActivity.getId(), "Procedure", "Procedure content"), "MAIN", true);
-		lineItemService.create(new LineItemCreateRequest("Technical notes", null), "MAIN", true);
+		lineItemService.create(new LineItemCreateRequest("Introduction", null), "MAIN");
+		lineItemService.create(new LineItemCreateRequest(contentDevelopmentActivity.getId(), "Body structure", "Body structure content"), "MAIN");
+		lineItemService.create(new LineItemCreateRequest(contentDevelopmentActivity.getId(), "Procedure", "Procedure content"), "MAIN");
+		lineItemService.create(new LineItemCreateRequest("Technical notes", null), "MAIN");
 
 		List<String> categories = lineItemService.findCategories("MAIN");
 		assertEquals(2, categories.size());
@@ -343,20 +343,20 @@ public class LineItemServiceTest extends AbstractTest {
 	void testGetVersions() throws Exception {
 		String sourceBranch = "MAIN";
 
-		lineItemService.create(new LineItemCreateRequest("Body Structure", "Release 2022-01-31"), sourceBranch, true);
-		lineItemService.create(new LineItemCreateRequest("Clinical Finding", "Release 2022-01-31"), sourceBranch, true);
-		lineItemService.create(new LineItemCreateRequest("Procedure", "Release 2022-01-31"), sourceBranch, true);
+		lineItemService.create(new LineItemCreateRequest("Body Structure", "Release 2022-01-31"), sourceBranch);
+		lineItemService.create(new LineItemCreateRequest("Clinical Finding", "Release 2022-01-31"), sourceBranch);
+		lineItemService.create(new LineItemCreateRequest("Procedure", "Release 2022-01-31"), sourceBranch);
 		lineItemService.version(sourceBranch, new VersionRequest(DATE_FORMATTER.parse("2022-01-31")));
 
-		lineItemService.create(new LineItemCreateRequest("COVID-19", "Release 2022-07-31"), sourceBranch, true);
+		lineItemService.create(new LineItemCreateRequest("COVID-19", "Release 2022-07-31"), sourceBranch);
 		lineItemService.version(sourceBranch, new VersionRequest(DATE_FORMATTER.parse("2022-07-31")));
 
-		lineItemService.create(new LineItemCreateRequest("Collaboration/Harmonization Agreements\"", "Release 2023-01-31"), sourceBranch, true);
+		lineItemService.create(new LineItemCreateRequest("Collaboration/Harmonization Agreements\"", "Release 2023-01-31"), sourceBranch);
 		lineItemService.version(sourceBranch, new VersionRequest(DATE_FORMATTER.parse("2023-01-31")));
 
 		String projectBranch = "MAIN/Project1";
-		lineItemService.create(new LineItemCreateRequest("Finding", "Not versioned"), projectBranch, true);
-		lineItemService.create(new LineItemCreateRequest("Procedure", "Not versioned"), projectBranch, true);
+		lineItemService.create(new LineItemCreateRequest("Finding", "Not versioned"), projectBranch);
+		lineItemService.create(new LineItemCreateRequest("Procedure", "Not versioned"), projectBranch);
 		lineItemService.promote(projectBranch);
 
 		List<String> versions = lineItemService.getVersions("MAIN");

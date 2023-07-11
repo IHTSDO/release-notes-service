@@ -50,7 +50,7 @@ public class LineItemService {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(LineItemService.class);
 
-	public LineItem create(final LineItemCreateRequest createRequest, final String path, final boolean skipGeneratingContent) throws BusinessServiceException {
+	public LineItem create(final LineItemCreateRequest createRequest, final String path) throws BusinessServiceException {
 		String title = createRequest.getTitle();
 
 		if (Strings.isNullOrEmpty(title)) {
@@ -63,9 +63,7 @@ public class LineItemService {
 		validateParentIdAndLevel(createRequest.getParentId(), createRequest.getLevel());
 
 		LineItem lineItem = createFromRequest(createRequest, path);
-		if (!skipGeneratingContent) {
-			lineItem.generateContent();
-		}
+		lineItem.generateContent();
 
 		return lineItemRepository.save(lineItem);
 	}
@@ -87,6 +85,12 @@ public class LineItemService {
 			existing.setSequence(updateRequest.getSequence());
 		}
 
+		if (updateRequest.getLevel() != null) {
+			existing.setLevel(updateRequest.getLevel());
+		}
+		if (updateRequest.getSequence() != null) {
+			existing.setSequence(updateRequest.getSequence());
+		}
 		if (updateRequest.getContent() != null) {
 			existing.setContent(updateRequest.getContent());
 		} else {
@@ -543,6 +547,7 @@ public class LineItemService {
 		lineItem.setLinkToTemplate(lineItemCreateRequest.getLinkToTemplate());
 		lineItem.setDescriptionChanges(lineItemCreateRequest.getDescriptionChanges());
 		lineItem.setNotes(lineItemCreateRequest.getNotes());
+
 		if (lineItemCreateRequest.getLevel() == null) {
 			lineItem.setLevel(lineItemCreateRequest.getParentId() == null ? 1 : 2);
 		} else {

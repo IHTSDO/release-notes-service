@@ -327,6 +327,9 @@ public class LineItem implements LineItemView {
 		if (StringUtils.hasLength(notes)) {
 			builder.append("Notes: ").append(notes).append(LINE_BREAK);
 		}
+		if (StringUtils.hasLength(content)) {
+			builder.append(content).append(LINE_BREAK);
+		}
 		String content = builder.toString();
 		if (content != null && content.endsWith(LINE_BREAK)) {
 			content = content.replaceAll(LINE_BREAK + "$", "");
