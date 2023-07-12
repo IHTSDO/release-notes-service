@@ -24,6 +24,7 @@ import org.springframework.data.elasticsearch.core.clients.elasticsearch7.Elasti
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -63,7 +64,9 @@ public class LineItemService {
 		validateParentIdAndLevel(createRequest.getParentId(), createRequest.getLevel());
 
 		LineItem lineItem = createFromRequest(createRequest, path);
-		lineItem.generateContent();
+		if (!StringUtils.hasLength(lineItem.getContent())) {
+			lineItem.generateContent();
+		}
 
 		return lineItemRepository.save(lineItem);
 	}
@@ -84,7 +87,7 @@ public class LineItemService {
 		if (updateRequest.getSequence() != null) {
 			existing.setSequence(updateRequest.getSequence());
 		}
-		if (updateRequest.getContent() != null) {
+		if (StringUtils.hasLength(updateRequest.getContent())) {
 			existing.setContent(updateRequest.getContent());
 		} else {
 			if (updateRequest.getChangeType() != null) {
