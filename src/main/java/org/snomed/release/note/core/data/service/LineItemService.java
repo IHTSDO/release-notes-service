@@ -323,7 +323,7 @@ public class LineItemService {
 	}
 
 	public void version(final String path, final VersionRequest versionRequest) throws BusinessServiceException {
-		final Date effectiveTime = versionRequest.getEffectiveTime();
+		final Date effectiveTime = versionRequest.effectiveTime();
 		final String releaseBranch = path + BranchUtil.SEPARATOR + DATE_FORMATTER.format(effectiveTime);
 
 		if (effectiveTime == null) {

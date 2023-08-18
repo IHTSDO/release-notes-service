@@ -6,18 +6,16 @@ import io.swagger.annotations.ApiModelProperty;
 
 import java.util.Date;
 
-public class VersionRequest {
-
-	@JsonFormat(pattern = "yyyy-MM-dd")
-	@ApiModelProperty(example = "2023-01-31")
-	private final Date effectiveTime;
+public record VersionRequest(
+		@JsonFormat(pattern = "yyyy-MM-dd") @ApiModelProperty(example = "2023-01-31") Date effectiveTime) {
 
 	@JsonCreator
 	public VersionRequest(Date effectiveTime) {
 		this.effectiveTime = effectiveTime;
 	}
 
-	public Date getEffectiveTime() {
+	@Override
+	public Date effectiveTime() {
 		return effectiveTime;
 	}
 

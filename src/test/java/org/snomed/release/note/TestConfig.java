@@ -58,7 +58,8 @@ public class TestConfig extends Config {
 	@Override
 	public RestHighLevelClient elasticsearchClient() {
 		if (!useLocalElasticsearch) {
-			return RestClients.create(ClientConfiguration.builder()
+            assert elasticsearchContainer != null;
+            return RestClients.create(ClientConfiguration.builder()
 					.connectedTo(elasticsearchContainer.getHttpHostAddress()).build()).rest();
 		}
 		return RestClients.create(ClientConfiguration.builder()
