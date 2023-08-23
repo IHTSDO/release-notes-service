@@ -1,8 +1,8 @@
 package org.snomed.release.note.rest;
 
 import io.kaicode.rest.util.branchpathrewrite.BranchPathUriUtil;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.ihtsdo.otf.rest.exception.BadRequestException;
 import org.ihtsdo.otf.rest.exception.BusinessServiceException;
 import org.snomed.release.note.core.data.domain.LineItem;
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@Api(tags = "Line Items")
+@Tag(name = "Line Items")
 @RequestMapping(produces = MediaType.APPLICATION_JSON_VALUE)
 public class LineItemController {
 
@@ -71,7 +71,7 @@ public class LineItemController {
 
 	@PostMapping(value = "/{path}/lineitems/{id}/promote")
 	@PreAuthorize("hasPermission('AUTHOR', #path)")
-	@ApiOperation(value = "Promote task line item", notes = "'id' - line item id, 'path' - task branch")
+	@Operation(summary = "Promote task line item", description = "'id' - line item id, 'path' - task branch")
 	public ResponseEntity<String> promoteTaskLineItem(
 			@PathVariable String path,
 			@PathVariable String id) throws BusinessServiceException {
@@ -81,7 +81,7 @@ public class LineItemController {
 
 	@PostMapping(value = "/{path}/lineitems/promote")
 	@PreAuthorize("hasPermission('AUTHOR', #path)")
-	@ApiOperation(value = "Promote project line item(s)", notes = "'path' is a project branch")
+	@Operation(summary = "Promote project line item(s)", description = "'path' is a project branch")
 	public ResponseEntity<String> promoteProjectLineItems(
 			@PathVariable String path) throws BusinessServiceException {
 		lineItemService.promote(BranchPathUriUtil.decodePath(path));
@@ -90,7 +90,7 @@ public class LineItemController {
 
 	@PostMapping(value = "/{path}/lineitems/version")
 	@PreAuthorize("hasPermission('RELEASE_LEAD', #path) || hasPermission('RELEASE_ADMIN', #path) || hasPermission('RELEASE_MANAGER', #path)")
-	@ApiOperation(value = "Version line items", notes = "Move all line items from the code system branch 'path' to a release branch 'path/effectiveTime', e.g. 'MAIN/2022-01-31'")
+	@Operation(summary = "Version line items", description = "Move all line items from the code system branch 'path' to a release branch 'path/effectiveTime', e.g. 'MAIN/2022-01-31'")
 	public ResponseEntity<String> versionLineItem(
 			@PathVariable String path,
 			@RequestBody VersionRequest versionRequest) throws BusinessServiceException {
@@ -100,7 +100,7 @@ public class LineItemController {
 
 	@PostMapping(value = "/{path}/lineitems/publish")
 	@PreAuthorize("hasPermission('RELEASE_ADMIN', #path) || hasPermission('RELEASE_MANAGER', #path)")
-	@ApiOperation(value = "Publish versioned line items", notes = "Set 'released' flag to 'true' for versioned line items on the release branch 'path'")
+	@Operation(summary = "Publish versioned line items", description = "Set 'released' flag to 'true' for versioned line items on the release branch 'path'")
 	public ResponseEntity<String> publishLineItems(
 			@PathVariable String path) throws BusinessServiceException {
 		lineItemService.publish(BranchPathUriUtil.decodePath(path));
@@ -122,14 +122,14 @@ public class LineItemController {
 	}
 
 	@GetMapping(value = "/{path}/lineitems/categories")
-	@ApiOperation("Retrieve available categories for content development.")
+	@Operation(summary = "Retrieve available categories for content development.")
 	public List<String> getCategories(
 			@PathVariable String path) {
 		return lineItemService.findCategories(BranchPathUriUtil.decodePath(path));
 	}
 
 	@GetMapping(value = "/{path}/lineitems/versions")
-	@ApiOperation("Retrieve existing versions for a given code system branch 'path'.")
+	@Operation(summary = "Retrieve existing versions for a given code system branch 'path'.")
 	public List<String> getVersions(
 			@PathVariable String path) throws BusinessServiceException {
 		return lineItemService.getVersions(BranchPathUriUtil.decodePath(path));

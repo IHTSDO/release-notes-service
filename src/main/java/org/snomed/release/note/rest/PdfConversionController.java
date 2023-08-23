@@ -1,8 +1,8 @@
 package org.snomed.release.note.rest;
 
 import io.kaicode.rest.util.branchpathrewrite.BranchPathUriUtil;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.ihtsdo.otf.rest.exception.BusinessServiceException;
 import org.snomed.release.note.core.data.service.PdfConversionService;
 import org.snomed.release.note.core.util.BranchUtil;
@@ -17,13 +17,13 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 @RestController
-@Api(tags = "PDF Conversion")
+@Tag(name = "PDF Conversion")
 public class PdfConversionController {
 
 	@Autowired
 	private PdfConversionService pdfConversionService;
 
-	@ApiOperation("Release notes in PDF format.")
+	@Operation(summary = "Release notes in PDF format.")
 	@GetMapping(value = "/{path}/lineitems/pdf")
 	public ResponseEntity<byte[]> convertToPdf(
 			@PathVariable String path) throws BusinessServiceException {

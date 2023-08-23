@@ -1,7 +1,7 @@
 package org.snomed.release.note.rest;
 
 import io.kaicode.rest.util.branchpathrewrite.BranchPathUriUtil;
-import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.snomed.release.note.core.data.service.LineItemService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -11,7 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@Api(tags = "Administration")
+@Tag(name = "Administration")
 @RequestMapping(produces = MediaType.APPLICATION_JSON_VALUE)
 public class AdminController {
 

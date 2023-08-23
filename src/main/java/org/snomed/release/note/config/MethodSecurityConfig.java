@@ -19,6 +19,7 @@ import java.io.Serializable;
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class MethodSecurityConfig extends GlobalMethodSecurityConfiguration {
 
+	@Lazy
 	@Autowired
 	private PermissionEvaluator permissionEvaluator;
 

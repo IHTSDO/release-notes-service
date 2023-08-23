@@ -1,8 +1,14 @@
 package org.snomed.release.note.config;
 
 import io.kaicode.rest.util.branchpathrewrite.BranchPathUriRewriteFilter;
+import io.swagger.v3.oas.models.ExternalDocumentation;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Contact;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.info.License;
 import org.ihtsdo.sso.integration.RequestHeaderAuthenticationDecorator;
 import org.snomed.release.note.rest.config.AccessDeniedExceptionHandler;
+import org.springdoc.core.GroupedOpenApi;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.info.BuildProperties;
@@ -19,16 +25,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 import org.springframework.security.web.firewall.DefaultHttpFirewall;
 import org.springframework.security.web.firewall.HttpFirewall;
-import springfox.documentation.builders.RequestHandlerSelectors;
-import springfox.documentation.service.ApiInfo;
-import springfox.documentation.service.Contact;
-import springfox.documentation.spi.DocumentationType;
-import springfox.documentation.spring.web.plugins.Docket;
-
-import java.util.Collections;
-
-import static java.util.function.Predicate.*;
-import static springfox.documentation.builders.PathSelectors.*;
 
 @Configuration
 @EnableWebSecurity
@@ -49,9 +45,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	private final String[] excludedUrlPatterns = {
 			"/version",
 			"/swagger-ui/**",
-			"/swagger-resources/**",
-			"/v2/api-docs",
-			"/webjars/springfox-swagger-ui/**"
+			"/v3/api-docs/**"
 	};
 
 	@Override
@@ -115,22 +109,35 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	}
 
 	@Bean
-	public Docket api() {
-		return new Docket(DocumentationType.SWAGGER_2)
-				.apiInfo(apiInfo())
-				.select()
-				.apis(RequestHandlerSelectors.any())
-				.paths(not(regex("/error")))
+	public GroupedOpenApi apiDocs() {
+		GroupedOpenApi.Builder apiBuilder = GroupedOpenApi.builder()
+				.group("release-notes-service")
+				.packagesToScan("org.snomed.release.note.rest");
+		// Don't show the error or root endpoints in swagger
+		apiBuilder.pathsToExclude("/error", "/");
+		return apiBuilder.build();
+	}
+
+	@Bean
+	public GroupedOpenApi springActuatorApi() {
+		return GroupedOpenApi.builder().group("actuator")
+				.packagesToScan("org.springframework.boot.actuate")
+				.pathsToMatch("/actuator/**")
 				.build();
 	}
 
-	private ApiInfo apiInfo() {
+	@Bean
+	public OpenAPI apiInfo() {
 		final String version = buildProperties != null ? buildProperties.getVersion() : "DEV";
-		return new ApiInfo(
-				"SNOMED CT Release Notes",
-				"Standalone service for management of SNOMED CT release notes", version, null,
-				new Contact("SNOMED International", "https://github.com/IHTSDO/release-notes-service", null),
-				"Apache License, Version 2.0", "http://www.apache.org/licenses/LICENSE-2.0",
-				Collections.emptyList());
+		return new OpenAPI()
+				.info(new Info()
+						.title("SNOMED CT Release Notes")
+						.description("Standalone service for management of SNOMED CT release notes")
+						.version(version)
+						.contact(new Contact().name("SNOMED International").url("https://www.snomed.org"))
+						.license(new License().name("Apache 2.0").url("http://www.apache.org/licenses/LICENSE-2.0")))
+				.externalDocs(new ExternalDocumentation()
+								.description("See more about Release Notes Service in GitHub")
+								.url("https://github.com/IHTSDO/release-notes-service"));
 	}
 }
