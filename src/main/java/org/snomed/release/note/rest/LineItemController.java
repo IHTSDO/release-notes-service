@@ -89,7 +89,7 @@ public class LineItemController {
 	}
 
 	@PostMapping(value = "/{path}/lineitems/version")
-	@PreAuthorize("hasPermission('PROJECT_LEAD', #path) || hasPermission('RELEASE_LEAD', #path) || hasPermission('RELEASE_ADMIN', #path) || hasPermission('RELEASE_MANAGER', #path)")
+	@PreAuthorize("hasPermission('RELEASE_LEAD', #path) || hasPermission('RELEASE_ADMIN', #path) || hasPermission('RELEASE_MANAGER', #path)")
 	@ApiOperation(value = "Version line items", notes = "Move all line items from the code system branch 'path' to a release branch 'path/effectiveTime', e.g. 'MAIN/2022-01-31'")
 	public ResponseEntity<String> versionLineItem(
 			@PathVariable String path,
