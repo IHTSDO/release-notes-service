@@ -28,7 +28,7 @@ public class LineItemController {
 	private LineItemService lineItemService;
 
 	@PostMapping(value = "/{path}/lineitems")
-	@PreAuthorize("hasPermission('AUTHOR', #path)")
+	@PreAuthorize("hasPermission('AUTHOR', #path) || hasPermission('PROJECT_LEAD', #path) || hasPermission('RELEASE_LEAD', #path) || hasPermission('RELEASE_ADMIN', #path) || hasPermission('RELEASE_MANAGER', #path)")
 	public LineItem createLineItem(
 			@PathVariable String path,
 			@RequestBody LineItemCreateRequest lineItemCreateRequest) throws BusinessServiceException {
@@ -58,7 +58,7 @@ public class LineItemController {
 	}
 
 	@PutMapping(value = "/{path}/lineitems/{id}")
-	@PreAuthorize("hasPermission('AUTHOR', #path)")
+	@PreAuthorize("hasPermission('AUTHOR', #path) || hasPermission('PROJECT_LEAD', #path) || hasPermission('RELEASE_LEAD', #path) || hasPermission('RELEASE_ADMIN', #path) || hasPermission('RELEASE_MANAGER', #path)")
 	public LineItem updateLineItem(
 			@PathVariable String path,
 			@PathVariable String id,
@@ -136,7 +136,7 @@ public class LineItemController {
 	}
 
 	@DeleteMapping(value = "/{path}/lineitems/{id}")
-	@PreAuthorize("hasPermission('AUTHOR', #path) || hasPermission('RELEASE_ADMIN', #path) || hasPermission('RELEASE_LEAD', #path)")
+	@PreAuthorize("hasPermission('AUTHOR', #path) || hasPermission('PROJECT_LEAD', #path) || hasPermission('RELEASE_LEAD', #path) || hasPermission('RELEASE_ADMIN', #path) || hasPermission('RELEASE_MANAGER', #path)")
 	public void deleteLineItem(
 			@PathVariable String path,
 			@PathVariable String id) {
