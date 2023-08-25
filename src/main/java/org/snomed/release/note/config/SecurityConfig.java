@@ -110,17 +110,18 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Bean
 	public GroupedOpenApi apiDocs() {
-		GroupedOpenApi.Builder apiBuilder = GroupedOpenApi.builder()
+		return GroupedOpenApi.builder()
 				.group("release-notes-service")
-				.packagesToScan("org.snomed.release.note.rest");
-		// Don't show the error or root endpoints in swagger
-		apiBuilder.pathsToExclude("/error", "/");
-		return apiBuilder.build();
+				.packagesToScan("org.snomed.release.note.rest")
+				// Don't show the error or root endpoints in swagger
+				.pathsToExclude("/error", "/")
+				.build();
 	}
 
 	@Bean
 	public GroupedOpenApi springActuatorApi() {
-		return GroupedOpenApi.builder().group("actuator")
+		return GroupedOpenApi.builder()
+				.group("actuator")
 				.packagesToScan("org.springframework.boot.actuate")
 				.pathsToMatch("/actuator/**")
 				.build();
