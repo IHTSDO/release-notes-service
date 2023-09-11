@@ -24,6 +24,7 @@ import org.springframework.data.elasticsearch.core.clients.elasticsearch7.Elasti
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -50,7 +51,7 @@ public class LineItemService {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(LineItemService.class);
 
-	public LineItem create(final LineItemCreateRequest createRequest, final String path, final boolean skipGeneratingContent) throws BusinessServiceException {
+	public LineItem create(final LineItemCreateRequest createRequest, final String path) throws BusinessServiceException {
 		String title = createRequest.getTitle();
 
 		if (Strings.isNullOrEmpty(title)) {
@@ -63,7 +64,7 @@ public class LineItemService {
 		validateParentIdAndLevel(createRequest.getParentId(), createRequest.getLevel());
 
 		LineItem lineItem = createFromRequest(createRequest, path);
-		if (!skipGeneratingContent) {
+		if (!StringUtils.hasLength(lineItem.getContent())) {
 			lineItem.generateContent();
 		}
 
@@ -86,8 +87,7 @@ public class LineItemService {
 		if (updateRequest.getSequence() != null) {
 			existing.setSequence(updateRequest.getSequence());
 		}
-
-		if (updateRequest.getContent() != null) {
+		if (StringUtils.hasLength(updateRequest.getContent())) {
 			existing.setContent(updateRequest.getContent());
 		} else {
 			if (updateRequest.getChangeType() != null) {
@@ -543,6 +543,7 @@ public class LineItemService {
 		lineItem.setLinkToTemplate(lineItemCreateRequest.getLinkToTemplate());
 		lineItem.setDescriptionChanges(lineItemCreateRequest.getDescriptionChanges());
 		lineItem.setNotes(lineItemCreateRequest.getNotes());
+
 		if (lineItemCreateRequest.getLevel() == null) {
 			lineItem.setLevel(lineItemCreateRequest.getParentId() == null ? 1 : 2);
 		} else {

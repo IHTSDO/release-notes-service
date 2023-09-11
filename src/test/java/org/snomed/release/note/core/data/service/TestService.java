@@ -63,7 +63,7 @@ public class TestService {
 			lineItemCreateRequest.setSequence(obj.getInt("sequence"));
 		}
 
-		return lineItemService.create(lineItemCreateRequest, path, true);
+		return lineItemService.create(lineItemCreateRequest, path);
 	}
 
 	private void createLineItems(JSONArray array, String path, String parentId) throws BusinessServiceException {
