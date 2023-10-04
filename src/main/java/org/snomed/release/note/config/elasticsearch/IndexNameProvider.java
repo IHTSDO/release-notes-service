@@ -1,6 +1,6 @@
 package org.snomed.release.note.config.elasticsearch;
 
-import org.elasticsearch.common.Strings;
+import com.google.common.base.Strings;
 
 public class IndexNameProvider {
 

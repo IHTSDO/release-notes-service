@@ -4,7 +4,7 @@ import com.lowagie.text.DocumentException;
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
-import org.elasticsearch.common.Strings;
+import com.google.common.base.Strings;
 import org.ihtsdo.otf.rest.exception.BusinessServiceException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;

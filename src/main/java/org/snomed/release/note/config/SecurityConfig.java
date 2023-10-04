@@ -8,7 +8,7 @@ import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
 import org.ihtsdo.sso.integration.RequestHeaderAuthenticationDecorator;
 import org.snomed.release.note.rest.config.AccessDeniedExceptionHandler;
-import org.springdoc.core.GroupedOpenApi;
+import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.info.BuildProperties;
@@ -16,19 +16,20 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.config.annotation.web.configurers.ExpressionUrlAuthorizationConfigurer;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.firewall.DefaultHttpFirewall;
 import org.springframework.security.web.firewall.HttpFirewall;
 
 @Configuration
-@EnableWebSecurity
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
+@EnableWebSecurity(debug = true)
+public class SecurityConfig {
 
 	@Autowired(required = false)
 	private BuildProperties buildProperties;
@@ -48,45 +49,51 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 			"/v3/api-docs/**"
 	};
 
-	@Override
-	public void configure(WebSecurity web) {
-		web.httpFirewall(allowUrlEncodedSlashHttpFirewall());
+	@Bean
+	public WebSecurityCustomizer webSecurityCustomizer() {
+		return (web) -> web.httpFirewall(allowUrlEncodedSlashHttpFirewall());
 	}
 
-	@Override
-	public void configure(HttpSecurity http) throws Exception {
-		http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-		http.csrf().disable();
-
-		ExpressionUrlAuthorizationConfigurer<HttpSecurity>.ExpressionInterceptUrlRegistry authorizeRequests = http.authorizeRequests();
+	@Bean
+	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+		http.csrf(AbstractHttpConfigurer::disable);// lgtm [java/spring-disabled-csrf-protection]
+		http.sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
 		if (restApiReadOnly) {
 			// Read-only mode
 			// Block all POST/PUT/PATCH/DELETE
-			authorizeRequests
-					.antMatchers(HttpMethod.POST, "/**").denyAll()
-					.antMatchers(HttpMethod.PUT, "/**").denyAll()
-					.antMatchers(HttpMethod.PATCH, "/**").denyAll()
-					.antMatchers(HttpMethod.DELETE, "/**").denyAll()
-					.anyRequest().permitAll();
+			http.authorizeHttpRequests(c -> c
+					.requestMatchers(HttpMethod.POST, "/**").denyAll()
+					.requestMatchers(HttpMethod.PUT, "/**").denyAll()
+					.requestMatchers(HttpMethod.PATCH, "/**").denyAll()
+					.requestMatchers(HttpMethod.DELETE, "/**").denyAll()
+					.anyRequest().permitAll());
 		} else {
-			authorizeRequests.antMatchers(excludedUrlPatterns).permitAll();
-
 			if (rolesEnabled) {
-				http.addFilterBefore(new RequestHeaderAuthenticationDecorator(), FilterSecurityInterceptor.class);
+				http.addFilterBefore(new RequestHeaderAuthenticationDecorator(), AuthorizationFilter.class);
+
 				if (requiredRole != null && !requiredRole.isEmpty()) {
-					authorizeRequests.anyRequest().hasAuthority(requiredRole);
+					http.authorizeHttpRequests(c -> c
+							.requestMatchers(excludedUrlPatterns).permitAll()
+							.anyRequest().hasAuthority(requiredRole));
 				} else {
-					authorizeRequests.anyRequest().authenticated();
+					http.authorizeHttpRequests(c -> c
+							.requestMatchers(excludedUrlPatterns).permitAll()
+							.anyRequest().authenticated());
 				}
 			} else {
-				authorizeRequests.anyRequest().authenticated();
+				http.authorizeHttpRequests(c -> c
+						.requestMatchers(excludedUrlPatterns).permitAll()
+						.anyRequest().authenticated());
 			}
 
-			authorizeRequests
-					.and().exceptionHandling().accessDeniedHandler(new AccessDeniedExceptionHandler())
-					.and().httpBasic();
+			http.exceptionHandling(c -> c
+					.accessDeniedHandler(new AccessDeniedExceptionHandler()));
+
+			http.httpBasic(Customizer.withDefaults());
 		}
+
+		return http.build();
 	}
 
 	@Bean

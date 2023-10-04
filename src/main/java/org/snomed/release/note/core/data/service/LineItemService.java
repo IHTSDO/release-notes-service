@@ -1,10 +1,9 @@
 package org.snomed.release.note.core.data.service;
 
-import org.elasticsearch.common.Strings;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
+import co.elastic.clients.elasticsearch._types.aggregations.AggregationBuilders;
+import co.elastic.clients.elasticsearch._types.aggregations.StringTermsAggregate;
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import com.google.common.base.Strings;
 import org.ihtsdo.otf.rest.exception.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,11 +16,13 @@ import org.snomed.release.note.rest.pojo.LineItemCreateRequest;
 import org.snomed.release.note.rest.pojo.LineItemUpdateRequest;
 import org.snomed.release.note.rest.pojo.VersionRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregation;
+import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregations;
+import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
-import org.springframework.data.elasticsearch.core.clients.elasticsearch7.ElasticsearchAggregations;
-import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -30,9 +31,9 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import static co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders.bool;
+import static org.snomed.release.note.core.data.helper.QueryHelper.*;
 import static java.util.stream.Collectors.toList;
-import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
-import static org.elasticsearch.index.query.QueryBuilders.regexpQuery;
 
 @Service
 public class LineItemService {
@@ -182,10 +183,12 @@ public class LineItemService {
 	}
 
 	public List<LineItem> findByTitle(final String title, final String path) {
-		Query query = new NativeSearchQueryBuilder().withQuery(boolQuery()
-						.must(QueryBuilders.termQuery("title", title))
-						.must(QueryBuilders.termQuery("sourceBranch", path))
-						.mustNot(QueryBuilders.existsQuery("end")))
+		Query query = new NativeQueryBuilder()
+				.withQuery(bool(b -> b
+						.must(termQuery("title", title))
+						.must(termQuery("sourceBranch", path))
+						.mustNot(existsQuery("end"))))
+				.withPageable(Pageable.ofSize(10000))
 				.build();
 
 		SearchHits<LineItem> searchHits = elasticsearchOperations.search(query, LineItem.class);
@@ -197,9 +200,11 @@ public class LineItemService {
 	}
 
 	public List<LineItem> find(final String path) {
-		Query query = new NativeSearchQueryBuilder().withQuery(boolQuery()
-						.must(QueryBuilders.termQuery("sourceBranch", path))
-						.mustNot(QueryBuilders.existsQuery("end")))
+		Query query = new NativeQueryBuilder()
+				.withQuery(bool(b -> b
+						.must(termQuery("sourceBranch", path))
+						.mustNot(existsQuery("end"))))
+				.withPageable(Pageable.ofSize(10000))
 				.build();
 
 		SearchHits<LineItem> searchHits = elasticsearchOperations.search(query, LineItem.class);
@@ -216,11 +221,13 @@ public class LineItemService {
 	}
 
 	public List<LineItem> findPublished(final String path, final boolean ordered) {
-		Query query = new NativeSearchQueryBuilder().withQuery(boolQuery()
-						.mustNot(QueryBuilders.existsQuery("end"))
-						.must(QueryBuilders.termQuery("released", true))
-						.should(QueryBuilders.termQuery("sourceBranch", path))
-						.should(QueryBuilders.termQuery("promotedBranch", path)))
+		Query query = new NativeQueryBuilder()
+				.withQuery(bool(b -> b
+						.mustNot(existsQuery("end"))
+						.must(termQuery("released", true))
+						.should(termQuery("sourceBranch", path))
+						.should(termQuery("promotedBranch", path))))
+				.withPageable(Pageable.ofSize(10000))
 				.build();
 
 		SearchHits<LineItem> searchHits = elasticsearchOperations.search(query, LineItem.class);
@@ -232,10 +239,12 @@ public class LineItemService {
 	}
 
 	public List<LineItem> findUnpublished(final String path, final boolean ordered) {
-		Query query = new NativeSearchQueryBuilder().withQuery(boolQuery()
-						.mustNot(QueryBuilders.existsQuery("end"))
-						.must(QueryBuilders.termQuery("released", false))
-						.must(QueryBuilders.termQuery("sourceBranch", path)))
+		Query query = new NativeQueryBuilder()
+				.withQuery(bool(b -> b
+						.mustNot(existsQuery("end"))
+						.must(termQuery("released", false))
+						.must(termQuery("sourceBranch", path))))
+				.withPageable(Pageable.ofSize(10000))
 				.build();
 
 		SearchHits<LineItem> searchHits = elasticsearchOperations.search(query, LineItem.class);
@@ -267,12 +276,12 @@ public class LineItemService {
 		final String regexp = path + BranchUtil.SEPARATOR + "[0-9]{4}-[0-9]{2}-[0-9]{2}";
 		final String aggregationName = "versions";
 
-		Query aggregateQuery = new NativeSearchQueryBuilder()
+		Query aggregateQuery = new NativeQueryBuilder()
 				.withQuery(regexpQuery("promotedBranch", regexp))
-				.withAggregations(AggregationBuilders
-						.terms(aggregationName)
-						.field("promotedBranch")
-						.size(AGGREGATION_SEARCH_SIZE))
+				.withAggregation(aggregationName,
+						AggregationBuilders.terms(a -> a
+								.field("promotedBranch")
+								.size(AGGREGATION_SEARCH_SIZE)))
 				.withMaxResults(0)
 				.build();
 
@@ -281,8 +290,9 @@ public class LineItemService {
 		ElasticsearchAggregations elasticsearchAggregations = (ElasticsearchAggregations) searchHits.getAggregations();
 
 		if (elasticsearchAggregations != null) {
-			ParsedStringTerms terms = elasticsearchAggregations.aggregations().get(aggregationName);
-			terms.getBuckets().forEach(bucket -> versions.add(bucket.getKeyAsString()));
+			ElasticsearchAggregation aggregation = elasticsearchAggregations.get(aggregationName);
+			StringTermsAggregate terms = (StringTermsAggregate) aggregation.aggregation().getAggregate()._get();
+			terms.buckets().array().forEach(bucket -> versions.add(bucket.key().stringValue()));
 		}
 
 		return versions;
@@ -386,17 +396,22 @@ public class LineItemService {
 	}
 
 	public List<LineItem> getChildren(String parentId, String path) {
-		BoolQueryBuilder queryBuilder = boolQuery()
-				.must(QueryBuilders.termQuery("sourceBranch", path))
-				.mustNot(QueryBuilders.existsQuery("end"));
+		BoolQuery.Builder queryBuilder = new BoolQuery.Builder()
+				.must(termQuery("sourceBranch", path))
+				.mustNot(existsQuery("end"));
 
 		if (parentId == null) {
-			queryBuilder.mustNot(QueryBuilders.existsQuery("parentId"));
+			queryBuilder
+					.mustNot(existsQuery("parentId"));
 		} else {
-			queryBuilder.must(QueryBuilders.termQuery("parentId", parentId));
+			queryBuilder
+					.must(termQuery("parentId", parentId));
 		}
 
-		Query query = new NativeSearchQueryBuilder().withQuery(queryBuilder).build();
+		Query query = new NativeQueryBuilder()
+				.withQuery(queryBuilder.build()._toQuery())
+				.withPageable(Pageable.ofSize(10000))
+				.build();
 		SearchHits<LineItem> searchHits = elasticsearchOperations.search(query, LineItem.class);
 
 		return searchHits.get().map(SearchHit::getContent).collect(toList());
@@ -489,18 +504,23 @@ public class LineItemService {
 	}
 
 	private LineItem findOpenLineItem(final String parentId, final String title, final String sourceBranch) {
-		BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery()
-				.must(QueryBuilders.termQuery("title", title))
-				.must(QueryBuilders.termQuery("sourceBranch", sourceBranch))
-				.mustNot(QueryBuilders.existsQuery("end"));
+		BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder()
+				.must(termQuery("title", title))
+				.must(termQuery("sourceBranch", sourceBranch))
+				.mustNot(existsQuery("end"));
 
 		if (parentId == null) {
-			boolQueryBuilder.mustNot(QueryBuilders.existsQuery("parentId"));
+			boolQueryBuilder
+					.mustNot(existsQuery("parentId"));
 		} else {
-			boolQueryBuilder.must(QueryBuilders.termQuery("parentId", parentId));
+			boolQueryBuilder
+					.must(termQuery("parentId", parentId));
 		}
 
-		Query query = new NativeSearchQueryBuilder().withQuery(boolQueryBuilder).build();
+		Query query = new NativeQueryBuilder()
+				.withQuery(boolQueryBuilder.build()._toQuery())
+				.withPageable(Pageable.ofSize(10000))
+				.build();
 
 		// Should always be just one open line item per subject, per branch
 		SearchHit<LineItem> searchHit = elasticsearchOperations.searchOne(query, LineItem.class);

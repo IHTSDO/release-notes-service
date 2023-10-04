@@ -1,8 +1,11 @@
 package org.snomed.release.note.config;
 
 import org.snomed.release.note.config.elasticsearch.ElasticsearchConfig;
+import org.snomed.release.note.config.elasticsearch.ElasticsearchProperties;
+import org.snomed.release.note.config.elasticsearch.IndexNameProvider;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.data.elasticsearch.repository.config.EnableElasticsearchRepositories;
 
@@ -14,5 +17,5 @@ import org.springframework.data.elasticsearch.repository.config.EnableElasticsea
 @EnableConfigurationProperties
 @PropertySource(value = "classpath:application.properties", encoding = "UTF-8")
 public abstract class Config extends ElasticsearchConfig {
-	
+
 }

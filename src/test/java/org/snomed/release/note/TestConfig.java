@@ -1,13 +1,12 @@
 package org.snomed.release.note;
 
-import org.elasticsearch.client.RestHighLevelClient;
+import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.snomed.release.note.config.Config;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.data.elasticsearch.client.ClientConfiguration;
-import org.springframework.data.elasticsearch.client.RestClients;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -15,7 +14,7 @@ import org.testcontainers.junit.jupiter.Container;
 @SpringBootApplication
 @TestConfiguration
 public class TestConfig extends Config {
-	private static final String ELASTIC_SEARCH_SERVER_VERSION = "7.15.2";
+	private static final String ELASTIC_SEARCH_SERVER_VERSION = "8.7.1";
 
 	// set it to true to use local instance instead of test container
 	static final boolean useLocalElasticsearch = false;
@@ -24,8 +23,8 @@ public class TestConfig extends Config {
 
 	@Container
 	private static final ElasticsearchContainer elasticsearchContainer;
-	static
-	{
+
+	static {
 		if (useLocalElasticsearch) {
 			elasticsearchContainer = null;
 		} else {
@@ -47,6 +46,7 @@ public class TestConfig extends Config {
 			// these are mapped ports used by the test container the actual ports used might be different
 			this.addFixedExposedPort(9235, 9235);
 			this.addFixedExposedPort(9330, 9330);
+			this.addEnv("xpack.security.enabled", "false");
 			this.addEnv("cluster.name", "integration-test-cluster");
 		}
 	}
@@ -56,13 +56,16 @@ public class TestConfig extends Config {
 	}
 
 	@Override
-	public RestHighLevelClient elasticsearchClient() {
+	public @NotNull ClientConfiguration clientConfiguration() {
 		if (!useLocalElasticsearch) {
-            assert elasticsearchContainer != null;
-            return RestClients.create(ClientConfiguration.builder()
-					.connectedTo(elasticsearchContainer.getHttpHostAddress()).build()).rest();
+			assert elasticsearchContainer != null;
+			return ClientConfiguration.builder()
+					.connectedTo(elasticsearchContainer.getHttpHostAddress())
+					.build();
 		}
-		return RestClients.create(ClientConfiguration.builder()
-				.connectedTo("localhost:9200").build()).rest();
+		return ClientConfiguration.builder()
+				.connectedToLocalhost()
+				.build();
 	}
+
 }
