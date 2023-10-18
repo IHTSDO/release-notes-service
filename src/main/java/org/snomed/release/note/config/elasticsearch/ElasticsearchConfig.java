@@ -2,10 +2,6 @@ package org.snomed.release.note.config.elasticsearch;
 
 import jakarta.validation.constraints.NotNull;
 import org.apache.http.HttpHost;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -27,33 +23,17 @@ public class ElasticsearchConfig extends ElasticsearchConfiguration {
 			LOGGER.info("Elasticsearch URL {}", url);
 		}
 
-		if (elasticsearchProperties().getUsername() != null && !elasticsearchProperties().getUsername().isEmpty()) {
-			final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-
-			credentialsProvider.setCredentials(AuthScope.ANY,
-					new UsernamePasswordCredentials(
-							elasticsearchProperties().getUsername(),
-							elasticsearchProperties().getPassword())
-			);
-
-			return ClientConfiguration.builder()
-					.connectedTo(elasticsearchProperties().getUrls())
-					.withClientConfigurer(ElasticsearchClients.ElasticsearchRestClientConfigurationCallback
-							.from(restClientBuilder -> restClientBuilder.setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder.setConnectionRequestTimeout(0))))
-					.withClientConfigurer(ElasticsearchClients.ElasticsearchHttpClientConfigurationCallback
-							.from(httpAsyncClientBuilder -> httpAsyncClientBuilder.setDefaultCredentialsProvider(credentialsProvider)))
-					.build();
-		}
-
-		ClientConfiguration.TerminalClientConfigurationBuilder builder = ClientConfiguration.builder()
-				.connectedTo(elasticsearchProperties().getUrls())
-				.withClientConfigurer(ElasticsearchClients.ElasticsearchRestClientConfigurationCallback
-						.from(restClientBuilder -> restClientBuilder.setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder.setConnectionRequestTimeout(0))));
-
 		return ClientConfiguration.builder()
 				.connectedTo(getHosts(elasticsearchProperties().getUrls()))
+				.withBasicAuth(elasticsearchProperties().getUsername(), elasticsearchProperties().getPassword())
 				.withClientConfigurer(ElasticsearchClients.ElasticsearchRestClientConfigurationCallback
-						.from(restClientBuilder -> restClientBuilder.setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder.setConnectionRequestTimeout(0))))
+					.from(restClientBuilder -> {
+						restClientBuilder.setRequestConfigCallback(builder -> {
+							builder.setConnectionRequestTimeout(0); //Disable lease handling for the connection pool! See https://github.com/elastic/elasticsearch/issues/24069
+							return builder;
+						});
+						return restClientBuilder;
+					}))
 				.build();
 	}
 

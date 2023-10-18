@@ -1,5 +1,6 @@
 package org.snomed.release.note.config;
 
+import com.google.common.base.Strings;
 import io.kaicode.rest.util.branchpathrewrite.BranchPathUriRewriteFilter;
 import io.swagger.v3.oas.models.ExternalDocumentation;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -28,7 +29,7 @@ import org.springframework.security.web.firewall.DefaultHttpFirewall;
 import org.springframework.security.web.firewall.HttpFirewall;
 
 @Configuration
-@EnableWebSecurity(debug = true)
+@EnableWebSecurity
 public class SecurityConfig {
 
 	@Autowired(required = false)
@@ -72,7 +73,7 @@ public class SecurityConfig {
 			if (rolesEnabled) {
 				http.addFilterBefore(new RequestHeaderAuthenticationDecorator(), AuthorizationFilter.class);
 
-				if (requiredRole != null && !requiredRole.isEmpty()) {
+				if (!Strings.isNullOrEmpty(requiredRole)) {
 					http.authorizeHttpRequests(c -> c
 							.requestMatchers(excludedUrlPatterns).permitAll()
 							.anyRequest().hasAuthority(requiredRole));
@@ -87,10 +88,8 @@ public class SecurityConfig {
 						.anyRequest().authenticated());
 			}
 
-			http.exceptionHandling(c -> c
-					.accessDeniedHandler(new AccessDeniedExceptionHandler()));
-
-			http.httpBasic(Customizer.withDefaults());
+			http.exceptionHandling(c -> c.accessDeniedHandler(new AccessDeniedExceptionHandler()))
+					.httpBasic(Customizer.withDefaults());
 		}
 
 		return http.build();

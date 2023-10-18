@@ -23,7 +23,7 @@ public class MethodSecurityConfig {
 	private PermissionEvaluator permissionEvaluator;
 
 	@Bean
-	public MethodSecurityExpressionHandler createExpressionHandler() {
+	public MethodSecurityExpressionHandler expressionHandler() {
 		DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
 		expressionHandler.setPermissionEvaluator(permissionEvaluator);
 		return expressionHandler;
