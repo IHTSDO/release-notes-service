@@ -24,7 +24,7 @@ If you want to use your local Elasticsearch installation, set _useLocalElasticse
 Access the service **API documentation** at [http://localhost:8081/release-notes-service/swagger-ui/index.html](http://localhost:8081/release-notes-service/swagger-ui/index.html).
 
 ## Setup
-To use this service you need to install Elasticsearch (version 7.15.2). 
+To use this service you need to install Elasticsearch (minimum version 8.7.1 ).
 
 Elasticsearch URLs, index prefix, username and password can be found in [application.properties](src/main/resources/application.properties).
 
