@@ -14,7 +14,7 @@ import org.testcontainers.junit.jupiter.Container;
 @SpringBootApplication
 @TestConfiguration
 public class TestConfig extends Config {
-	private static final String ELASTIC_SEARCH_SERVER_VERSION = "8.7.1";
+	private static final String ELASTIC_SEARCH_SERVER_VERSION = "8.11.1";
 
 	// set it to true to use local instance instead of test container
 	static final boolean useLocalElasticsearch = false;
