@@ -417,6 +417,35 @@ public class LineItemService {
 		return searchHits.get().map(SearchHit::getContent).collect(toList());
 	}
 
+	public List<LineItem> updateSequence(LineItemUpdateRequest lineItemUpdateRequest, String path) {
+		List<LineItem> lineItems = getChildren(lineItemUpdateRequest.getParentId(), path);
+		LineItem lineItem = lineItems.stream().filter(item -> item.getId().equals(lineItemUpdateRequest.getId())).findFirst().orElse(null);
+		if (lineItem != null) {
+			Integer previousSequence = lineItem.getSequence();
+			Integer currentSequence = lineItemUpdateRequest.getSequence();
+			for (LineItem item : lineItems) {
+				if (item.getId().equals(lineItemUpdateRequest.getId())) {
+					item.setSequence(currentSequence);
+				} else {
+					Integer itemSequence = item.getSequence();
+					if (currentSequence > previousSequence) { // Move down
+						if (itemSequence > previousSequence && itemSequence <= currentSequence) {
+							item.setSequence(item.getSequence() - 1);
+						}
+					} else { // Move up
+						if (itemSequence >= currentSequence && itemSequence < previousSequence) {
+							item.setSequence(item.getSequence() + 1);
+						}
+					}
+				}
+			}
+			lineItemRepository.saveAll(lineItems);
+			return lineItems;
+		}
+		throw new ResourceNotFoundException("No line item found for id '" + lineItemUpdateRequest.getId() + "' and source branch '" + path + "'");
+
+	}
+
 	public void updateSequence(String path) {
 		updateSequence(findOrderedLineItems(path));
 	}

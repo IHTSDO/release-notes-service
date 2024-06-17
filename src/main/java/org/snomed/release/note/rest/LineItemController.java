@@ -69,6 +69,18 @@ public class LineItemController {
 		return lineItemService.update(lineItemUpdateRequest, BranchPathUriUtil.decodePath(path));
 	}
 
+	@PutMapping(value = "/{path}/lineitems/{id}/update-sequence")
+	@PreAuthorize("hasPermission('AUTHOR', #path) || hasPermission('PROJECT_LEAD', #path) || hasPermission('RELEASE_LEAD', #path) || hasPermission('RELEASE_ADMIN', #path) || hasPermission('RELEASE_MANAGER', #path)")
+	public List<LineItem> updateLineItemSequence(
+			@PathVariable String path,
+			@PathVariable String id,
+			@RequestBody LineItemUpdateRequest lineItemUpdateRequest) throws BusinessServiceException {
+		if (!id.equals(lineItemUpdateRequest.getId())) {
+			throw new BadRequestException("'id' in the request body: '" + lineItemUpdateRequest.getId() + "' does not match the one in the path: '" + id + "'");
+		}
+		return lineItemService.updateSequence(lineItemUpdateRequest, BranchPathUriUtil.decodePath(path));
+	}
+
 	@PostMapping(value = "/{path}/lineitems/{id}/promote")
 	@PreAuthorize("hasPermission('AUTHOR', #path)")
 	@Operation(summary = "Promote task line item", description = "'id' - line item id, 'path' - task branch")
