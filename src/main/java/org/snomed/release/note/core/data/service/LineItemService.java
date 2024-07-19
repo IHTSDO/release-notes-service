@@ -77,8 +77,12 @@ public class LineItemService {
 	public LineItem update(final LineItemUpdateRequest updateRequest, final String path) throws BusinessServiceException {
 		LineItem existing = find(updateRequest.getId(), path);
 
-		if (!Strings.isNullOrEmpty(existing.getPromotedBranch())) {
-			throw new BadConfigurationException("Line item with id '" + existing.getId() + "' is already promoted to branch '" + existing.getPromotedBranch() + "' and cannot be changed");
+		if (existing == null) {
+			throw new ResourceNotFoundException(LINE_ITEM_ID_NOT_FOUND_MSG + updateRequest.getId() + "' on branch '" + path + "'");
+		}
+
+		if (existing.isReleased()) {
+			throw new BadConfigurationException("Line item with id '" + existing.getId() + "' has already been released and cannot be changed");
 		}
 
 		validateParentIdAndLevel(updateRequest.getParentId(), updateRequest.getLevel() == null ? existing.getLevel() : updateRequest.getLevel());
