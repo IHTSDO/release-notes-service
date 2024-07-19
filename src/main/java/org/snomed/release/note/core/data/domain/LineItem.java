@@ -19,6 +19,13 @@ import static org.snomed.release.note.core.util.ContentUtil.LINE_BREAK;
 @Setting(settingPath = "elasticsearch-settings.json")
 public class LineItem implements LineItemView {
 
+	public static final String FIELD_PARENT_ID = "parentId";
+	public static final String FIELD_SOURCE_BRANCH = "sourceBranch";
+	public static final String FIELD_END = "end";
+	public static final String FIELD_TITLE = "title";
+	public static final String FIELD_RELEASED = "released";
+	public static final String FIELD_PROMOTED_BRANCH = "promotedBranch";
+
 	@Id
 	@Field(type = FieldType.Keyword)
 	private String id;

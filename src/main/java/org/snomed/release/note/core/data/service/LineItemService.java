@@ -44,6 +44,8 @@ public class LineItemService {
 	@Autowired
 	private ElasticsearchOperations elasticsearchOperations;
 
+	private static final String LINE_ITEM_ID_NOT_FOUND_MSG = "No line item found for id '";
+	private static final String LINE_ITEM_NOT_FOUND_MSG = "{} line items found on path {}";
 	public static final String CONTENT_DEVELOPMENT_ACTIVITY = "Content Development Activity";
 
 	public static final int AGGREGATION_SEARCH_SIZE = 200;
@@ -91,46 +93,50 @@ public class LineItemService {
 		if (StringUtils.hasLength(updateRequest.getContent())) {
 			existing.setContent(updateRequest.getContent());
 		} else {
-			if (updateRequest.getChangeType() != null) {
-				existing.setChangeType(updateRequest.getChangeType());
-			}
-			if (updateRequest.getAdditionalChangeTypes() != null) {
-				existing.setAdditionalChangeTypes(updateRequest.getAdditionalChangeTypes());
-			}
-			if (updateRequest.getHierarchy() != null) {
-				existing.setHierarchy(updateRequest.getHierarchy());
-			}
-			if (updateRequest.getChangedInAdditionalHierarchy() != null) {
-				existing.setChangedInAdditionalHierarchy(updateRequest.getChangedInAdditionalHierarchy());
-			}
-			if (updateRequest.getNumberEditedConcepts() != null) {
-				existing.setNumberEditedConcepts(updateRequest.getNumberEditedConcepts());
-			}
-			if (updateRequest.getFutureChangesPlanned() != null) {
-				existing.setFutureChangesPlanned(updateRequest.getFutureChangesPlanned());
-			}
-			if (updateRequest.getLinkContentTracker() != null) {
-				existing.setLinkContentTracker(updateRequest.getLinkContentTracker());
-			}
-			if (updateRequest.getConceptInactivations() != null) {
-				existing.setConceptInactivations(updateRequest.getConceptInactivations());
-			}
-			if (updateRequest.getLinkBriefingNote() != null) {
-				existing.setLinkBriefingNote(updateRequest.getLinkBriefingNote());
-			}
-			if (updateRequest.getLinkToTemplate() != null) {
-				existing.setLinkToTemplate(updateRequest.getLinkToTemplate());
-			}
-			if (updateRequest.getDescriptionChanges() != null) {
-				existing.setDescriptionChanges(updateRequest.getDescriptionChanges());
-			}
-			if (updateRequest.getNotes() != null) {
-				existing.setNotes(updateRequest.getNotes());
-			}
-			existing.generateContent();
+			updateItemContent(updateRequest, existing);
 		}
 
 		return lineItemRepository.save(existing);
+	}
+
+	private void updateItemContent(LineItemUpdateRequest updateRequest, LineItem existing) {
+		if (updateRequest.getChangeType() != null) {
+			existing.setChangeType(updateRequest.getChangeType());
+		}
+		if (updateRequest.getAdditionalChangeTypes() != null) {
+			existing.setAdditionalChangeTypes(updateRequest.getAdditionalChangeTypes());
+		}
+		if (updateRequest.getHierarchy() != null) {
+			existing.setHierarchy(updateRequest.getHierarchy());
+		}
+		if (updateRequest.getChangedInAdditionalHierarchy() != null) {
+			existing.setChangedInAdditionalHierarchy(updateRequest.getChangedInAdditionalHierarchy());
+		}
+		if (updateRequest.getNumberEditedConcepts() != null) {
+			existing.setNumberEditedConcepts(updateRequest.getNumberEditedConcepts());
+		}
+		if (updateRequest.getFutureChangesPlanned() != null) {
+			existing.setFutureChangesPlanned(updateRequest.getFutureChangesPlanned());
+		}
+		if (updateRequest.getLinkContentTracker() != null) {
+			existing.setLinkContentTracker(updateRequest.getLinkContentTracker());
+		}
+		if (updateRequest.getConceptInactivations() != null) {
+			existing.setConceptInactivations(updateRequest.getConceptInactivations());
+		}
+		if (updateRequest.getLinkBriefingNote() != null) {
+			existing.setLinkBriefingNote(updateRequest.getLinkBriefingNote());
+		}
+		if (updateRequest.getLinkToTemplate() != null) {
+			existing.setLinkToTemplate(updateRequest.getLinkToTemplate());
+		}
+		if (updateRequest.getDescriptionChanges() != null) {
+			existing.setDescriptionChanges(updateRequest.getDescriptionChanges());
+		}
+		if (updateRequest.getNotes() != null) {
+			existing.setNotes(updateRequest.getNotes());
+		}
+		existing.generateContent();
 	}
 
 	public void promote(final String id, final String path) throws BusinessServiceException {
@@ -171,12 +177,12 @@ public class LineItemService {
 
 	public LineItem find(final String id, final String path) {
 		LineItem lineItem = lineItemRepository.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("No line item found for id '" + id + "'"));
+				.orElseThrow(() -> new ResourceNotFoundException(LINE_ITEM_ID_NOT_FOUND_MSG + id + "'"));
 
 		String sourceBranch = lineItem.getSourceBranch();
 
 		if (!path.equals(sourceBranch)) {
-			throw new ResourceNotFoundException("No line item found for id '" + id + "' and source branch '" + path + "'");
+			throw new ResourceNotFoundException(LINE_ITEM_ID_NOT_FOUND_MSG + id + "' and source branch '" + path + "'");
 		}
 
 		return lineItem;
@@ -185,9 +191,9 @@ public class LineItemService {
 	public List<LineItem> findByTitle(final String title, final String path) {
 		Query query = new NativeQueryBuilder()
 				.withQuery(bool(b -> b
-						.must(termQuery("title", title))
-						.must(termQuery("sourceBranch", path))
-						.mustNot(existsQuery("end"))))
+						.must(termQuery(LineItem.FIELD_TITLE, title))
+						.must(termQuery(LineItem.FIELD_SOURCE_BRANCH, path))
+						.mustNot(existsQuery(LineItem.FIELD_END))))
 				.withPageable(Pageable.ofSize(10000))
 				.build();
 
@@ -202,15 +208,15 @@ public class LineItemService {
 	public List<LineItem> find(final String path) {
 		Query query = new NativeQueryBuilder()
 				.withQuery(bool(b -> b
-						.must(termQuery("sourceBranch", path))
-						.mustNot(existsQuery("end"))))
+						.must(termQuery(LineItem.FIELD_SOURCE_BRANCH, path))
+						.mustNot(existsQuery(LineItem.FIELD_END))))
 				.withPageable(Pageable.ofSize(10000))
 				.build();
 
 		SearchHits<LineItem> searchHits = elasticsearchOperations.search(query, LineItem.class);
 
 		List<LineItem> lineItems = searchHits.get().map(SearchHit::getContent).collect(toList());
-		LOGGER.info("{} line items found on path {}", lineItems.size(), path);
+		LOGGER.info(LINE_ITEM_NOT_FOUND_MSG, lineItems.size(), path);
 
 		return lineItems;
 	}
@@ -223,17 +229,17 @@ public class LineItemService {
 	public List<LineItem> findPublished(final String path, final boolean ordered) {
 		Query query = new NativeQueryBuilder()
 				.withQuery(bool(b -> b
-						.mustNot(existsQuery("end"))
-						.must(termQuery("released", true))
-						.should(termQuery("sourceBranch", path))
-						.should(termQuery("promotedBranch", path))))
+						.mustNot(existsQuery(LineItem.FIELD_END))
+						.must(termQuery(LineItem.FIELD_RELEASED, true))
+						.should(termQuery(LineItem.FIELD_SOURCE_BRANCH, path))
+						.should(termQuery(LineItem.FIELD_PROMOTED_BRANCH, path))))
 				.withPageable(Pageable.ofSize(10000))
 				.build();
 
 		SearchHits<LineItem> searchHits = elasticsearchOperations.search(query, LineItem.class);
 
 		List<LineItem> lineItems = searchHits.get().map(SearchHit::getContent).collect(toList());
-		LOGGER.info("{} line items found on path {}", lineItems.size(), path);
+		LOGGER.info(LINE_ITEM_NOT_FOUND_MSG, lineItems.size(), path);
 
 		return ordered ? doOrder(lineItems) : lineItems;
 	}
@@ -241,16 +247,16 @@ public class LineItemService {
 	public List<LineItem> findUnpublished(final String path, final boolean ordered) {
 		Query query = new NativeQueryBuilder()
 				.withQuery(bool(b -> b
-						.mustNot(existsQuery("end"))
-						.must(termQuery("released", false))
-						.must(termQuery("sourceBranch", path))))
+						.mustNot(existsQuery(LineItem.FIELD_END))
+						.must(termQuery(LineItem.FIELD_RELEASED, false))
+						.must(termQuery(LineItem.FIELD_SOURCE_BRANCH, path))))
 				.withPageable(Pageable.ofSize(10000))
 				.build();
 
 		SearchHits<LineItem> searchHits = elasticsearchOperations.search(query, LineItem.class);
 
 		List<LineItem> lineItems = searchHits.get().map(SearchHit::getContent).collect(toList());
-		LOGGER.info("{} line items found on path {}", lineItems.size(), path);
+		LOGGER.info(LINE_ITEM_NOT_FOUND_MSG, lineItems.size(), path);
 
 		return ordered ? doOrder(lineItems) : lineItems;
 	}
@@ -277,10 +283,10 @@ public class LineItemService {
 		final String aggregationName = "versions";
 
 		Query aggregateQuery = new NativeQueryBuilder()
-				.withQuery(regexpQuery("promotedBranch", regexp))
+				.withQuery(regexpQuery(LineItem.FIELD_PROMOTED_BRANCH, regexp))
 				.withAggregation(aggregationName,
 						AggregationBuilders.terms(a -> a
-								.field("promotedBranch")
+								.field(LineItem.FIELD_PROMOTED_BRANCH)
 								.size(AGGREGATION_SEARCH_SIZE)))
 				.withMaxResults(0)
 				.build();
@@ -336,46 +342,41 @@ public class LineItemService {
 		final Date effectiveTime = versionRequest.effectiveTime();
 		final String releaseBranch = path + BranchUtil.SEPARATOR + DATE_FORMATTER.format(effectiveTime);
 
-		if (effectiveTime == null) {
-			throw new BadRequestException("'effectiveTime' is required");
-		}
-		if (!BranchUtil.isCodeSystemBranch(path)) {
-			throw new BadRequestException("Branch '" + path + "' must be a code system branch");
-		}
-		if (!find(releaseBranch).isEmpty()) {
-			throw new BadConfigurationException("Line items already exist on branch '" + releaseBranch + "'");
-		}
+		validateVersionRequest(path, effectiveTime, releaseBranch);
 
 		List<LineItem> lineItems = findOrderedLineItems(path);
 
 		List<LineItem> lineItemsToSave = new ArrayList<>();
 
 		lineItems.forEach(lineItem -> {
-			LineItemCreateRequest createParentRequest = new LineItemCreateRequest(
-					lineItem.getParentId(),
-					lineItem.getTitle(),
-					lineItem.getContent(),
-					lineItem.getLevel(),
-					lineItem.getSequence());
+			if (hasContent(lineItem)) {
+				LineItemCreateRequest createParentRequest = new LineItemCreateRequest(
+						lineItem.getParentId(),
+						lineItem.getTitle(),
+						lineItem.getContent(),
+						lineItem.getLevel(),
+						lineItem.getSequence());
 
-			LineItem clonedParent = lineItemRepository.save(createFromRequest(createParentRequest, releaseBranch, releaseBranch));
+				LineItem clonedParent = lineItemRepository.save(createFromRequest(createParentRequest, releaseBranch, releaseBranch));
 
-			boolean shouldClearContent = CONTENT_DEVELOPMENT_ACTIVITY.equals(lineItem.getTitle());
+				boolean shouldClearContent = CONTENT_DEVELOPMENT_ACTIVITY.equals(lineItem.getTitle());
 
-			for (LineItem child : lineItem.getChildren()) {
-				LineItemCreateRequest createChildRequest = new LineItemCreateRequest(
-						clonedParent.getId(),
-						child.getTitle(),
-						child.getContent(),
-						child.getLevel(),
-						child.getSequence());
-				LineItem clonedChild = createFromRequest(createChildRequest, releaseBranch, releaseBranch);
+				for (LineItem child : lineItem.getChildren()) {
+					LineItemCreateRequest createChildRequest = new LineItemCreateRequest(
+							clonedParent.getId(),
+							child.getTitle(),
+							child.getContent(),
+							child.getLevel(),
+							child.getSequence());
+					if (hasContent(child)) {
+						LineItem clonedChild = createFromRequest(createChildRequest, releaseBranch, releaseBranch);
+						lineItemsToSave.add(clonedChild);
+					}
 
-				lineItemsToSave.add(clonedChild);
-
-				if (shouldClearContent) {
-					child.setContent(null);
-					lineItemsToSave.add(child);
+					if (shouldClearContent) {
+						child.setContent(null);
+						lineItemsToSave.add(child);
+					}
 				}
 			}
 		});
@@ -397,15 +398,15 @@ public class LineItemService {
 
 	public List<LineItem> getChildren(String parentId, String path) {
 		BoolQuery.Builder queryBuilder = new BoolQuery.Builder()
-				.must(termQuery("sourceBranch", path))
-				.mustNot(existsQuery("end"));
+				.must(termQuery(LineItem.FIELD_SOURCE_BRANCH, path))
+				.mustNot(existsQuery(LineItem.FIELD_END));
 
 		if (parentId == null) {
 			queryBuilder
-					.mustNot(existsQuery("parentId"));
+					.mustNot(existsQuery(LineItem.FIELD_PARENT_ID));
 		} else {
 			queryBuilder
-					.must(termQuery("parentId", parentId));
+					.must(termQuery(LineItem.FIELD_PARENT_ID, parentId));
 		}
 
 		Query query = new NativeQueryBuilder()
@@ -424,30 +425,51 @@ public class LineItemService {
 			Integer previousSequence = lineItem.getSequence();
 			Integer currentSequence = lineItemUpdateRequest.getSequence();
 			for (LineItem item : lineItems) {
-				if (item.getId().equals(lineItemUpdateRequest.getId())) {
-					item.setSequence(currentSequence);
-				} else {
-					Integer itemSequence = item.getSequence();
-					if (currentSequence > previousSequence) { // Move down
-						if (itemSequence > previousSequence && itemSequence <= currentSequence) {
-							item.setSequence(item.getSequence() - 1);
-						}
-					} else { // Move up
-						if (itemSequence >= currentSequence && itemSequence < previousSequence) {
-							item.setSequence(item.getSequence() + 1);
-						}
-					}
-				}
+				shiftSequence(lineItemUpdateRequest, item, currentSequence, previousSequence);
 			}
 			lineItemRepository.saveAll(lineItems);
 			return lineItems;
 		}
-		throw new ResourceNotFoundException("No line item found for id '" + lineItemUpdateRequest.getId() + "' and source branch '" + path + "'");
+		throw new ResourceNotFoundException(LINE_ITEM_ID_NOT_FOUND_MSG + lineItemUpdateRequest.getId() + "' and source branch '" + path + "'");
 
+	}
+
+	private void shiftSequence(LineItemUpdateRequest lineItemUpdateRequest, LineItem item, Integer currentSequence, Integer previousSequence) {
+		if (item.getId().equals(lineItemUpdateRequest.getId())) {
+			item.setSequence(currentSequence);
+		} else {
+			Integer itemSequence = item.getSequence();
+			if (currentSequence > previousSequence) { // Move down
+				if (itemSequence > previousSequence && itemSequence <= currentSequence) {
+					item.setSequence(item.getSequence() - 1);
+				}
+			} else { // Move up
+				if (itemSequence >= currentSequence && itemSequence < previousSequence) {
+					item.setSequence(item.getSequence() + 1);
+				}
+			}
+		}
 	}
 
 	public void updateSequence(String path) {
 		updateSequence(findOrderedLineItems(path));
+	}
+
+	private void validateVersionRequest(String path, Date effectiveTime, String releaseBranch) throws BadRequestException, BadConfigurationException {
+		if (effectiveTime == null) {
+			throw new BadRequestException("'effectiveTime' is required");
+		}
+		if (!BranchUtil.isCodeSystemBranch(path)) {
+			throw new BadRequestException("Branch '" + path + "' must be a code system branch");
+		}
+		if (!find(releaseBranch).isEmpty()) {
+			throw new BadConfigurationException("Line items already exist on branch '" + releaseBranch + "'");
+		}
+	}
+
+	private boolean hasContent(LineItem lineItem) {
+		return (lineItem.getContent() != null && StringUtils.hasLength(lineItem.getContent().trim()))
+			|| (lineItem.getChildren() != null && lineItem.getChildren().stream().anyMatch(child -> child.getContent() != null && StringUtils.hasLength(child.getContent().trim())));
 	}
 
 	private void updateSequence(List<LineItem> lineItems) {
@@ -534,16 +556,16 @@ public class LineItemService {
 
 	private LineItem findOpenLineItem(final String parentId, final String title, final String sourceBranch) {
 		BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder()
-				.must(termQuery("title", title))
-				.must(termQuery("sourceBranch", sourceBranch))
-				.mustNot(existsQuery("end"));
+				.must(termQuery(LineItem.FIELD_TITLE, title))
+				.must(termQuery(LineItem.FIELD_SOURCE_BRANCH, sourceBranch))
+				.mustNot(existsQuery(LineItem.FIELD_END));
 
 		if (parentId == null) {
 			boolQueryBuilder
-					.mustNot(existsQuery("parentId"));
+					.mustNot(existsQuery(LineItem.FIELD_PARENT_ID));
 		} else {
 			boolQueryBuilder
-					.must(termQuery("parentId", parentId));
+					.must(termQuery(LineItem.FIELD_PARENT_ID, parentId));
 		}
 
 		Query query = new NativeQueryBuilder()

@@ -41,7 +41,7 @@ public class TestDataHelper {
 	}
 
 	public LineItem constructLineItem(String path, String title, int level, int sequence) {
-		return constructLineItem(null, path, title, "", level, sequence);
+		return constructLineItem(null, path, title, "Test content", level, sequence);
 	}
 
 	public LineItem constructLineItem(String parentId, String path, String title, String content, int level, int sequence) {
