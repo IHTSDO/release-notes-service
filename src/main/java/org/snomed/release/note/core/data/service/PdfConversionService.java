@@ -17,8 +17,10 @@ import org.springframework.stereotype.Service;
 import org.xhtmlrenderer.pdf.ITextRenderer;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class PdfConversionService {
@@ -32,7 +34,7 @@ public class PdfConversionService {
 		LOGGER.info("Collecting the release notes on path {}", path);
 
 		StringBuilder content = new StringBuilder();
-		collectContent(content, lineItemService.findOrderedLineItems(path));
+		collectContent(content, lineItemService.findOrderedLineItems(path), List.of(1));
 
 		LOGGER.info("Converting the release notes on path {} to PDF", path);
 
@@ -62,9 +64,10 @@ public class PdfConversionService {
 		}
 	}
 
-	private void collectContent(StringBuilder contentTotal, List<LineItem> lineItems) {
-		lineItems.forEach(lineItem -> {
-			contentTotal.append(formatTitle(lineItem));
+	private void collectContent(StringBuilder contentTotal, List<LineItem> lineItems, List<Integer> indices) {
+		List<Integer> copiedIndices = new ArrayList<>(indices);
+		for (LineItem lineItem : lineItems) {
+			contentTotal.append(formatTitle(lineItem, copiedIndices));
 			contentTotal.append("\n\n");
 
 			String content = lineItem.getContent();
@@ -72,14 +75,17 @@ public class PdfConversionService {
 				contentTotal.append(content);
 				contentTotal.append("\n\n");
 			}
-			collectContent(contentTotal, lineItem.getChildren());
-		});
+			List<Integer> childIndices = new ArrayList<>(copiedIndices);
+			childIndices.add(1);
+			collectContent(contentTotal, lineItem.getChildren(), childIndices);
+			copiedIndices.set(copiedIndices.size() - 1, copiedIndices.get(copiedIndices.size() - 1) + 1);
+		}
 	}
 
-	private String formatTitle(LineItem lineItem) {
+	private String formatTitle(LineItem lineItem, List<Integer> indices) {
 		char[] heading = new char[lineItem.getLevel()];
 		Arrays.fill(heading, '#');
 
-		return String.valueOf(heading) + " " + lineItem.getTitle();
+		return String.valueOf(heading) + " " + indices.stream().map(Object::toString).collect(Collectors.joining(".")) + ". " + lineItem.getTitle();
 	}
 }
