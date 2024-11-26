@@ -34,7 +34,12 @@ public class PdfConversionService {
 		LOGGER.info("Collecting the release notes on path {}", path);
 
 		StringBuilder content = new StringBuilder();
-		collectContent(content, lineItemService.findOrderedLineItems(path), List.of(1));
+		List<LineItem> lineItems = lineItemService.findOrderedLineItems(path);
+		for (LineItem lineItem : lineItems) {
+			lineItem.setChildren(lineItem.getChildren().stream().filter(LineItemService::hasContent).toList());
+		}
+		lineItems = lineItems.stream().filter(LineItemService::hasContent).toList();
+		collectContent(content, lineItems, List.of(1));
 
 		LOGGER.info("Converting the release notes on path {} to PDF", path);
 

@@ -54,6 +54,11 @@ public class LineItemService {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(LineItemService.class);
 
+	public static boolean hasContent(LineItem lineItem) {
+		return (lineItem.getContent() != null && StringUtils.hasLength(lineItem.getContent().trim()))
+				|| (lineItem.getChildren() != null && lineItem.getChildren().stream().anyMatch(child -> child.getContent() != null && StringUtils.hasLength(child.getContent().trim())));
+	}
+
 	public LineItem create(final LineItemCreateRequest createRequest, final String path) throws BusinessServiceException {
 		String title = createRequest.getTitle();
 
@@ -469,11 +474,6 @@ public class LineItemService {
 		if (!find(releaseBranch).isEmpty()) {
 			throw new BadConfigurationException("Line items already exist on branch '" + releaseBranch + "'");
 		}
-	}
-
-	private boolean hasContent(LineItem lineItem) {
-		return (lineItem.getContent() != null && StringUtils.hasLength(lineItem.getContent().trim()))
-			|| (lineItem.getChildren() != null && lineItem.getChildren().stream().anyMatch(child -> child.getContent() != null && StringUtils.hasLength(child.getContent().trim())));
 	}
 
 	private void updateSequence(List<LineItem> lineItems) {
