@@ -58,7 +58,7 @@ public class LineItemController {
 	}
 
 	@PutMapping(value = "/{path}/lineitems/{id}")
-	@PreAuthorize("hasPermission('AUTHOR', #path) || hasPermission('PROJECT_LEAD', #path) || hasPermission('RELEASE_LEAD', #path) || hasPermission('RELEASE_ADMIN', #path) || hasPermission('RELEASE_MANAGER', #path)")
+	@PreAuthorize("hasPermission('RNMS-INT-EDITOR', #path) || hasPermission('AUTHOR', #path) || hasPermission('PROJECT_LEAD', #path) || hasPermission('RELEASE_LEAD', #path) || hasPermission('RELEASE_ADMIN', #path) || hasPermission('RELEASE_MANAGER', #path)")
 	public LineItem updateLineItem(
 			@PathVariable String path,
 			@PathVariable String id,
