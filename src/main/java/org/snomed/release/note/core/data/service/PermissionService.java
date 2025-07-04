@@ -17,10 +17,10 @@ public class PermissionService {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(PermissionService.class);
 
-	@Value("${rnms.ims-security.roles.enabled}")
+	@Value("${ims-security.roles.enabled}")
 	private boolean rolesEnabled;
 
-	public PermissionService(@Value("${rnms.snowstorm.url}") String snowstormUrl) {
+	public PermissionService(@Value("${snowstorm.url}") String snowstormUrl) {
 		snowstormRestClientFactory = new SnowstormRestClientFactory(snowstormUrl, null);
 	}
 

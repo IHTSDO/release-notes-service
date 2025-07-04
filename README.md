@@ -9,7 +9,7 @@ It is also integrated into Authoring Platform and SNOMED CT Browser (read-only a
 - Read published release notes
 
 ## Permissions
-Set property _rnms.ims-security.roles.enabled_ to _true_ to manage user permissions. You may also need update _rnms.snowstorm.url_ to point to the terminology server URL. 
+Set property _ims-security.roles.enabled_ to _true_ to manage user permissions. You may also need update _snowstorm.url_ to point to the terminology server URL. 
 
 ## Quick Start
 Use Maven to build the executable jar and run:
@@ -21,7 +21,7 @@ Please note that by default tests are executed in Elasticsearch Docker container
 
 If you want to use your local Elasticsearch installation, set _useLocalElasticsearch_ to _true_ in [TestConfig.java](src/test/java/org/snomed/release/note/TestConfig.java).
 
-Access the service **API documentation** at [http://localhost:8081/release-notes-service/swagger-ui/index.html](http://localhost:8081/release-notes-service/swagger-ui/index.html).
+Access the service **API documentation** at [http://localhost:8087/release-notes-service/swagger-ui/index.html](http://localhost:8081/release-notes-service/swagger-ui/index.html).
 
 ## Setup
 To use this service you need to install Elasticsearch (minimum version 8.7.1 ).

@@ -38,10 +38,10 @@ public class SecurityConfig {
 	@Value("${rnms.rest-api.readonly}")
 	private boolean restApiReadOnly;
 
-	@Value("${rnms.ims-security.roles.enabled}")
+	@Value("${ims-security.roles.enabled}")
 	private boolean rolesEnabled;
 
-	@Value("${rnms.ims-security.required-role}")
+	@Value("${ims-security.required-role}")
 	private String requiredRole;
 
 	private final String[] excludedUrlPatterns = {
