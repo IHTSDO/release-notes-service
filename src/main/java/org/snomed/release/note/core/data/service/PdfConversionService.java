@@ -19,11 +19,14 @@ import org.xhtmlrenderer.pdf.ITextRenderer;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 public class PdfConversionService {
+
+	public static final String STYLE_ATTRIBUTE = "style";
 
 	@Autowired
 	LineItemService lineItemService;
@@ -51,6 +54,9 @@ public class PdfConversionService {
 		Document document = Jsoup.parse(html);
 		document.outputSettings().syntax(Document.OutputSettings.Syntax.xml);
 		document.outputSettings().escapeMode(Entities.EscapeMode.xhtml);
+
+		// Add logo to the document
+		addLogoToDocument(document);
 
 		try {
 			ITextRenderer renderer = new ITextRenderer();
@@ -92,5 +98,52 @@ public class PdfConversionService {
 		Arrays.fill(heading, '#');
 
 		return String.valueOf(heading) + " " + indices.stream().map(Object::toString).collect(Collectors.joining(".")) + ". " + lineItem.getTitle();
+	}
+
+	private void addLogoToDocument(Document document) {
+		try {
+			// Load logo from resources
+			InputStream logoStream = getClass().getClassLoader().getResourceAsStream("logo.png");
+			if (logoStream == null) {
+				LOGGER.warn("Logo file snomed-logo.png not found in resources");
+				return;
+			}
+
+			// Read image bytes
+			ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+			byte[] data = new byte[1024];
+			int nRead;
+			while ((nRead = logoStream.read(data, 0, data.length)) != -1) {
+				buffer.write(data, 0, nRead);
+			}
+			buffer.flush();
+			byte[] imageBytes = buffer.toByteArray();
+
+			// Convert to base64
+			String base64Image = Base64.getEncoder().encodeToString(imageBytes);
+
+			// Create img element with base64 data URI
+			org.jsoup.nodes.Element body = document.body();
+            // Set body to relative positioning for absolute positioning of logo
+            String bodyStyle = body.attr(STYLE_ATTRIBUTE);
+            if (bodyStyle.isEmpty()) {
+                body.attr(STYLE_ATTRIBUTE, "position: relative;");
+            } else {
+                body.attr(STYLE_ATTRIBUTE, bodyStyle + " position: relative;");
+            }
+
+            org.jsoup.nodes.Element logoDiv = new org.jsoup.nodes.Element("div");
+
+            org.jsoup.nodes.Element img = new org.jsoup.nodes.Element("img");
+            img.attr("src", "data:image/png;base64," + base64Image);
+            img.attr(STYLE_ATTRIBUTE, "max-width: 150px; height: auto;");
+
+            logoDiv.appendChild(img);
+            body.prependChild(logoDiv);
+
+            logoStream.close();
+		} catch (IOException e) {
+			LOGGER.error("Failed to load logo image", e);
+		}
 	}
 }
