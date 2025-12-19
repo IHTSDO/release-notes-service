@@ -1,7 +1,7 @@
 package org.snomed.release.note.rest.config;
 
-import us.monoid.json.JSONException;
-import us.monoid.json.JSONObject;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -23,15 +23,11 @@ public class AccessDeniedExceptionHandler implements AccessDeniedHandler {
 		response.setStatus(HttpStatus.FORBIDDEN.value());
 		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
-		try {
-			response.getWriter().write(new JSONObject()
-					.put("errorMessage", exception.getLocalizedMessage())
-					.put("httpStatus", HttpStatus.FORBIDDEN.toString())
-					.toString());
-		} catch (JSONException e) {
-			LOGGER.error("Failed to write response body", e);
-			throw new RuntimeException(e);
-		}
+		ObjectMapper objectMapper = new ObjectMapper();
+		ObjectNode jsonObject = objectMapper.createObjectNode();
+		jsonObject.put("errorMessage", exception.getLocalizedMessage());
+		jsonObject.put("httpStatus", HttpStatus.FORBIDDEN.toString());
+		response.getWriter().write(objectMapper.writeValueAsString(jsonObject));
 	}
 
 }
