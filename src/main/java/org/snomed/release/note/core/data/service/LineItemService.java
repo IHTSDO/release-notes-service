@@ -93,6 +93,9 @@ public class LineItemService {
 		validateParentIdAndLevel(updateRequest.getParentId(), updateRequest.getLevel() == null ? existing.getLevel() : updateRequest.getLevel());
 
 		existing.setParentId(updateRequest.getParentId());
+		if (updateRequest.getTitle() != null) {
+			existing.setTitle(updateRequest.getTitle());
+		}
 		if (updateRequest.getLevel() != null) {
 			existing.setLevel(updateRequest.getLevel());
 		}
