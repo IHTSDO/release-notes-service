@@ -17,7 +17,6 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
@@ -88,8 +87,7 @@ public class SecurityConfig {
 						.anyRequest().authenticated());
 			}
 
-			http.exceptionHandling(c -> c.accessDeniedHandler(new AccessDeniedExceptionHandler()))
-					.httpBasic(Customizer.withDefaults());
+			http.exceptionHandling(c -> c.accessDeniedHandler(new AccessDeniedExceptionHandler()));
 		}
 
 		return http.build();
