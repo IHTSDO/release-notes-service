@@ -83,7 +83,7 @@ public class PdfConversionService {
 
 			String content = lineItem.getContent();
 			if (!Strings.isNullOrEmpty(content)) {
-				contentTotal.append(content);
+				contentTotal.append(content.replace(" \n\n ", "<br>"));
 				contentTotal.append("\n\n");
 			}
 			List<Integer> childIndices = new ArrayList<>(copiedIndices);
