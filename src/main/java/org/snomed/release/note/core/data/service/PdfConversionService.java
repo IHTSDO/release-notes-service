@@ -33,6 +33,35 @@ public class PdfConversionService {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(PdfConversionService.class);
 
+	/**
+	 * NBSP repeats so Markdown→HTML rendering does not collapse tab stops (regular spaces collapse in HTML).
+	 */
+	private static final String VISIBLE_TAB = "\u00a0".repeat(4);
+
+	/**
+	 * Expands tabs and tab escape sequences using {@link #VISIBLE_TAB}.
+	 *
+	 * @return non-null; empty string if {@code text} is null
+	 */
+	private static String expandTabStops(String text) {
+		if (text == null) {
+			return "";
+		}
+		return text.replace("&#9;", VISIBLE_TAB)
+				.replace("&#09;", VISIBLE_TAB)
+				.replace("&#x9;", VISIBLE_TAB)
+				.replace("&#x09;", VISIBLE_TAB)
+				.replace("&#X9;", VISIBLE_TAB)
+				.replace("&#X09;", VISIBLE_TAB)
+				.replace("\\u0009", VISIBLE_TAB)
+				.replace("\\t", VISIBLE_TAB)
+				.replace("\t", VISIBLE_TAB);
+	}
+
+	private static String normalizeLineItemBodyForMarkdownPdf(String raw) {
+		return expandTabStops(raw).replace(" \n\n ", "<br>");
+	}
+
 	public byte[] convertToPdf(String path) throws BusinessServiceException {
 		LOGGER.info("Collecting the release notes on path {}", path);
 
@@ -83,7 +112,7 @@ public class PdfConversionService {
 
 			String content = lineItem.getContent();
 			if (!Strings.isNullOrEmpty(content)) {
-				contentTotal.append(content.replace(" \n\n ", "<br>"));
+				contentTotal.append(normalizeLineItemBodyForMarkdownPdf(content));
 				contentTotal.append("\n\n");
 			}
 			List<Integer> childIndices = new ArrayList<>(copiedIndices);
@@ -97,7 +126,7 @@ public class PdfConversionService {
 		char[] heading = new char[lineItem.getLevel()];
 		Arrays.fill(heading, '#');
 
-		return String.valueOf(heading) + " " + indices.stream().map(Object::toString).collect(Collectors.joining(".")) + ". " + lineItem.getTitle();
+		return String.valueOf(heading) + " " + indices.stream().map(Object::toString).collect(Collectors.joining(".")) + ". " + expandTabStops(lineItem.getTitle());
 	}
 
 	private void addLogoToDocument(Document document) {
