@@ -3,10 +3,13 @@ package org.snomed.release.note.rest;
 import io.kaicode.rest.util.branchpathrewrite.BranchPathUriUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.ihtsdo.otf.rest.client.RestClientException;
 import org.ihtsdo.otf.rest.exception.BadRequestException;
 import org.ihtsdo.otf.rest.exception.BusinessServiceException;
 import org.snomed.release.note.core.data.domain.LineItem;
 import org.snomed.release.note.core.data.service.LineItemService;
+import org.snomed.release.note.core.data.service.PermissionService;
+import org.snomed.release.note.core.util.BranchUtil;
 import org.snomed.release.note.rest.pojo.LineItemCreateRequest;
 import org.snomed.release.note.rest.pojo.LineItemUpdateRequest;
 import org.snomed.release.note.rest.pojo.VersionRequest;
@@ -17,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -24,8 +28,14 @@ import java.util.List;
 @RequestMapping(produces = MediaType.APPLICATION_JSON_VALUE)
 public class LineItemController {
 
+	private final LineItemService lineItemService;
+	private final PermissionService permissionService;
+
 	@Autowired
-	private LineItemService lineItemService;
+	public LineItemController(LineItemService lineItemService, PermissionService permissionService) {
+		this.lineItemService = lineItemService;
+		this.permissionService = permissionService;
+	}
 
 	@PostMapping(value = "/{path}/lineitems")
 	@PreAuthorize("hasPermission('AUTHOR', #path) || hasPermission('PROJECT_LEAD', #path) || hasPermission('RELEASE_LEAD', #path) || hasPermission('RELEASE_ADMIN', #path) || hasPermission('RELEASE_MANAGER', #path)")
@@ -106,7 +116,18 @@ public class LineItemController {
 	public ResponseEntity<String> versionLineItem(
 			@PathVariable String path,
 			@RequestBody VersionRequest versionRequest) throws BusinessServiceException {
-		lineItemService.version(BranchPathUriUtil.decodePath(path), versionRequest);
+		String branchPath = BranchPathUriUtil.decodePath(path);
+		final Date effectiveTime = versionRequest.effectiveTime();
+		final String releaseBranch = branchPath + BranchUtil.SEPARATOR + LineItemService.DATE_FORMATTER.format(effectiveTime);
+		// make sure the versioned branch does exist in Snowstorm
+		try {
+			permissionService.getBranchOrThrow(releaseBranch);
+		} catch (RestClientException e) {
+			String message = e.getMessage() != null ? e.getMessage() : "Failed to communicate with Snowstorm.";
+			throw new BusinessServiceException(message, e);
+		}
+
+		lineItemService.version(branchPath, versionRequest);
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
 
