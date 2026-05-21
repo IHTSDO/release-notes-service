@@ -3,6 +3,7 @@ package org.snomed.release.note.core.data.service;
 import org.ihtsdo.otf.rest.client.RestClientException;
 import org.ihtsdo.otf.rest.client.terminologyserver.SnowstormRestClientFactory;
 import org.ihtsdo.otf.rest.client.terminologyserver.pojo.Branch;
+import org.ihtsdo.otf.rest.exception.ResourceNotFoundException;
 import org.ihtsdo.sso.integration.SecurityUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,11 +41,11 @@ public class PermissionService {
 		}
 	}
 
-	private Branch getBranchOrThrow(String branchPath) throws RestClientException {
+	public Branch getBranchOrThrow(String branchPath) throws RestClientException {
 		final Branch branch = snowstormRestClientFactory.getClient().getBranch(branchPath);
 		if (branch == null) {
 			LOGGER.error("Branch {} does not exist", branchPath);
-			throw new AccessDeniedException("Branch '" + branchPath + "' does not exist.");
+			throw new ResourceNotFoundException("Branch '" + branchPath + "' does not exist.");
 		}
 		return branch;
 	}
