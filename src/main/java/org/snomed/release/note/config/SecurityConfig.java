@@ -46,7 +46,8 @@ public class SecurityConfig {
 	private final String[] excludedUrlPatterns = {
 			"/version",
 			"/swagger-ui/**",
-			"/v3/api-docs/**"
+			"/v3/api-docs/**",
+			"/**/lineitems/view"
 	};
 
 	@Bean
