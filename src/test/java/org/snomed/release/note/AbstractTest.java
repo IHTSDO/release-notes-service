@@ -3,6 +3,7 @@ package org.snomed.release.note;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.snomed.release.note.core.data.service.AttachmentService;
 import org.snomed.release.note.core.data.service.LineItemService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
@@ -20,6 +21,9 @@ public abstract class AbstractTest {
 	@Autowired
 	protected LineItemService lineItemService;
 
+	@Autowired
+	protected AttachmentService attachmentService;
+
 	private final static ElasticsearchContainer elasticsearchContainer = TestConfig.getElasticsearchContainerInstance();
 
 	@BeforeAll
@@ -32,5 +36,6 @@ public abstract class AbstractTest {
 	@AfterEach
 	void defaultTearDown() {
 		lineItemService.deleteAll();
+		attachmentService.deleteAll();
 	}
 }

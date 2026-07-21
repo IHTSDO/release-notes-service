@@ -44,6 +44,9 @@ public class LineItemService {
 	@Autowired
 	private ElasticsearchOperations elasticsearchOperations;
 
+	@Autowired
+	private AttachmentService attachmentService;
+
 	private static final String LINE_ITEM_ID_NOT_FOUND_MSG = "No line item found for id '";
 	private static final String LINE_ITEM_NOT_FOUND_MSG = "{} line items found on path {}";
 	public static final String CONTENT_DEVELOPMENT_ACTIVITY = "Content Development Activity";
@@ -394,6 +397,7 @@ public class LineItemService {
 		});
 
 		lineItemRepository.saveAll(lineItemsToSave);
+		attachmentService.version(path, releaseBranch);
 	}
 
 	public void publish(final String path) throws BusinessServiceException {
@@ -406,6 +410,7 @@ public class LineItemService {
 		lineItems.forEach(lineItem -> lineItem.setReleased(true));
 
 		lineItemRepository.saveAll(lineItems);
+		attachmentService.publish(path);
 	}
 
 	public List<LineItem> getChildren(String parentId, String path) {

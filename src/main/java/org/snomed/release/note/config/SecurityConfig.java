@@ -102,6 +102,8 @@ public class SecurityConfig {
 				"/(.*)/subjects/.*",
 				"/(.*)/lineitems",
 				"/(.*)/lineitems/.*",
+				"/(.*)/attachments",
+				"/(.*)/attachments/.*",
 				"/test/(.*)/testData"
 		));
 	}
