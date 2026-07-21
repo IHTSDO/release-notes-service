@@ -25,11 +25,16 @@ public class AttachmentService {
 	public static final long MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024L;
 	public static final String CSV_CONTENT_TYPE = "text/csv";
 
-	@Autowired
-	private AttachmentRepository attachmentRepository;
+
+	private final AttachmentRepository attachmentRepository;
+
+	private final LineItemRepository lineItemRepository;
 
 	@Autowired
-	private LineItemRepository lineItemRepository;
+	public AttachmentService(AttachmentRepository attachmentRepository, LineItemRepository lineItemRepository) {
+		this.attachmentRepository = attachmentRepository;
+		this.lineItemRepository = lineItemRepository;
+	}
 
 	public List<Attachment> findByBranch(String path) {
 		return attachmentRepository.findBySourceBranch(path);

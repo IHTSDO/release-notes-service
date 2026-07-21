@@ -18,7 +18,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.snomed.release.note.core.data.service.LineItemService.DATE_FORMATTER;
 
-public class AttachmentServiceTest extends AbstractTest {
+class AttachmentServiceTest extends AbstractTest {
 
 	@Autowired
 	private AttachmentService attachmentService;
@@ -91,9 +91,10 @@ public class AttachmentServiceTest extends AbstractTest {
 		final String path = "MAIN";
 		MockMultipartFile file = new MockMultipartFile("file", "report.csv", "text/csv", "x,y\n".getBytes(StandardCharsets.UTF_8));
 		Attachment uploaded = attachmentService.upload(path, "Temp attachment", file);
+		String uploadedId = uploaded.getId();
 
-		attachmentService.delete(path, uploaded.getId());
-		assertThrows(ResourceNotFoundException.class, () -> attachmentService.find(path, uploaded.getId()));
+		attachmentService.delete(path, uploadedId);
+		assertThrows(ResourceNotFoundException.class, () -> attachmentService.find(path, uploadedId));
 	}
 
 	@Test
@@ -149,13 +150,15 @@ public class AttachmentServiceTest extends AbstractTest {
 
 		List<Attachment> publishedList = attachmentService.findByBranch("MAIN/2022-01-31");
 		assertEquals(1, publishedList.size());
-		assertTrue(publishedList.get(0).isReleased());
+		Attachment published = publishedList.get(0);
+		assertTrue(published.isReleased());
+		String publishedId = published.getId();
 
 		MockMultipartFile replacement = new MockMultipartFile(
 				"file", "other.csv", "text/csv", "a,b\n".getBytes(StandardCharsets.UTF_8));
 		assertThrows(BadConfigurationException.class,
 				() -> attachmentService.upload("MAIN/2022-01-31", "New descriptions", replacement));
 		assertThrows(BadConfigurationException.class,
-				() -> attachmentService.delete("MAIN/2022-01-31", publishedList.get(0).getId()));
+				() -> attachmentService.delete("MAIN/2022-01-31", publishedId));
 	}
 }

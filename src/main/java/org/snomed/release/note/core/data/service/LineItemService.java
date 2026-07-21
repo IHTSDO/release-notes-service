@@ -38,14 +38,18 @@ import static java.util.stream.Collectors.toList;
 @Service
 public class LineItemService {
 
-	@Autowired
-	private LineItemRepository lineItemRepository;
+	private final LineItemRepository lineItemRepository;
+
+	private final ElasticsearchOperations elasticsearchOperations;
+
+	private final AttachmentService attachmentService;
 
 	@Autowired
-	private ElasticsearchOperations elasticsearchOperations;
-
-	@Autowired
-	private AttachmentService attachmentService;
+	public LineItemService(LineItemRepository lineItemRepository, ElasticsearchOperations elasticsearchOperations, AttachmentService attachmentService) {
+		this.lineItemRepository = lineItemRepository;
+		this.elasticsearchOperations = elasticsearchOperations;
+		this.attachmentService = attachmentService;
+	}
 
 	private static final String LINE_ITEM_ID_NOT_FOUND_MSG = "No line item found for id '";
 	private static final String LINE_ITEM_NOT_FOUND_MSG = "{} line items found on path {}";
