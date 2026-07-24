@@ -55,19 +55,17 @@ class AttachmentServiceTest extends AbstractTest {
 	}
 
 	@Test
-	void testReplaceSameReportType() throws BusinessServiceException {
+	void testMultipleAttachmentsSameReportType() throws BusinessServiceException {
 		final String path = "MAIN";
 		MockMultipartFile first = new MockMultipartFile("file", "old.csv", "text/csv", "a,b\n".getBytes(StandardCharsets.UTF_8));
 		MockMultipartFile second = new MockMultipartFile("file", "new.csv", "text/csv", "c,d\n".getBytes(StandardCharsets.UTF_8));
 
 		Attachment firstUpload = attachmentService.upload(path, "New descriptions", first);
-		Attachment replaced = attachmentService.upload(path, "New descriptions", second);
+		Attachment secondUpload = attachmentService.upload(path, "New descriptions", second);
 
-		assertEquals(firstUpload.getId(), replaced.getId());
-		assertEquals("new.csv", replaced.getFilename());
-		assertEquals(1, attachmentService.findByBranch(path).size());
-		assertArrayEquals("c,d\n".getBytes(StandardCharsets.UTF_8),
-				attachmentService.find(path, replaced.getId()).getContent());
+		assertNotEquals(firstUpload.getId(), secondUpload.getId());
+		assertEquals(2, attachmentService.findByBranch(path).size());
+		assertEquals(2, attachmentService.findByBranchAndReportType(path, "New descriptions").size());
 	}
 
 	@Test
@@ -90,7 +88,7 @@ class AttachmentServiceTest extends AbstractTest {
 	void testDelete() throws BusinessServiceException {
 		final String path = "MAIN";
 		MockMultipartFile file = new MockMultipartFile("file", "report.csv", "text/csv", "x,y\n".getBytes(StandardCharsets.UTF_8));
-		Attachment uploaded = attachmentService.upload(path, "Temp attachment", file);
+		Attachment uploaded = attachmentService.upload(path, "New descriptions", file);
 		String uploadedId = uploaded.getId();
 
 		attachmentService.delete(path, uploadedId);
@@ -107,14 +105,14 @@ class AttachmentServiceTest extends AbstractTest {
 	void testUploadRejectsNonCsv() {
 		MockMultipartFile file = new MockMultipartFile("file", "report.txt", "text/plain", "nope".getBytes(StandardCharsets.UTF_8));
 		assertThrows(BadRequestException.class,
-				() -> attachmentService.upload("MAIN", "Anything", file));
+				() -> attachmentService.upload("MAIN", "New descriptions", file));
 	}
 
 	@Test
 	void testUploadRejectsEmptyFile() {
 		MockMultipartFile file = new MockMultipartFile("file", "report.csv", "text/csv", new byte[0]);
 		assertThrows(BadRequestException.class,
-				() -> attachmentService.upload("MAIN", "Anything", file));
+				() -> attachmentService.upload("MAIN", "New descriptions", file));
 	}
 
 	@Test

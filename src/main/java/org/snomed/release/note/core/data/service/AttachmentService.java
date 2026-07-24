@@ -61,8 +61,7 @@ public class AttachmentService {
 		assertBranchNotReleased(path);
 
 		String trimmedReportType = reportType.trim();
-		Attachment attachment = attachmentRepository.findBySourceBranchAndReportType(path, trimmedReportType)
-				.orElseGet(Attachment::new);
+		Attachment attachment = new Attachment();
 
 		try {
 			attachment.setReportType(trimmedReportType);

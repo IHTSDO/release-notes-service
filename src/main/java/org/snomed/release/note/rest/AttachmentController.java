@@ -56,7 +56,7 @@ public class AttachmentController {
 
 	@PostMapping(value = "/{path}/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	@PreAuthorize("hasPermission('AUTHOR', #path) || hasPermission('PROJECT_LEAD', #path) || hasPermission('RELEASE_LEAD', #path) || hasPermission('RELEASE_ADMIN', #path) || hasPermission('RELEASE_MANAGER', #path)")
-	@Operation(summary = "Upload or replace a CSV attachment associated with a report type. Re-uploading the same report type replaces the existing file.")
+	@Operation(summary = "Upload a CSV attachment associated with a report type. Multiple files are allowed for the same report type.")
 	public Attachment uploadAttachment(
 			@PathVariable String path,
 			@RequestParam("reportType") String reportType,
