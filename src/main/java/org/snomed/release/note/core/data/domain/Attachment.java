@@ -15,14 +15,10 @@ import java.util.Objects;
 public class Attachment {
 
 	public static final String FIELD_SOURCE_BRANCH = "sourceBranch";
-	public static final String FIELD_REPORT_TYPE = "reportType";
 
 	@Id
 	@Field(type = FieldType.Keyword)
 	private String id;
-
-	@Field(type = FieldType.Keyword)
-	private String reportType;
 
 	@Field(type = FieldType.Keyword)
 	private String filename;
@@ -52,14 +48,6 @@ public class Attachment {
 
 	public void setId(String id) {
 		this.id = id;
-	}
-
-	public String getReportType() {
-		return reportType;
-	}
-
-	public void setReportType(String reportType) {
-		this.reportType = reportType;
 	}
 
 	public String getFilename() {
@@ -126,11 +114,11 @@ public class Attachment {
 		if (id != null || that.id != null) {
 			return Objects.equals(id, that.id);
 		}
-		return Objects.equals(reportType, that.reportType) && Objects.equals(sourceBranch, that.sourceBranch);
+		return Objects.equals(filename, that.filename) && Objects.equals(sourceBranch, that.sourceBranch);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, reportType, sourceBranch);
+		return Objects.hash(id, filename, sourceBranch);
 	}
 }

@@ -8,6 +8,4 @@ import java.util.List;
 public interface AttachmentRepository extends ElasticsearchRepository<Attachment, String> {
 
 	List<Attachment> findBySourceBranch(String sourceBranch);
-
-	List<Attachment> findAllBySourceBranchAndReportType(String sourceBranch, String reportType);
 }

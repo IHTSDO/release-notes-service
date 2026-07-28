@@ -29,14 +29,9 @@ public class AttachmentController {
 	}
 
 	@GetMapping(value = "/{path}/attachments", produces = MediaType.APPLICATION_JSON_VALUE)
-	@Operation(summary = "List CSV attachments for a branch (metadata only), optionally filtered by report type.")
-	public List<Attachment> listAttachments(
-			@PathVariable String path,
-			@RequestParam(required = false) String reportType) {
-		String branch = BranchPathUriUtil.decodePath(path);
-		return (reportType != null)
-				? attachmentService.findByBranchAndReportType(branch, reportType)
-				: attachmentService.findByBranch(branch);
+	@Operation(summary = "List CSV attachments for a branch (metadata only).")
+	public List<Attachment> listAttachments(@PathVariable String path) {
+		return attachmentService.findByBranch(BranchPathUriUtil.decodePath(path));
 	}
 
 	@GetMapping(value = "/{path}/attachments/{id}")
@@ -56,12 +51,11 @@ public class AttachmentController {
 
 	@PostMapping(value = "/{path}/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	@PreAuthorize("hasPermission('AUTHOR', #path) || hasPermission('PROJECT_LEAD', #path) || hasPermission('RELEASE_LEAD', #path) || hasPermission('RELEASE_ADMIN', #path) || hasPermission('RELEASE_MANAGER', #path)")
-	@Operation(summary = "Upload a CSV attachment associated with a report type. Multiple files are allowed for the same report type.")
+	@Operation(summary = "Upload a CSV attachment.")
 	public Attachment uploadAttachment(
 			@PathVariable String path,
-			@RequestParam("reportType") String reportType,
 			@RequestParam("file") MultipartFile file) throws BusinessServiceException {
-		return attachmentService.upload(BranchPathUriUtil.decodePath(path), reportType, file);
+		return attachmentService.upload(BranchPathUriUtil.decodePath(path), file);
 	}
 
 	@DeleteMapping(value = "/{path}/attachments/{id}")

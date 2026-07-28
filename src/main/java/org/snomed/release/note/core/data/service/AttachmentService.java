@@ -9,6 +9,7 @@ import org.snomed.release.note.core.data.domain.Attachment;
 import org.snomed.release.note.core.data.domain.LineItem;
 import org.snomed.release.note.core.data.repository.AttachmentRepository;
 import org.snomed.release.note.core.data.repository.LineItemRepository;
+import org.snomed.release.note.core.util.BranchUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -25,7 +26,6 @@ public class AttachmentService {
 	public static final long MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024L;
 	public static final String CSV_CONTENT_TYPE = "text/csv";
 
-
 	private final AttachmentRepository attachmentRepository;
 
 	private final LineItemRepository lineItemRepository;
@@ -40,10 +40,6 @@ public class AttachmentService {
 		return attachmentRepository.findBySourceBranch(path);
 	}
 
-	public List<Attachment> findByBranchAndReportType(String path, String reportType) {
-		return attachmentRepository.findAllBySourceBranchAndReportType(path, reportType);
-	}
-
 	public Attachment find(String path, String id) {
 		Attachment attachment = attachmentRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException(
@@ -55,16 +51,14 @@ public class AttachmentService {
 		return attachment;
 	}
 
-	public Attachment upload(String path, String reportType, MultipartFile file) throws BusinessServiceException {
-		validateReportType(reportType);
+	public Attachment upload(String path, MultipartFile file) throws BusinessServiceException {
 		validateUpload(file);
+		assertNotVersionedBranch(path);
 		assertBranchNotReleased(path);
 
-		String trimmedReportType = reportType.trim();
 		Attachment attachment = new Attachment();
 
 		try {
-			attachment.setReportType(trimmedReportType);
 			attachment.setFilename(sanitizeFilename(file.getOriginalFilename()));
 			attachment.setContentType(resolveContentType(file));
 			attachment.setContent(file.getBytes());
@@ -79,6 +73,7 @@ public class AttachmentService {
 	}
 
 	public void delete(String path, String id) throws BusinessServiceException {
+		assertNotVersionedBranch(path);
 		assertBranchNotReleased(path);
 		Attachment attachment = find(path, id);
 		attachmentRepository.delete(attachment);
@@ -88,7 +83,6 @@ public class AttachmentService {
 		List<Attachment> attachments = findByBranch(sourcePath);
 		for (Attachment attachment : attachments) {
 			Attachment clone = new Attachment();
-			clone.setReportType(attachment.getReportType());
 			clone.setFilename(attachment.getFilename());
 			clone.setContentType(attachment.getContentType());
 			clone.setContent(attachment.getContent());
@@ -111,18 +105,19 @@ public class AttachmentService {
 		attachmentRepository.deleteAll();
 	}
 
+	private void assertNotVersionedBranch(String path) throws BadRequestException {
+		if (BranchUtil.isReleaseBranch(path)) {
+			throw new BadRequestException(
+					"Attachments cannot be modified on versioned branch '" + path + "'");
+		}
+	}
+
 	private void assertBranchNotReleased(String path) throws BadConfigurationException {
 		boolean lineItemsReleased = lineItemRepository.findBySourceBranch(path).stream().anyMatch(LineItem::isReleased);
 		boolean attachmentsReleased = findByBranch(path).stream().anyMatch(Attachment::isReleased);
 		if (lineItemsReleased || attachmentsReleased) {
 			throw new BadConfigurationException(
 					"Branch '" + path + "' has already been released and its attachments cannot be changed");
-		}
-	}
-
-	private void validateReportType(String reportType) throws BadRequestException {
-		if (!StringUtils.hasLength(reportType) || !StringUtils.hasLength(reportType.trim())) {
-			throw new BadRequestException("'reportType' is required");
 		}
 	}
 
