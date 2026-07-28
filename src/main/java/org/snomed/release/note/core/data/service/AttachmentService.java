@@ -9,7 +9,6 @@ import org.snomed.release.note.core.data.domain.Attachment;
 import org.snomed.release.note.core.data.domain.LineItem;
 import org.snomed.release.note.core.data.repository.AttachmentRepository;
 import org.snomed.release.note.core.data.repository.LineItemRepository;
-import org.snomed.release.note.core.util.BranchUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -53,7 +52,6 @@ public class AttachmentService {
 
 	public Attachment upload(String path, MultipartFile file) throws BusinessServiceException {
 		validateUpload(file);
-		assertNotVersionedBranch(path);
 		assertBranchNotReleased(path);
 
 		Attachment attachment = new Attachment();
@@ -73,7 +71,6 @@ public class AttachmentService {
 	}
 
 	public void delete(String path, String id) throws BusinessServiceException {
-		assertNotVersionedBranch(path);
 		assertBranchNotReleased(path);
 		Attachment attachment = find(path, id);
 		attachmentRepository.delete(attachment);
@@ -103,13 +100,6 @@ public class AttachmentService {
 
 	public void deleteAll() {
 		attachmentRepository.deleteAll();
-	}
-
-	private void assertNotVersionedBranch(String path) throws BadRequestException {
-		if (BranchUtil.isReleaseBranch(path)) {
-			throw new BadRequestException(
-					"Attachments cannot be modified on versioned branch '" + path + "'");
-		}
 	}
 
 	private void assertBranchNotReleased(String path) throws BadConfigurationException {

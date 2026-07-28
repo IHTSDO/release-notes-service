@@ -1,5 +1,6 @@
 package org.snomed.release.note.core.data.service;
 
+import org.ihtsdo.otf.rest.exception.BadConfigurationException;
 import org.ihtsdo.otf.rest.exception.BadRequestException;
 import org.ihtsdo.otf.rest.exception.BusinessServiceException;
 import org.ihtsdo.otf.rest.exception.ResourceNotFoundException;
@@ -115,12 +116,12 @@ class AttachmentServiceTest extends AbstractTest {
 
 		MockMultipartFile replacement = new MockMultipartFile(
 				"file", "other.csv", "text/csv", "a,b\n".getBytes(StandardCharsets.UTF_8));
-		assertThrows(BadRequestException.class, () -> attachmentService.upload("MAIN/2022-01-31", replacement));
-		assertThrows(BadRequestException.class, () -> attachmentService.delete("MAIN/2022-01-31", publishedId));
+		assertThrows(BadConfigurationException.class, () -> attachmentService.upload("MAIN/2022-01-31", replacement));
+		assertThrows(BadConfigurationException.class, () -> attachmentService.delete("MAIN/2022-01-31", publishedId));
 	}
 
 	@Test
-	void testUploadRejectedOnVersionedBranch() throws Exception {
+	void testUploadAndDeleteAllowedOnVersionedBranch() throws Exception {
 		MockMultipartFile file = new MockMultipartFile(
 				"file", "components.csv", "text/csv", "id,fsn\n".getBytes(StandardCharsets.UTF_8));
 		attachmentService.upload("MAIN", file);
@@ -129,6 +130,12 @@ class AttachmentServiceTest extends AbstractTest {
 
 		MockMultipartFile uploadOnVersion = new MockMultipartFile(
 				"file", "extra.csv", "text/csv", "a,b\n".getBytes(StandardCharsets.UTF_8));
-		assertThrows(BadRequestException.class, () -> attachmentService.upload("MAIN/2022-01-31", uploadOnVersion));
+		Attachment uploaded = attachmentService.upload("MAIN/2022-01-31", uploadOnVersion);
+		assertNotNull(uploaded.getId());
+		assertEquals("extra.csv", uploaded.getFilename());
+		assertEquals(2, attachmentService.findByBranch("MAIN/2022-01-31").size());
+
+		attachmentService.delete("MAIN/2022-01-31", uploaded.getId());
+		assertEquals(1, attachmentService.findByBranch("MAIN/2022-01-31").size());
 	}
 }
