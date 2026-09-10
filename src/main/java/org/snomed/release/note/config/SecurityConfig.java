@@ -56,7 +56,7 @@ public class SecurityConfig {
 	}
 
 	@Bean
-	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+	public SecurityFilterChain filterChain(HttpSecurity http) {
 		http.csrf(AbstractHttpConfigurer::disable);// lgtm [java/spring-disabled-csrf-protection]
 		http.sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
