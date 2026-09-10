@@ -11,10 +11,14 @@ import org.testcontainers.DockerClientFactory;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.junit.jupiter.Container;
 
+import java.time.Duration;
+
 @SpringBootApplication
 @TestConfiguration
 public class TestConfig extends Config {
-	private static final String ELASTIC_SEARCH_SERVER_VERSION = "8.11.1";
+	// spring-data-elasticsearch 6 forces the Elasticsearch 9 client; keep in step with
+	// ${elasticsearch.version} from snomed-parent-bom.
+	private static final String ELASTIC_SEARCH_SERVER_VERSION = "9.5.2";
 
 	// set it to true to use local instance instead of test container
 	static final boolean useLocalElasticsearch = false;
@@ -48,6 +52,8 @@ public class TestConfig extends Config {
 			this.addFixedExposedPort(9330, 9330);
 			this.addEnv("xpack.security.enabled", "false");
 			this.addEnv("cluster.name", "integration-test-cluster");
+			// ES 9 often needs >60s on Docker Desktop (entitlements + 2GB heap default).
+			this.withStartupTimeout(Duration.ofMinutes(3));
 		}
 	}
 

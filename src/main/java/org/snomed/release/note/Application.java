@@ -3,7 +3,7 @@ package org.snomed.release.note;
 import org.apache.tomcat.util.buf.EncodedSolidusHandling;
 import org.snomed.release.note.config.Config;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.web.embedded.tomcat.TomcatConnectorCustomizer;
+import org.springframework.boot.tomcat.TomcatConnectorCustomizer;
 import org.springframework.context.annotation.Bean;
 
 public class Application extends Config {
